@@ -15,5 +15,13 @@ It's named for the "sons of thunder", James and John. Jesus dubbed them this nam
 ```
 - _doc - internal planning documents, ignored in .git.
 - _doc/wiki - internal documentation of the structure.
+- _doc/nativephp - NativePHP Desktop documentation.
 - _doc/[library] - any critical dependency documentation.
 ```
+
+## Architecture
+
+- Local first, no authentication or cloud.
+- Self-contained as much as possible, with no 3rd party connections or telemetry.
+- Minimal dependency tree.
+- Tests and components first.
