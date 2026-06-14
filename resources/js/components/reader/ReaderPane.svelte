@@ -10,7 +10,7 @@
         translationAbbrev,
         prevNav,
         nextNav,
-        navLayout = 'horizontal',
+        navLayout = 'vertical',
         onprev,
         onnext,
         onscroll,

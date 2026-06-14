@@ -21,15 +21,14 @@
         <span class="reader-prose mt-2 flex w-6 shrink-0 justify-center text-xs opacity-70">
             {#if verse.paragraphStart}
                 <Pilcrow size={14} aria-hidden="true" />
-            {:else}
-                {verse.number}
             {/if}
+            {verse.number}
         </span>
         <textarea
             class="textarea reader-prose textarea-ghost w-full resize-none leading-relaxed"
             class:bg-base-300={isEmpty}
             rows="2"
-            placeholder="Write your understanding of this verse…"
+            placeholder="Write your revision of this verse…"
             {value}
             oninput={(event) => onupdate?.(event.currentTarget.value)}
         ></textarea>
