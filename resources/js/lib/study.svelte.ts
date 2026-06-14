@@ -1,15 +1,15 @@
 import { http } from '@inertiajs/svelte';
 
 import { updateStudy as updateStudySettings } from '@/actions/App/Http/Controllers/SettingsController';
-import { getAdjacentChapter, getChapter } from '@/lib/mock/chapter';
+import { getAdjacentChapter } from '@/lib/bible.svelte.ts';
 import type { StudySettings } from '@/lib/types/study';
-import type { Chapter, ViewMode } from '@/lib/types/bible';
+import type { ViewMode } from '@/lib/types/bible';
 
 export const study = $state({
     activeView: 'bible' as ViewMode,
     bookId: 'gen',
     chapter: 15,
-    translationId: 'kjv',
+    translationId: 'asv',
     translationBId: 'asv',
     scrollSync: false,
     settingsOpen: false,
@@ -49,10 +49,6 @@ function schedulePersist(): void {
     persistTimeout = setTimeout(() => {
         http.patch(updateStudySettings.url(), studyPayload());
     }, 300);
-}
-
-export function getCurrentChapter(): Chapter {
-    return getChapter(study.bookId, study.chapter);
 }
 
 export function getPreviousChapter(): ReturnType<typeof getAdjacentChapter> {
@@ -121,10 +117,14 @@ export function setScrollSync(enabled: boolean): void {
     study.scrollSync = enabled;
 }
 
-export function chapterLabel(current: Chapter, translationAbbrev?: string): string {
+export function chapterLabel(
+    book: string,
+    chapter: number,
+    translationAbbrev?: string,
+): string {
     if (translationAbbrev) {
-        return `${current.book} ${current.chapter} (${translationAbbrev})`;
+        return `${book} ${chapter} (${translationAbbrev})`;
     }
 
-    return `${current.book} ${current.chapter}`;
+    return `${book} ${chapter}`;
 }

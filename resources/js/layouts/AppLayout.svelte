@@ -7,6 +7,7 @@
     import ReadabilitySettings from '@/components/settings/ReadabilitySettings.svelte';
     import SaveStatus from '@/components/scribe/SaveStatus.svelte';
     import { hydrateReadability } from '@/lib/readability.svelte.ts';
+    import { loadBooks, loadTranslations } from '@/lib/bible.svelte.ts';
     import { closeSettings, hydrateStudy, study } from '@/lib/study.svelte.ts';
     import type { ReadabilitySettings as ReadabilitySettingsType } from '@/lib/types/readability';
     import type { StudySettings as StudySettingsType } from '@/lib/types/study';
@@ -18,6 +19,12 @@
     $effect(() => {
         hydrateReadability(page.props.readability as ReadabilitySettingsType);
         hydrateStudy(page.props.study as StudySettingsType);
+    });
+
+    $effect(() => {
+        const translationId = study.translationId;
+
+        loadTranslations().then(() => loadBooks(translationId));
     });
 </script>
 

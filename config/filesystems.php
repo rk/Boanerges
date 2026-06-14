@@ -47,6 +47,18 @@ return [
             'report' => false,
         ],
 
+        /*
+         * Bundled read-only resources (NativePHP overrides this at runtime).
+         *
+         * @see _doc/nativephp/docs/digging-deeper/files.md
+         */
+        'extras' => [
+            'driver' => 'local',
+            'root' => base_path('extras'),
+            'throw' => true,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

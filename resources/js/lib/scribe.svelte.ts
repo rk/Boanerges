@@ -1,5 +1,3 @@
-import { getChapter } from '@/lib/mock/chapter';
-
 const STORAGE_PREFIX = 'boanerges.scribe';
 
 function storageKey(bookId: string, chapter: number): string {
@@ -25,12 +23,6 @@ export function loadScribeDraft(bookId: string, chapterNumber: number): Record<n
     } catch {
         return {};
     }
-}
-
-export function getScribeVerses(bookId: string, chapterNumber: number): number[] {
-    const chapter = getChapter(bookId, chapterNumber);
-
-    return chapter.verses.map((verse) => verse.number);
 }
 
 export function scheduleScribeSave(

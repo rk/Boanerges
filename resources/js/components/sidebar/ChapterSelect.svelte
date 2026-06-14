@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { books } from '@/lib/mock/chapter';
+    import { bible } from '@/lib/bible.svelte.ts';
     import { study, setChapter } from '@/lib/study.svelte.ts';
 
-    const currentBook = $derived(books.find((book) => book.id === study.bookId));
+    const currentBook = $derived(bible.books.find((book) => book.id === study.bookId));
     const chapterOptions = $derived(
         Array.from({ length: currentBook?.chapters ?? 1 }, (_, index) => index + 1),
     );
@@ -16,6 +16,7 @@
         class="select select-bordered select-sm w-full"
         value={study.chapter}
         onchange={(event) => setChapter(Number(event.currentTarget.value))}
+        disabled={! currentBook}
     >
         {#each chapterOptions as chapterNumber (chapterNumber)}
             <option value={chapterNumber}>{chapterNumber}</option>

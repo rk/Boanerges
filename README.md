@@ -25,3 +25,13 @@ It's named for the "sons of thunder", James and John. Jesus dubbed them this nam
 - Self-contained as much as possible, with no 3rd party connections or telemetry.
 - Minimal dependency tree.
 - Tests and components first.
+
+## Bible module setup
+
+The ASV translation is vendored under `extras/sword/` and bundled with the NativePHP app at build time. After cloning, if the module is missing, install it with:
+
+```bash
+php artisan bible:install-asv
+```
+
+Use `--force` to re-download and replace the module.
