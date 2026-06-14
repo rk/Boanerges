@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Storage;
 
 beforeEach(function (): void {
     if (! is_dir(Storage::disk('extras')->path('sword/mods.d'))) {
-        $this->markTestSkipped('ASV SWORD module not installed. Run `php artisan bible:install-asv`.');
+        $this->markTestSkipped('ASV SWORD module not installed. Run `php artisan bible:verify-asv`.');
     }
 });
 
@@ -15,7 +15,7 @@ test('lists installed translations', function (): void {
     $response->assertSuccessful();
     $response->assertJsonPath('translations.0.id', 'asv');
     $response->assertJsonPath('translations.0.abbrev', 'ASV');
-    $response->assertJsonPath('translations.0.name', 'American Standard Version');
+    $response->assertJsonPath('translations.0.bundled', true);
 });
 
 test('lists books for a translation', function (): void {
@@ -63,6 +63,10 @@ test('returns unprocessable for invalid chapter', function (): void {
 
 test('returns service unavailable when module files are missing', function (): void {
     $manager = Mockery::mock(BibleModuleManager::class);
+    $manager->shouldReceive('installedModules')
+        ->andReturn([
+            ['key' => 'ASV', 'description' => 'American Standard Version', 'bundled' => true],
+        ]);
     $manager->shouldReceive('open')
         ->once()
         ->andThrow(App\Exceptions\BibleModuleNotInstalledException::missing('ASV'));

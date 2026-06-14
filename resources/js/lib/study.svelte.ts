@@ -1,7 +1,7 @@
 import { http } from '@inertiajs/svelte';
 
 import { updateStudy as updateStudySettings } from '@/actions/App/Http/Controllers/SettingsController';
-import { getAdjacentChapter } from '@/lib/bible.svelte.ts';
+import { getAdjacentChapter, bible, invalidateTranslations, loadTranslations } from '@/lib/bible.svelte.ts';
 import type { StudySettings } from '@/lib/types/study';
 import type { ViewMode } from '@/lib/types/bible';
 
@@ -115,6 +115,20 @@ export function closeSettings(): void {
 
 export function setScrollSync(enabled: boolean): void {
     study.scrollSync = enabled;
+}
+
+export function syncStudyTranslationSelection(): void {
+    const installedIds = new Set(bible.translations.map((translation) => translation.id));
+
+    if (! installedIds.has(study.translationId)) {
+        study.translationId = 'asv';
+    }
+
+    if (! installedIds.has(study.translationBId)) {
+        study.translationBId = study.translationId;
+    }
+
+    schedulePersist();
 }
 
 export function chapterLabel(

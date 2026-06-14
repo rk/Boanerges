@@ -32,6 +32,13 @@ export type Translation = {
     id: string;
     name: string;
     abbrev: string;
+    bundled?: boolean;
+};
+
+export type CatalogTranslation = Translation & {
+    module: string;
+    installed: boolean;
+    bundled: boolean;
 };
 
 export type ChapterNav = {

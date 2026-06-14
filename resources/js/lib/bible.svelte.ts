@@ -1,35 +1,67 @@
 import {
     books as booksRoute,
+    catalog as catalogRoute,
     chapter as chapterRoute,
+    install as installRoute,
     translations as translationsRoute,
+    uninstall as uninstallRoute,
 } from '@/actions/App/Http/Controllers/BibleController';
-import type { Book, Chapter, Translation } from '@/lib/types/bible';
+import type { Book, CatalogTranslation, Chapter, Translation } from '@/lib/types/bible';
 
 export const bible = $state({
     translations: [] as Translation[],
+    catalog: [] as CatalogTranslation[],
     books: [] as Book[],
     booksTranslationId: null as string | null,
     translationsLoading: false,
+    catalogLoading: false,
     booksLoading: false,
     translationsLoaded: false,
+    catalogLoaded: false,
+    translationManagerOpen: false,
+    installingModule: null as string | null,
+    uninstallingModule: null as string | null,
+    managerError: null as string | null,
 });
 
 const chapterCache = new Map<string, Chapter>();
 const chapterInflight = new Map<string, Promise<Chapter>>();
 
-async function jsonFetch<T>(url: string): Promise<T> {
+async function jsonFetch<T>(url: string, init?: RequestInit): Promise<T> {
     const response = await fetch(url, {
+        ...init,
         headers: {
             Accept: 'application/json',
             'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json',
+            ...(init?.headers ?? {}),
         },
     });
 
     if (! response.ok) {
-        throw new Error(`Request failed: ${response.status}`);
+        const body = (await response.json().catch(() => null)) as { message?: string } | null;
+        throw new Error(body?.message ?? `Request failed: ${response.status}`);
     }
 
     return response.json() as Promise<T>;
+}
+
+export function openTranslationManager(): void {
+    bible.translationManagerOpen = true;
+    bible.managerError = null;
+    void loadCatalog();
+}
+
+export function closeTranslationManager(): void {
+    bible.translationManagerOpen = false;
+    bible.managerError = null;
+}
+
+export function invalidateTranslations(): void {
+    bible.translationsLoaded = false;
+    bible.catalogLoaded = false;
+    bible.translations = [];
+    bible.catalog = [];
 }
 
 export async function loadTranslations(): Promise<void> {
@@ -45,6 +77,54 @@ export async function loadTranslations(): Promise<void> {
         bible.translationsLoaded = true;
     } finally {
         bible.translationsLoading = false;
+    }
+}
+
+export async function loadCatalog(force = false): Promise<void> {
+    if (bible.catalogLoaded && ! force) {
+        return;
+    }
+
+    bible.catalogLoading = true;
+
+    try {
+        const data = await jsonFetch<{ translations: CatalogTranslation[] }>(catalogRoute.url());
+        bible.catalog = data.translations;
+        bible.catalogLoaded = true;
+    } finally {
+        bible.catalogLoading = false;
+    }
+}
+
+export async function installTranslation(module: string): Promise<void> {
+    bible.installingModule = module;
+    bible.managerError = null;
+
+    try {
+        await jsonFetch(installRoute.url(module), { method: 'POST' });
+        invalidateTranslations();
+        await Promise.all([loadTranslations(), loadCatalog(true)]);
+    } catch (error) {
+        bible.managerError = error instanceof Error ? error.message : 'Installation failed.';
+        throw error;
+    } finally {
+        bible.installingModule = null;
+    }
+}
+
+export async function uninstallTranslation(module: string): Promise<void> {
+    bible.uninstallingModule = module;
+    bible.managerError = null;
+
+    try {
+        await jsonFetch(uninstallRoute.url(module), { method: 'DELETE' });
+        invalidateTranslations();
+        await Promise.all([loadTranslations(), loadCatalog(true)]);
+    } catch (error) {
+        bible.managerError = error instanceof Error ? error.message : 'Removal failed.';
+        throw error;
+    } finally {
+        bible.uninstallingModule = null;
     }
 }
 

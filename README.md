@@ -28,10 +28,12 @@ It's named for the "sons of thunder", James and John. Jesus dubbed them this nam
 
 ## Bible module setup
 
-The ASV translation is vendored under `extras/sword/` and bundled with the NativePHP app at build time. After cloning, if the module is missing, install it with:
+The ASV translation is bundled under `extras/sword/` and ships with NativePHP builds. Additional translations are downloaded to the local disk at `modules/bible/` and persist in app data.
+
+Use the **Manage translations** button (square plus icon) in the sidebar to install or remove English translations from the bundled catalog (`extras/translations.json`).
+
+Verify the bundled ASV module:
 
 ```bash
-php artisan bible:install-asv
+php artisan bible:verify-asv
 ```
-
-Use `--force` to re-download and replace the module.

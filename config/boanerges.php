@@ -1,15 +1,12 @@
 <?php
 
 return [
-    'sword_path' => 'sword',
+    'bundled_sword_path' => 'sword',
+    'local_sword_path' => 'modules/bible',
+    'catalog_path' => 'translations.json',
 
-    'translations' => [
-        [
-            'id' => 'asv',
-            'module' => 'ASV',
-            'name' => 'American Standard Version',
-            'abbrev' => 'ASV',
-        ],
+    'bundled_modules' => [
+        'ASV',
     ],
 
     'readability' => [

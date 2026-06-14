@@ -10,7 +10,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class TranslationResource extends JsonResource
 {
     /**
-     * @return array{id: string, name: string, abbrev: string}
+     * @return array{id: string, name: string, abbrev: string, bundled: bool}
      */
     public function toArray(Request $request): array
     {
@@ -18,6 +18,7 @@ class TranslationResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'abbrev' => $this->abbrev,
+            'bundled' => $this->bundled,
         ];
     }
 }

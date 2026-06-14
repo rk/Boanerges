@@ -2,11 +2,14 @@
     import PanelLeftClose from '@lucide/svelte/icons/panel-left-close';
     import Settings from '@lucide/svelte/icons/settings';
     import SlidersHorizontal from '@lucide/svelte/icons/sliders-horizontal';
+    import SquarePlus from '@lucide/svelte/icons/square-plus';
 
     import BookSelector from '@/components/sidebar/BookSelector.svelte';
     import ChapterSelect from '@/components/sidebar/ChapterSelect.svelte';
+    import TranslationManagerModal from '@/components/sidebar/TranslationManagerModal.svelte';
     import TranslationSelect from '@/components/sidebar/TranslationSelect.svelte';
     import ViewSelector from '@/components/sidebar/ViewSelector.svelte';
+    import { openTranslationManager } from '@/lib/bible.svelte.ts';
     import {
         study,
         openSettings,
@@ -39,7 +42,17 @@
         </section>
 
         <section class="mb-4">
-            <p class="menu-title px-0">Translation</p>
+            <div class="mb-1 flex items-center justify-between gap-2">
+                <p class="menu-title px-0">Translation</p>
+                <button
+                    type="button"
+                    class="btn btn-ghost btn-xs btn-square"
+                    aria-label="Manage translations"
+                    onclick={openTranslationManager}
+                >
+                    <SquarePlus size={16} aria-hidden="true" />
+                </button>
+            </div>
             <TranslationSelect label="Primary" value={study.translationId} onchange={setTranslation} />
 
             {#if study.activeView === 'comparison' || study.activeView === 'scribe'}
@@ -84,3 +97,5 @@
         </ul>
     </div>
 </div>
+
+<TranslationManagerModal />
