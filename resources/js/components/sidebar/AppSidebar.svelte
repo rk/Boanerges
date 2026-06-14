@@ -1,4 +1,8 @@
 <script lang="ts">
+    import PanelLeftClose from '@lucide/svelte/icons/panel-left-close';
+    import Settings from '@lucide/svelte/icons/settings';
+    import SlidersHorizontal from '@lucide/svelte/icons/sliders-horizontal';
+
     import BookSelector from '@/components/sidebar/BookSelector.svelte';
     import ChapterSelect from '@/components/sidebar/ChapterSelect.svelte';
     import TranslationSelect from '@/components/sidebar/TranslationSelect.svelte';
@@ -24,7 +28,7 @@
             aria-label="Toggle sidebar"
             data-tip="Sidebar"
         >
-            ↔
+            <PanelLeftClose size={18} aria-hidden="true" />
         </label>
     </div>
 
@@ -56,7 +60,10 @@
 
         <ul class="menu rounded-box bg-base-100">
             <li>
-                <button type="button" onclick={openSettings}>Readability settings</button>
+                <button type="button" class="gap-2" onclick={openSettings}>
+                    <SlidersHorizontal size={16} aria-hidden="true" />
+                    Readability settings
+                </button>
             </li>
         </ul>
     </div>
@@ -68,9 +75,10 @@
                     type="button"
                     class="is-drawer-close:tooltip is-drawer-close:tooltip-right"
                     data-tip="Settings"
+                    aria-label="Readability settings"
                     onclick={openSettings}
                 >
-                    ⚙
+                    <Settings size={18} aria-hidden="true" />
                 </button>
             </li>
         </ul>

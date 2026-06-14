@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\ReadabilitySettingsStore;
+use App\Services\StudySettingsStore;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -41,6 +43,8 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'readability' => fn() => app(ReadabilitySettingsStore::class)->get(),
+            'study' => fn() => app(StudySettingsStore::class)->get(),
         ];
     }
 }

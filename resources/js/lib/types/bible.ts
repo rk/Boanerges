@@ -1,3 +1,8 @@
+export type ChapterNavTarget = {
+    bookAbbrev: string;
+    chapter: number;
+};
+
 export type ViewMode = 'bible' | 'comparison' | 'scribe';
 
 export type Testament = 'ot' | 'nt';

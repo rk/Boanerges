@@ -1,31 +1,46 @@
 <script lang="ts">
+    import ChevronDown from '@lucide/svelte/icons/chevron-down';
+    import ChevronUp from '@lucide/svelte/icons/chevron-up';
+
     let {
-        label,
-        direction = 'horizontal',
+        direction,
+        bookAbbrev,
+        chapter,
+        layout = 'horizontal',
         onclick,
     }: {
-        label: string;
-        direction?: 'horizontal' | 'vertical';
+        direction: 'prev' | 'next';
+        bookAbbrev: string;
+        chapter: number;
+        layout?: 'horizontal' | 'vertical';
         onclick?: () => void;
     } = $props();
+
+    const Icon = $derived(direction === 'prev' ? ChevronUp : ChevronDown);
 </script>
 
 {#if onclick}
     <button
         type="button"
-        class="divider hover:text-primary cursor-pointer text-sm opacity-80"
-        class:divider-horizontal={direction === 'horizontal'}
-        class:divider-vertical={direction === 'vertical'}
+        class="divider hover:text-primary flex cursor-pointer items-center gap-1 text-sm opacity-80"
+        class:divider-horizontal={layout === 'horizontal'}
+        class:divider-vertical={layout === 'vertical'}
+        class:flex-col={layout === 'vertical'}
         {onclick}
     >
-        {label}
+        <Icon size={14} aria-hidden="true" />
+        <span>{bookAbbrev} {chapter}</span>
+        <Icon size={14} aria-hidden="true" />
     </button>
 {:else}
     <div
-        class="divider text-sm opacity-50"
-        class:divider-horizontal={direction === 'horizontal'}
-        class:divider-vertical={direction === 'vertical'}
+        class="divider flex items-center gap-1 text-sm opacity-50"
+        class:divider-horizontal={layout === 'horizontal'}
+        class:divider-vertical={layout === 'vertical'}
+        class:flex-col={layout === 'vertical'}
     >
-        {label}
+        <Icon size={14} aria-hidden="true" />
+        <span>{bookAbbrev} {chapter}</span>
+        <Icon size={14} aria-hidden="true" />
     </div>
 {/if}

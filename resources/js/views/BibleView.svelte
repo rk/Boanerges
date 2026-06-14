@@ -8,24 +8,36 @@
         getPreviousChapter,
         goToNextChapter,
         goToPreviousChapter,
-        navLabel,
     } from '@/lib/study.svelte.ts';
     import { getReaderStyle } from '@/lib/readability.svelte.ts';
+    import type { ChapterNavTarget } from '@/lib/types/bible';
 
     const currentChapter = $derived(getCurrentChapter());
     const previousChapter = $derived(getPreviousChapter());
     const nextChapter = $derived(getNextChapter());
     const readerStyle = $derived(getReaderStyle());
 
-    const prevLabel = $derived(
+    function chapterNavTarget(
+        bookId: string,
+        chapterNumber: number,
+    ): ChapterNavTarget {
+        const chapter = getChapter(bookId, chapterNumber);
+
+        return {
+            bookAbbrev: chapter.bookAbbrev,
+            chapter: chapterNumber,
+        };
+    }
+
+    const prevNav = $derived(
         previousChapter
-            ? navLabel(getChapter(previousChapter.bookId, previousChapter.chapter).bookAbbrev, previousChapter.chapter, 'prev')
+            ? chapterNavTarget(previousChapter.bookId, previousChapter.chapter)
             : undefined,
     );
 
-    const nextLabel = $derived(
+    const nextNav = $derived(
         nextChapter
-            ? navLabel(getChapter(nextChapter.bookId, nextChapter.chapter).bookAbbrev, nextChapter.chapter, 'next')
+            ? chapterNavTarget(nextChapter.bookId, nextChapter.chapter)
             : undefined,
     );
 </script>
@@ -34,8 +46,8 @@
     <div class="mx-auto h-full max-w-prose">
         <ReaderPane
             chapter={currentChapter}
-            prevLabel={prevLabel}
-            nextLabel={nextLabel}
+            {prevNav}
+            {nextNav}
             onprev={previousChapter ? goToPreviousChapter : undefined}
             onnext={nextChapter ? goToNextChapter : undefined}
         >

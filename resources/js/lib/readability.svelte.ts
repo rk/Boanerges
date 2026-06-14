@@ -1,13 +1,7 @@
-const STORAGE_KEY = 'boanerges.readability';
+import { http } from '@inertiajs/svelte';
 
-export type ReaderFontFamily = 'sans-serif' | 'serif';
-
-type ReadabilitySettings = {
-    fontSize: number;
-    lineHeight: number;
-    theme: 'light' | 'dark';
-    fontFamily: ReaderFontFamily;
-};
+import { updateReadability as updateReadabilitySettings } from '@/actions/App/Http/Controllers/SettingsController';
+import type { ReadabilitySettings, ReaderFontFamily } from '@/lib/types/readability';
 
 const fontStacks: Record<ReaderFontFamily, string> = {
     'sans-serif':
@@ -22,31 +16,12 @@ const defaults: ReadabilitySettings = {
     fontFamily: 'serif',
 };
 
-function loadSettings(): ReadabilitySettings {
-    if (typeof window === 'undefined') {
-        return defaults;
-    }
+export type { ReaderFontFamily, ReadabilitySettings };
 
-    try {
-        const stored = localStorage.getItem(STORAGE_KEY);
+export const readability = $state({ ...defaults });
 
-        if (! stored) {
-            return defaults;
-        }
-
-        return { ...defaults, ...JSON.parse(stored) };
-    } catch {
-        return defaults;
-    }
-}
-
-function persist(settings: ReadabilitySettings): void {
-    if (typeof window === 'undefined') {
-        return;
-    }
-
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-}
+let hydrated = false;
+let persistTimeout: ReturnType<typeof setTimeout> | null = null;
 
 function applyTheme(theme: 'light' | 'dark'): void {
     if (typeof document === 'undefined') {
@@ -56,14 +31,14 @@ function applyTheme(theme: 'light' | 'dark'): void {
     document.documentElement.setAttribute('data-theme', theme);
 }
 
-const initial = loadSettings();
-
-export const readability = $state({
-    fontSize: initial.fontSize,
-    lineHeight: initial.lineHeight,
-    theme: initial.theme,
-    fontFamily: initial.fontFamily,
-});
+export function hydrateReadability(settings: ReadabilitySettings): void {
+    readability.fontSize = settings.fontSize;
+    readability.lineHeight = settings.lineHeight;
+    readability.theme = settings.theme;
+    readability.fontFamily = settings.fontFamily;
+    applyTheme(readability.theme);
+    hydrated = true;
+}
 
 export function getReaderFontStack(family: ReaderFontFamily = readability.fontFamily): string {
     return fontStacks[family];
@@ -77,25 +52,44 @@ export function getReaderStyle(): string {
     ].join('; ');
 }
 
+function schedulePersist(): void {
+    if (! hydrated) {
+        return;
+    }
+
+    if (persistTimeout) {
+        clearTimeout(persistTimeout);
+    }
+
+    persistTimeout = setTimeout(() => {
+        http.patch(updateReadabilitySettings.url(), {
+            fontSize: readability.fontSize,
+            lineHeight: readability.lineHeight,
+            theme: readability.theme,
+            fontFamily: readability.fontFamily,
+        });
+    }, 300);
+}
+
 export function setFontSize(value: number): void {
     readability.fontSize = value;
-    persist(readability);
+    schedulePersist();
 }
 
 export function setLineHeight(value: number): void {
     readability.lineHeight = value;
-    persist(readability);
+    schedulePersist();
 }
 
 export function setTheme(value: 'light' | 'dark'): void {
     readability.theme = value;
     applyTheme(value);
-    persist(readability);
+    schedulePersist();
 }
 
 export function setFontFamily(value: ReaderFontFamily): void {
     readability.fontFamily = value;
-    persist(readability);
+    schedulePersist();
 }
 
 if (typeof document !== 'undefined') {

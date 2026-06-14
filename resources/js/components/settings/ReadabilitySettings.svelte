@@ -7,6 +7,7 @@
         setLineHeight,
         setTheme,
         type ReaderFontFamily,
+        type ReadabilitySettings,
     } from '@/lib/readability.svelte.ts';
 
     let { onclose }: { onclose: () => void } = $props();

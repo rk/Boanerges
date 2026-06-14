@@ -3,13 +3,14 @@
 
     import ChapterHeading from '@/components/reader/ChapterHeading.svelte';
     import ChapterNavDivider from '@/components/reader/ChapterNavDivider.svelte';
-    import type { Chapter } from '@/lib/types/bible';
+    import type { Chapter, ChapterNavTarget } from '@/lib/types/bible';
 
     let {
         chapter,
         translationAbbrev,
-        prevLabel,
-        nextLabel,
+        prevNav,
+        nextNav,
+        navLayout = 'horizontal',
         onprev,
         onnext,
         onscroll,
@@ -18,8 +19,9 @@
     }: {
         chapter: Chapter;
         translationAbbrev?: string;
-        prevLabel?: string;
-        nextLabel?: string;
+        prevNav?: ChapterNavTarget;
+        nextNav?: ChapterNavTarget;
+        navLayout?: 'horizontal' | 'vertical';
         onprev?: () => void;
         onnext?: () => void;
         onscroll?: () => void;
@@ -29,8 +31,14 @@
 </script>
 
 <div class="flex h-full min-h-0 flex-col">
-    {#if prevLabel && onprev}
-        <ChapterNavDivider label={prevLabel} onclick={onprev} />
+    {#if prevNav && onprev}
+        <ChapterNavDivider
+            direction="prev"
+            bookAbbrev={prevNav.bookAbbrev}
+            chapter={prevNav.chapter}
+            layout={navLayout}
+            onclick={onprev}
+        />
     {/if}
 
     <div
@@ -45,7 +53,13 @@
         {@render children()}
     </div>
 
-    {#if nextLabel && onnext}
-        <ChapterNavDivider label={nextLabel} onclick={onnext} />
+    {#if nextNav && onnext}
+        <ChapterNavDivider
+            direction="next"
+            bookAbbrev={nextNav.bookAbbrev}
+            chapter={nextNav.chapter}
+            layout={navLayout}
+            onclick={onnext}
+        />
     {/if}
 </div>

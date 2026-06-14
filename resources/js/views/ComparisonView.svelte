@@ -11,9 +11,9 @@
         getPreviousChapter,
         goToNextChapter,
         goToPreviousChapter,
-        navLabel,
         study,
     } from '@/lib/study.svelte.ts';
+    import type { ChapterNavTarget } from '@/lib/types/bible';
 
     let leftScroll: HTMLElement | null = $state(null);
     let rightScroll: HTMLElement | null = $state(null);
@@ -27,15 +27,27 @@
     const translationA = $derived(translations.find((item) => item.id === study.translationId));
     const translationB = $derived(translations.find((item) => item.id === study.translationBId));
 
-    const prevLabel = $derived(
+    function chapterNavTarget(
+        bookId: string,
+        chapterNumber: number,
+    ): ChapterNavTarget {
+        const chapter = getChapter(bookId, chapterNumber);
+
+        return {
+            bookAbbrev: chapter.bookAbbrev,
+            chapter: chapterNumber,
+        };
+    }
+
+    const prevNav = $derived(
         previousChapter
-            ? navLabel(getChapter(previousChapter.bookId, previousChapter.chapter).bookAbbrev, previousChapter.chapter, 'prev')
+            ? chapterNavTarget(previousChapter.bookId, previousChapter.chapter)
             : undefined,
     );
 
-    const nextLabel = $derived(
+    const nextNav = $derived(
         nextChapter
-            ? navLabel(getChapter(nextChapter.bookId, nextChapter.chapter).bookAbbrev, nextChapter.chapter, 'next')
+            ? chapterNavTarget(nextChapter.bookId, nextChapter.chapter)
             : undefined,
     );
 
@@ -84,18 +96,22 @@
         </ReaderPane>
 
         <div class="border-base-300 flex w-12 flex-col items-center justify-between border-x py-4">
-            {#if prevLabel}
+            {#if prevNav}
                 <ChapterNavDivider
-                    label={prevLabel}
-                    direction="vertical"
+                    direction="prev"
+                    bookAbbrev={prevNav.bookAbbrev}
+                    chapter={prevNav.chapter}
+                    layout="vertical"
                     onclick={goToPreviousChapter}
                 />
             {/if}
             <div class="divider divider-vertical flex-1"></div>
-            {#if nextLabel}
+            {#if nextNav}
                 <ChapterNavDivider
-                    label={nextLabel}
-                    direction="vertical"
+                    direction="next"
+                    bookAbbrev={nextNav.bookAbbrev}
+                    chapter={nextNav.chapter}
+                    layout="vertical"
                     onclick={goToNextChapter}
                 />
             {/if}

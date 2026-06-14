@@ -1,4 +1,6 @@
 import type { Auth } from '@/types/auth';
+import type { ReadabilitySettings } from '@/lib/types/readability';
+import type { StudySettings } from '@/lib/types/study';
 
 // Extend ImportMeta interface for Vite...
 declare module 'vite/client' {
@@ -21,6 +23,8 @@ declare module '@inertiajs/core' {
         sharedPageProps: {
             name: string;
             auth: Auth;
+            readability: ReadabilitySettings;
+            study: StudySettings;
             [key: string]: unknown;
         };
     }

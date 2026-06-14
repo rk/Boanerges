@@ -1,4 +1,6 @@
 <script lang="ts">
+    import Pilcrow from '@lucide/svelte/icons/pilcrow';
+
     import type { Verse } from '@/lib/types/bible';
 
     let {
@@ -16,8 +18,12 @@
 
 <div class="mb-1" class:mt-4={verse.paragraphStart}>
     <div class="flex items-start gap-2">
-        <span class="reader-prose mt-2 w-6 shrink-0 text-xs opacity-70">
-            {#if verse.paragraphStart}¶{:else}{verse.number}{/if}
+        <span class="reader-prose mt-2 flex w-6 shrink-0 justify-center text-xs opacity-70">
+            {#if verse.paragraphStart}
+                <Pilcrow size={14} aria-hidden="true" />
+            {:else}
+                {verse.number}
+            {/if}
         </span>
         <textarea
             class="textarea reader-prose textarea-ghost w-full resize-none leading-relaxed"

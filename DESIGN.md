@@ -2,6 +2,7 @@
 
 - Our front-end design will be via DaisyUI, using the DaisyUI skill.
 - We will introduce each app component as a Svelte component.
+- Lucide for icons.
 
 ## Layouts
 
@@ -11,6 +12,7 @@
 - The default layout will be the Bible view, where the main pane is a single column paragraph Bible reader.
 - Two alternate layouts will be: Comparison view, a two column view of the same book/chapter in two different translations; and Scribe view, a three column view with two different translations to the left/right of an editor.
 - There should be menu item that allows the user to edit settings, probably to allow control over font-size, line-height, as well as color/contrast.
+- The sidebar should probably be collapsible.
 
 ### Bible View
 
