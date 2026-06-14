@@ -132,8 +132,7 @@
                 {#if prevNav}
                     <ChapterNavDivider
                         direction="prev"
-                        bookAbbrev={prevNav.bookAbbrev}
-                        chapter={prevNav.chapter}
+                        label={`${prevNav.chapter}`}
                         layout="vertical"
                         onclick={goToPreviousChapter}
                     />
@@ -142,8 +141,7 @@
                 {#if nextNav}
                     <ChapterNavDivider
                         direction="next"
-                        bookAbbrev={nextNav.bookAbbrev}
-                        chapter={nextNav.chapter}
+                        label={`${nextNav.chapter}`}
                         layout="vertical"
                         onclick={goToNextChapter}
                     />

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { fetchChapter, getAdjacentChapter, loadBooks, bookAbbrev } from '@/lib/bible.svelte.ts';
+    import { fetchChapter, getAdjacentChapter, loadBooks, bookAbbrev, bible } from '@/lib/bible.svelte.ts';
     import {
         goToNextChapter,
         goToPreviousChapter,
@@ -16,6 +16,7 @@
     const previousChapter = $derived(getAdjacentChapter(study.bookId, study.chapter, 'prev'));
     const nextChapter = $derived(getAdjacentChapter(study.bookId, study.chapter, 'next'));
     const readerStyle = $derived(getReaderStyle());
+    const translation = $derived(bible.translations.find((item) => item.id === study.translationId));
 
     $effect(() => {
         const translationId = study.translationId;
@@ -72,6 +73,7 @@
         {:else}
             <ReaderPane
                 chapter={currentChapter}
+                translationAbbrev={translation?.abbrev}
                 {prevNav}
                 {nextNav}
                 onprev={previousChapter ? goToPreviousChapter : undefined}

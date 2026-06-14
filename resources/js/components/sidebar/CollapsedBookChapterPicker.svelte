@@ -139,7 +139,7 @@
     });
 </script>
 
-<li class="sidebar-collapsed-only">
+<li class="sidebar-collapsed-only my-2">
     <button
         bind:this={triggerEl}
         type="button"

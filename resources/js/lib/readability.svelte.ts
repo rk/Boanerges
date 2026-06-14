@@ -1,6 +1,5 @@
-import { http } from '@inertiajs/svelte';
-
 import { updateReadability as updateReadabilitySettings } from '@/actions/App/Http/Controllers/SettingsController';
+import { patchJson } from '@/lib/patchJson';
 import type { ReadabilitySettings, ReaderFontFamily, ReaderTheme } from '@/lib/types/readability';
 
 const fontStacks: Record<ReaderFontFamily, string> = {
@@ -66,7 +65,7 @@ function schedulePersist(): void {
     }
 
     persistTimeout = setTimeout(() => {
-        http.patch(updateReadabilitySettings.url(), {
+        void patchJson(updateReadabilitySettings.url(), {
             fontSize: readability.fontSize,
             lineHeight: readability.lineHeight,
             theme: readability.theme,
@@ -94,8 +93,4 @@ export function setTheme(value: ReaderTheme): void {
 export function setFontFamily(value: ReaderFontFamily): void {
     readability.fontFamily = value;
     schedulePersist();
-}
-
-if (typeof document !== 'undefined') {
-    applyTheme(readability.theme);
 }

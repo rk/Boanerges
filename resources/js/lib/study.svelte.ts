@@ -1,9 +1,8 @@
-import { http } from '@inertiajs/svelte';
-
 import { updateStudy as updateStudySettings } from '@/actions/App/Http/Controllers/SettingsController';
 import { getAdjacentChapter, bible, invalidateTranslations, loadTranslations } from '@/lib/bible.svelte.ts';
-import type { StudySettings } from '@/lib/types/study';
+import { patchJson } from '@/lib/patchJson';
 import type { ViewMode } from '@/lib/types/bible';
+import type { StudySettings } from '@/lib/types/study';
 
 export const study = $state({
     activeView: 'bible' as ViewMode,
@@ -47,7 +46,7 @@ function schedulePersist(): void {
     }
 
     persistTimeout = setTimeout(() => {
-        http.patch(updateStudySettings.url(), studyPayload());
+        void patchJson(updateStudySettings.url(), studyPayload());
     }, 300);
 }
 

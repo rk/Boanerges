@@ -1,22 +1,19 @@
 <script lang="ts">
-    import ChevronDown from '@lucide/svelte/icons/chevron-down';
-    import ChevronUp from '@lucide/svelte/icons/chevron-up';
+    import { ArrowUp, ArrowDown } from '@lucide/svelte';
 
     let {
         direction,
-        bookAbbrev,
-        chapter,
+        label,
         layout = 'horizontal',
-        onclick,
+        onclick
     }: {
         direction: 'prev' | 'next';
-        bookAbbrev: string;
-        chapter: number;
+        label: string;
         layout?: 'horizontal' | 'vertical';
         onclick?: () => void;
     } = $props();
 
-    const Icon = $derived(direction === 'prev' ? ChevronUp : ChevronDown);
+    const Icon = $derived(direction === 'prev' ? ArrowUp : ArrowDown);
 </script>
 
 {#if onclick}
@@ -29,7 +26,7 @@
         {onclick}
     >
         <Icon color="currentColor" size={18} aria-hidden="true" />
-        <span>{bookAbbrev} {chapter}</span>
+        <span>{label}</span>
         <Icon color="currentColor" size={18} aria-hidden="true" />
     </button>
 {:else}
@@ -40,7 +37,7 @@
         class:flex-col={layout === 'horizontal'}
     >
         <Icon color="currentColor" size={18} aria-hidden="true" />
-        <span>{bookAbbrev} {chapter}</span>
+        <span>{label}</span>
         <Icon color="currentColor" size={18} aria-hidden="true" />
     </div>
 {/if}

@@ -34,8 +34,7 @@
     {#if prevNav && onprev}
         <ChapterNavDivider
             direction="prev"
-            bookAbbrev={prevNav.bookAbbrev}
-            chapter={prevNav.chapter}
+            label={`${prevNav.bookAbbrev} ${prevNav.chapter} (${translationAbbrev})`}
             layout={navLayout}
             onclick={onprev}
         />
@@ -56,8 +55,7 @@
     {#if nextNav && onnext}
         <ChapterNavDivider
             direction="next"
-            bookAbbrev={nextNav.bookAbbrev}
-            chapter={nextNav.chapter}
+            label={`${nextNav.bookAbbrev} ${nextNav.chapter} (${translationAbbrev})`}
             layout={navLayout}
             onclick={onnext}
         />
