@@ -1,7 +1,6 @@
 <script lang="ts">
     import PanelLeftClose from '@lucide/svelte/icons/panel-left-close';
-    import Settings from '@lucide/svelte/icons/settings';
-    import SlidersHorizontal from '@lucide/svelte/icons/sliders-horizontal';
+    import Type from '@lucide/svelte/icons/type';
     import SquarePlus from '@lucide/svelte/icons/square-plus';
 
     import BookSelector from '@/components/sidebar/BookSelector.svelte';
@@ -74,7 +73,7 @@
         <ul class="menu rounded-box bg-base-100">
             <li>
                 <button type="button" class="gap-2" onclick={openSettings}>
-                    <SlidersHorizontal size={16} aria-hidden="true" />
+                    <Type size={16} aria-hidden="true" />
                     Readability settings
                 </button>
             </li>
@@ -91,7 +90,7 @@
                     aria-label="Readability settings"
                     onclick={openSettings}
                 >
-                    <Settings size={18} aria-hidden="true" />
+                    <Type size={18} aria-hidden="true" />
                 </button>
             </li>
         </ul>
