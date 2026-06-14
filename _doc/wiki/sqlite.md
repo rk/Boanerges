@@ -1,0 +1,151 @@
+# NativePHP embedded SQLite
+
+Capabilities of the SQLite stack bundled with NativePHP in this project. Captured from a native boot probe on macOS (NativePHP embedded PHP).
+
+## PHP extensions
+
+| Extension | Available |
+| --- | --- |
+| `pdo` | yes |
+| `pdo_sqlite` | yes |
+| `sqlite3` | yes |
+
+- **PHP:** 8.4.21
+- **PDO drivers:** `sqlite`
+- **`sqlite_version()`:** 3.45.2
+- **`sqlite3_libversion()`:** n/a (PDO path used; `sqlite3` extension loaded but this function was not reported)
+
+## SQLite modules
+
+From `SELECT name FROM pragma_module_list ORDER BY name`:
+
+```
+fts3
+fts3tokenize
+fts4
+fts4aux
+fts5
+fts5vocab
+geopoly
+json_each
+json_tree
+pragma_module_list
+rtree
+rtree_i32
+```
+
+Notable built-ins:
+
+- **FTS:** `fts3`, `fts4`, `fts5` (+ tokenize / vocab / aux helpers)
+- **JSON:** `json_each`, `json_tree`
+- **Spatial:** `geopoly`, `rtree`, `rtree_i32`
+
+## Compile options
+
+From `PRAGMA compile_options`:
+
+```
+ATOMIC_INTRINSICS=1
+COMPILER=clang-17.0.0
+DEFAULT_AUTOVACUUM
+DEFAULT_CACHE_SIZE=-2000
+DEFAULT_FILE_FORMAT=4
+DEFAULT_JOURNAL_SIZE_LIMIT=-1
+DEFAULT_MMAP_SIZE=0
+DEFAULT_PAGE_SIZE=4096
+DEFAULT_PCACHE_INITSZ=20
+DEFAULT_RECURSIVE_TRIGGERS
+DEFAULT_SECTOR_SIZE=4096
+DEFAULT_SYNCHRONOUS=2
+DEFAULT_WAL_AUTOCHECKPOINT=1000
+DEFAULT_WAL_SYNCHRONOUS=2
+DEFAULT_WORKER_THREADS=0
+DIRECT_OVERFLOW_READ
+ENABLE_FTS3
+ENABLE_FTS4
+ENABLE_FTS5
+ENABLE_GEOPOLY
+ENABLE_MATH_FUNCTIONS
+ENABLE_RTREE
+MALLOC_SOFT_LIMIT=1024
+MAX_ATTACHED=10
+MAX_COLUMN=2000
+MAX_COMPOUND_SELECT=500
+MAX_DEFAULT_PAGE_SIZE=8192
+MAX_EXPR_DEPTH=1000
+MAX_FUNCTION_ARG=127
+MAX_LENGTH=1000000000
+MAX_LIKE_PATTERN_LENGTH=50000
+MAX_MMAP_SIZE=0x7fff0000
+MAX_PAGE_COUNT=0xfffffffe
+MAX_PAGE_SIZE=65536
+MAX_SQL_LENGTH=1000000000
+MAX_TRIGGER_DEPTH=1000
+MAX_VARIABLE_NUMBER=32766
+MAX_VDBE_OP=250000000
+MAX_WORKER_THREADS=8
+MUTEX_PTHREADS
+SYSTEM_MALLOC
+TEMP_STORE=1
+THREADSAFE=1
+```
+
+## Raw probe output
+
+```
+PHP 8.4.21
+pdo: yes
+pdo_sqlite: yes
+sqlite3: yes
+PDO drivers: sqlite
+sqlite_version(): 3.45.2
+sqlite3_libversion(): n/a
+
+pragma_module_list:
+fts3, fts3tokenize, fts4, fts4aux, fts5, fts5vocab, geopoly, json_each, json_tree, pragma_module_list, rtree, rtree_i32
+
+compile_options:
+  ATOMIC_INTRINSICS=1
+  COMPILER=clang-17.0.0
+  DEFAULT_AUTOVACUUM
+  DEFAULT_CACHE_SIZE=-2000
+  DEFAULT_FILE_FORMAT=4
+  DEFAULT_JOURNAL_SIZE_LIMIT=-1
+  DEFAULT_MMAP_SIZE=0
+  DEFAULT_PAGE_SIZE=4096
+  DEFAULT_PCACHE_INITSZ=20
+  DEFAULT_RECURSIVE_TRIGGERS
+  DEFAULT_SECTOR_SIZE=4096
+  DEFAULT_SYNCHRONOUS=2
+  DEFAULT_WAL_AUTOCHECKPOINT=1000
+  DEFAULT_WAL_SYNCHRONOUS=2
+  DEFAULT_WORKER_THREADS=0
+  DIRECT_OVERFLOW_READ
+  ENABLE_FTS3
+  ENABLE_FTS4
+  ENABLE_FTS5
+  ENABLE_GEOPOLY
+  ENABLE_MATH_FUNCTIONS
+  ENABLE_RTREE
+  MALLOC_SOFT_LIMIT=1024
+  MAX_ATTACHED=10
+  MAX_COLUMN=2000
+  MAX_COMPOUND_SELECT=500
+  MAX_DEFAULT_PAGE_SIZE=8192
+  MAX_EXPR_DEPTH=1000
+  MAX_FUNCTION_ARG=127
+  MAX_LENGTH=1000000000
+  MAX_LIKE_PATTERN_LENGTH=50000
+  MAX_MMAP_SIZE=0x7fff0000
+  MAX_PAGE_COUNT=0xfffffffe
+  MAX_PAGE_SIZE=65536
+  MAX_SQL_LENGTH=1000000000
+  MAX_TRIGGER_DEPTH=1000
+  MAX_VARIABLE_NUMBER=32766
+  MAX_VDBE_OP=250000000
+  MAX_WORKER_THREADS=8
+  MUTEX_PTHREADS
+  SYSTEM_MALLOC
+  TEMP_STORE=1
+  THREADSAFE=1
+```
