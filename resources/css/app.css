@@ -1,5 +1,9 @@
 @import 'tailwindcss';
 
+@plugin 'daisyui' {
+    themes: light --default, dark --prefersdark;
+}
+
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
@@ -8,4 +12,11 @@
         Instrument Sans, ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
+    --font-reader: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+}
+
+.reader-prose {
+    font-family: var(--reader-font-family, var(--font-reader));
+    font-size: var(--reader-font-size, 18px);
+    line-height: var(--reader-line-height, 1.7);
 }
