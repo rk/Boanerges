@@ -46,6 +46,19 @@ test('readability settings are shared with inertia pages', function () {
         );
 });
 
+test('readability settings can be updated with sepia theme', function () {
+    $response = $this->patchJson(route('settings.readability.update'), [
+        'fontSize' => 18,
+        'lineHeight' => 1.7,
+        'theme' => 'sepia',
+        'fontFamily' => 'serif',
+    ]);
+
+    $response->assertSuccessful();
+    $response->assertJsonPath('readability.theme', 'sepia');
+    expect(app(ReadabilitySettingsStore::class)->get()['theme'])->toBe('sepia');
+});
+
 test('readability settings validation rejects invalid values', function () {
     $response = $this->patchJson(route('settings.readability.update'), [
         'fontSize' => 10,

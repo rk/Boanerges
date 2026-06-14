@@ -1,7 +1,7 @@
 import { http } from '@inertiajs/svelte';
 
 import { updateReadability as updateReadabilitySettings } from '@/actions/App/Http/Controllers/SettingsController';
-import type { ReadabilitySettings, ReaderFontFamily } from '@/lib/types/readability';
+import type { ReadabilitySettings, ReaderFontFamily, ReaderTheme } from '@/lib/types/readability';
 
 const fontStacks: Record<ReaderFontFamily, string> = {
     'sans-serif':
@@ -16,14 +16,14 @@ const defaults: ReadabilitySettings = {
     fontFamily: 'serif',
 };
 
-export type { ReaderFontFamily, ReadabilitySettings };
+export type { ReaderFontFamily, ReaderTheme, ReadabilitySettings };
 
 export const readability = $state({ ...defaults });
 
 let hydrated = false;
 let persistTimeout: ReturnType<typeof setTimeout> | null = null;
 
-function applyTheme(theme: 'light' | 'dark'): void {
+function applyTheme(theme: ReaderTheme): void {
     if (typeof document === 'undefined') {
         return;
     }
@@ -32,6 +32,10 @@ function applyTheme(theme: 'light' | 'dark'): void {
 }
 
 export function hydrateReadability(settings: ReadabilitySettings): void {
+    if (hydrated) {
+        return;
+    }
+
     readability.fontSize = settings.fontSize;
     readability.lineHeight = settings.lineHeight;
     readability.theme = settings.theme;
@@ -81,7 +85,7 @@ export function setLineHeight(value: number): void {
     schedulePersist();
 }
 
-export function setTheme(value: 'light' | 'dark'): void {
+export function setTheme(value: ReaderTheme): void {
     readability.theme = value;
     applyTheme(value);
     schedulePersist();

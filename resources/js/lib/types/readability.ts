@@ -1,8 +1,10 @@
 export type ReaderFontFamily = 'sans-serif' | 'serif';
 
+export type ReaderTheme = 'light' | 'dark' | 'sepia';
+
 export type ReadabilitySettings = {
     fontSize: number;
     lineHeight: number;
-    theme: 'light' | 'dark';
+    theme: ReaderTheme;
     fontFamily: ReaderFontFamily;
 };

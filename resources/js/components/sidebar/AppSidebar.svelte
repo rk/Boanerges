@@ -1,45 +1,72 @@
 <script lang="ts">
+    import BookOpen from '@lucide/svelte/icons/book-open';
+    import Columns2 from '@lucide/svelte/icons/columns-2';
     import PanelLeftClose from '@lucide/svelte/icons/panel-left-close';
-    import Type from '@lucide/svelte/icons/type';
+    import PenLine from '@lucide/svelte/icons/pen-line';
     import SquarePlus from '@lucide/svelte/icons/square-plus';
+    import Type from '@lucide/svelte/icons/type';
 
     import BookSelector from '@/components/sidebar/BookSelector.svelte';
     import ChapterSelect from '@/components/sidebar/ChapterSelect.svelte';
+    import CollapsedBookChapterPicker from '@/components/sidebar/CollapsedBookChapterPicker.svelte';
     import TranslationManagerModal from '@/components/sidebar/TranslationManagerModal.svelte';
     import TranslationSelect from '@/components/sidebar/TranslationSelect.svelte';
-    import ViewSelector from '@/components/sidebar/ViewSelector.svelte';
     import { openTranslationManager } from '@/lib/bible.svelte.ts';
     import {
         study,
         openSettings,
         setTranslation,
         setTranslationB,
+        setView,
     } from '@/lib/study.svelte.ts';
+    import type { ViewMode } from '@/lib/types/bible';
 
     let { drawerId }: { drawerId: string } = $props();
+
+    const views: { id: ViewMode; label: string; icon: typeof BookOpen }[] = [
+        { id: 'bible', label: 'Bible', icon: BookOpen },
+        { id: 'comparison', label: 'Comparison', icon: Columns2 },
+        { id: 'scribe', label: 'Scribe', icon: PenLine },
+    ];
 </script>
 
 <div
-    class="is-drawer-close:w-14 is-drawer-open:w-72 bg-base-200 text-base-content flex min-h-full flex-col"
+    class="sidebar-shell bg-base-200 text-base-content flex min-h-full w-full flex-col items-start"
 >
-    <div class="border-base-300 flex items-center justify-between border-b p-2">
-        <span class="is-drawer-close:hidden px-2 text-sm font-semibold">Navigation</span>
-        <label
-            for={drawerId}
-            class="btn btn-ghost btn-circle btn-sm drawer-button is-drawer-open:rotate-y-180 is-drawer-close:tooltip is-drawer-close:tooltip-right"
-            aria-label="Toggle sidebar"
-            data-tip="Sidebar"
-        >
-            <PanelLeftClose size={18} aria-hidden="true" />
-        </label>
-    </div>
+    <ul class="menu w-full shrink-0">
+        {#each views as view (view.id)}
+            <li>
+                <button
+                    type="button"
+                    class="is-drawer-close:tooltip is-drawer-close:tooltip-right"
+                    class:menu-active={study.activeView === view.id}
+                    data-tip={view.label}
+                    aria-label={view.label}
+                    onclick={() => setView(view.id)}
+                >
+                    <view.icon size={18} aria-hidden="true" />
+                    <span class="is-drawer-close:hidden">{view.label}</span>
+                </button>
+            </li>
+        {/each}
 
-    <div class="is-drawer-close:hidden flex-1 overflow-y-auto p-3">
-        <section class="mb-4">
-            <p class="menu-title px-0">View</p>
-            <ViewSelector />
-        </section>
+        <CollapsedBookChapterPicker />
 
+        <li>
+            <button
+                type="button"
+                class="is-drawer-close:tooltip is-drawer-close:tooltip-right"
+                data-tip="Readability settings"
+                aria-label="Readability settings"
+                onclick={openSettings}
+            >
+                <Type size={18} aria-hidden="true" />
+                <span class="is-drawer-close:hidden">Readability settings</span>
+            </button>
+        </li>
+    </ul>
+
+    <div class="sidebar-expanded-only w-full flex-1 overflow-y-auto p-3">
         <section class="mb-4">
             <div class="mb-1 flex items-center justify-between gap-2">
                 <p class="menu-title px-0">Translation</p>
@@ -69,31 +96,19 @@
         <section class="mb-4">
             <ChapterSelect />
         </section>
-
-        <ul class="menu rounded-box bg-base-100">
-            <li>
-                <button type="button" class="gap-2" onclick={openSettings}>
-                    <Type size={16} aria-hidden="true" />
-                    Readability settings
-                </button>
-            </li>
-        </ul>
     </div>
 
-    <div class="is-drawer-open:hidden border-base-300 border-t p-2">
-        <ul class="menu menu-vertical w-full">
-            <li>
-                <button
-                    type="button"
-                    class="is-drawer-close:tooltip is-drawer-close:tooltip-right"
-                    data-tip="Settings"
-                    aria-label="Readability settings"
-                    onclick={openSettings}
-                >
-                    <Type size={18} aria-hidden="true" />
-                </button>
-            </li>
-        </ul>
+    <div
+        class="is-drawer-close:tooltip is-drawer-close:tooltip-right m-2 mt-auto"
+        data-tip="Toggle sidebar"
+    >
+        <label
+            for={drawerId}
+            class="btn btn-ghost btn-circle drawer-button is-drawer-open:rotate-y-180"
+            aria-label="Toggle sidebar"
+        >
+            <PanelLeftClose size={18} aria-hidden="true" />
+        </label>
     </div>
 </div>
 

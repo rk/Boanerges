@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Menu from '@lucide/svelte/icons/menu';
+    import PanelLeftClose from '@lucide/svelte/icons/panel-left-close';
     import { page } from '@inertiajs/svelte';
     import type { Snippet } from 'svelte';
 
@@ -35,10 +35,10 @@
         <header class="navbar bg-base-100 border-base-300 shrink-0 border-b px-4">
             <label
                 for={drawerId}
-                class="btn btn-ghost btn-square drawer-button lg:hidden"
+                class="btn btn-ghost btn-square drawer-button"
                 aria-label="Toggle sidebar"
             >
-                <Menu size={20} aria-hidden="true" />
+                <PanelLeftClose size={20} aria-hidden="true" />
             </label>
             <span class="text-lg font-semibold">Boanerges</span>
         </header>

@@ -7,7 +7,7 @@
         setLineHeight,
         setTheme,
         type ReaderFontFamily,
-        type ReadabilitySettings,
+        type ReaderTheme,
     } from '@/lib/readability.svelte.ts';
 
     let { onclose }: { onclose: () => void } = $props();
@@ -17,6 +17,12 @@
     const fontOptions: { id: ReaderFontFamily; label: string }[] = [
         { id: 'sans-serif', label: 'Sans-serif' },
         { id: 'serif', label: 'Serif' },
+    ];
+
+    const themeOptions: { id: ReaderTheme; label: string }[] = [
+        { id: 'light', label: 'Light' },
+        { id: 'dark', label: 'Dark' },
+        { id: 'sepia', label: 'Sepia' },
     ];
 
     $effect(() => {
@@ -86,25 +92,19 @@
 
             <fieldset class="fieldset">
                 <legend class="fieldset-legend">Theme</legend>
-                <div class="join">
-                    <button
-                        type="button"
-                        class="btn join-item"
-                        class:btn-primary={readability.theme === 'light'}
-                        onclick={() => setTheme('light')}
-                    >
-                        Light
-                    </button>
-                    <button
-                        type="button"
-                        class="btn join-item"
-                        class:btn-primary={readability.theme === 'dark'}
-                        onclick={() => setTheme('dark')}
-                    >
-                        Dark
-                    </button>
+                <div class="join grid w-full grid-cols-3">
+                    {#each themeOptions as option (option.id)}
+                        <button
+                            type="button"
+                            class="btn join-item"
+                            class:btn-primary={readability.theme === option.id}
+                            onclick={() => setTheme(option.id)}
+                        >
+                            {option.label}
+                        </button>
+                    {/each}
                 </div>
-                <p class="label text-xs">Light and dark themes adjust contrast for reading.</p>
+                <p class="label text-xs">Theme adjusts contrast and background for reading.</p>
             </fieldset>
         </div>
 

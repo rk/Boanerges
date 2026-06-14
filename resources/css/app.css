@@ -1,7 +1,39 @@
 @import 'tailwindcss';
 
 @plugin 'daisyui' {
-    themes: light --default, dark --prefersdark;
+    themes: light --default, dark --prefersdark, sepia;
+}
+
+@plugin 'daisyui/theme' {
+    name: 'sepia';
+    default: false;
+    prefersdark: false;
+    color-scheme: light;
+
+    --color-base-100: oklch(94% 0.02 85);
+    --color-base-200: oklch(90% 0.03 80);
+    --color-base-300: oklch(86% 0.04 75);
+    --color-base-content: oklch(28% 0.04 65);
+    --color-primary: oklch(45% 0.08 65);
+    --color-primary-content: oklch(96% 0.01 85);
+    --color-secondary: oklch(55% 0.06 70);
+    --color-secondary-content: oklch(96% 0.01 85);
+    --color-accent: oklch(50% 0.07 60);
+    --color-accent-content: oklch(96% 0.01 85);
+    --color-neutral: oklch(35% 0.04 65);
+    --color-neutral-content: oklch(96% 0.01 85);
+    --color-info: oklch(55% 0.08 230);
+    --color-info-content: oklch(98% 0.01 230);
+    --color-success: oklch(50% 0.1 145);
+    --color-success-content: oklch(98% 0.01 145);
+    --color-warning: oklch(70% 0.12 80);
+    --color-warning-content: oklch(25% 0.05 80);
+    --color-error: oklch(55% 0.15 25);
+    --color-error-content: oklch(98% 0.01 25);
+
+    --radius-selector: 0.25rem;
+    --radius-field: 0.25rem;
+    --radius-box: 0.5rem;
 }
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -19,4 +51,25 @@
     font-family: var(--reader-font-family, var(--font-reader));
     font-size: var(--reader-font-size, 18px);
     line-height: var(--reader-line-height, 1.7);
+}
+
+/* Drawer collapse helpers — is-drawer-open/close variants are not emitted in this build */
+.drawer:has(> .drawer-toggle:not(:checked)) > .drawer-side {
+    overflow: visible;
+}
+
+.drawer:has(> .drawer-toggle:checked) .sidebar-collapsed-only {
+    display: none;
+}
+
+.drawer:has(> .drawer-toggle:not(:checked)) .sidebar-expanded-only {
+    display: none;
+}
+
+.drawer:has(> .drawer-toggle:not(:checked)) .sidebar-shell {
+    width: 3.5rem;
+}
+
+.drawer:has(> .drawer-toggle:checked) .sidebar-shell {
+    width: 18rem;
 }
