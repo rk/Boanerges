@@ -1,8 +1,7 @@
-const STORAGE_PREFIX = 'boanerges.scribe';
+import { show, update } from '@/actions/App/Http/Controllers/ScribeController';
+import type { ScribeVerse } from '@/lib/types/bible';
 
-function storageKey(bookId: string, chapter: number): string {
-    return `${STORAGE_PREFIX}.${bookId}.${chapter}`;
-}
+const LEGACY_STORAGE_PREFIX = 'boanerges.scribe';
 
 export const scribe = $state({
     saveStatus: 'idle' as 'idle' | 'saving' | 'saved',
@@ -10,26 +9,85 @@ export const scribe = $state({
 
 let saveTimeout: ReturnType<typeof setTimeout> | null = null;
 let hideTimeout: ReturnType<typeof setTimeout> | null = null;
+let saveGeneration = 0;
 
-export function loadScribeDraft(bookId: string, chapterNumber: number): Record<number, string> {
+async function jsonFetch<T>(url: string, init?: RequestInit): Promise<T> {
+    const response = await fetch(url, {
+        ...init,
+        headers: {
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json',
+            ...(init?.headers ?? {}),
+        },
+    });
+
+    if (! response.ok) {
+        const body = (await response.json().catch(() => null)) as { message?: string } | null;
+        throw new Error(body?.message ?? `Request failed: ${response.status}`);
+    }
+
+    return response.json() as Promise<T>;
+}
+
+function legacyStorageKey(bookId: string, chapter: number): string {
+    return `${LEGACY_STORAGE_PREFIX}.${bookId}.${chapter}`;
+}
+
+function loadLegacyDraft(bookId: string, chapter: number): ScribeVerse[] {
     if (typeof window === 'undefined') {
-        return {};
+        return [];
     }
 
     try {
-        const stored = localStorage.getItem(storageKey(bookId, chapterNumber));
+        const stored = localStorage.getItem(legacyStorageKey(bookId, chapter));
 
-        return stored ? JSON.parse(stored) : {};
+        if (! stored) {
+            return [];
+        }
+
+        const parsed = JSON.parse(stored) as Record<string, string>;
+
+        return Object.entries(parsed).map(([verse, text]) => ({
+            verse: Number(verse),
+            text,
+        }));
     } catch {
-        return {};
+        return [];
     }
 }
 
-export function scheduleScribeSave(
-    bookId: string,
-    chapterNumber: number,
-    draft: Record<number, string>,
-): void {
+function clearLegacyDraft(bookId: string, chapter: number): void {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    localStorage.removeItem(legacyStorageKey(bookId, chapter));
+}
+
+export async function fetchScribeDraft(bookId: string, chapter: number): Promise<ScribeVerse[]> {
+    const data = await jsonFetch<{ verses: ScribeVerse[] }>(show.url({ book: bookId, chapter }));
+
+    if (data.verses.length > 0) {
+        return data.verses;
+    }
+
+    const legacy = loadLegacyDraft(bookId, chapter);
+
+    if (legacy.length > 0) {
+        await jsonFetch<{ verses: ScribeVerse[] }>(update.url({ book: bookId, chapter }), {
+            method: 'PUT',
+            body: JSON.stringify({ verses: legacy }),
+        });
+        clearLegacyDraft(bookId, chapter);
+
+        return legacy;
+    }
+
+    return [];
+}
+
+export function scheduleScribeSave(bookId: string, chapter: number, verses: ScribeVerse[]): void {
     scribe.saveStatus = 'saving';
 
     if (saveTimeout) {
@@ -40,15 +98,95 @@ export function scheduleScribeSave(
         clearTimeout(hideTimeout);
     }
 
+    const generation = ++saveGeneration;
+
     saveTimeout = setTimeout(() => {
-        if (typeof window !== 'undefined') {
-            localStorage.setItem(storageKey(bookId, chapterNumber), JSON.stringify(draft));
+        void jsonFetch<{ verses: ScribeVerse[] }>(update.url({ book: bookId, chapter }), {
+            method: 'PUT',
+            body: JSON.stringify({ verses }),
+        })
+            .then(() => {
+                if (generation !== saveGeneration) {
+                    return;
+                }
+
+                scribe.saveStatus = 'saved';
+
+                hideTimeout = setTimeout(() => {
+                    if (generation === saveGeneration) {
+                        scribe.saveStatus = 'idle';
+                    }
+                }, 1500);
+            })
+            .catch(() => {
+                if (generation === saveGeneration) {
+                    scribe.saveStatus = 'idle';
+                }
+            });
+    }, 500);
+}
+
+export function effectiveParagraphStart(
+    verseNumber: number,
+    sourceParagraphStart?: boolean,
+    override?: boolean,
+): boolean {
+    if (override !== undefined) {
+        return override;
+    }
+
+    if (sourceParagraphStart) {
+        return true;
+    }
+
+    return verseNumber === 1;
+}
+
+export type ScribeDraftEntry = {
+    text: string;
+    paragraphStartOverride?: boolean;
+};
+
+export function entriesFromScribeVerses(verses: ScribeVerse[]): Record<number, ScribeDraftEntry> {
+    const entries: Record<number, ScribeDraftEntry> = {};
+
+    for (const verse of verses) {
+        entries[verse.verse] = {
+            text: verse.text,
+            ...(verse.paragraphStart !== undefined
+                ? { paragraphStartOverride: verse.paragraphStart }
+                : {}),
+        };
+    }
+
+    return entries;
+}
+
+export function serializeScribeDraft(
+    verseNumbers: number[],
+    entries: Record<number, ScribeDraftEntry>,
+): ScribeVerse[] {
+    const verses: ScribeVerse[] = [];
+
+    for (const verseNumber of verseNumbers) {
+        const entry = entries[verseNumber];
+        const text = entry?.text ?? '';
+
+        if (text.trim() === '' && entry?.paragraphStartOverride === undefined) {
+            continue;
         }
 
-        scribe.saveStatus = 'saved';
+        const serialized: ScribeVerse = {
+            verse: verseNumber,
+            text,
+        };
 
-        hideTimeout = setTimeout(() => {
-            scribe.saveStatus = 'idle';
-        }, 1500);
-    }, 500);
+        if (entry?.paragraphStartOverride !== undefined) {
+            serialized.paragraphStart = entry.paragraphStartOverride;
+        }
+
+        verses.push(serialized);
+    }
+
+    return verses;
 }

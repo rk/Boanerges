@@ -46,3 +46,9 @@ export type ChapterNav = {
     bookAbbrev: string;
     chapter: number;
 };
+
+export type ScribeVerse = {
+    verse: number;
+    text: string;
+    paragraphStart?: boolean;
+};

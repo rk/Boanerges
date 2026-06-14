@@ -1,27 +1,10 @@
 <script lang="ts">
+    import { groupVersesIntoParagraphs } from '@/lib/paragraphs.ts';
     import type { Verse } from '@/lib/types/bible';
 
     let { verses }: { verses: Verse[] } = $props();
 
-    const paragraphs = $derived.by(() => {
-        const groups: Verse[][] = [];
-        let current: Verse[] = [];
-
-        for (const verse of verses) {
-            if (verse.paragraphStart && current.length > 0) {
-                groups.push(current);
-                current = [];
-            }
-
-            current.push(verse);
-        }
-
-        if (current.length > 0) {
-            groups.push(current);
-        }
-
-        return groups;
-    });
+    const paragraphs = $derived(groupVersesIntoParagraphs(verses));
 </script>
 
 <div class="reader-prose text-base-content space-y-4">
