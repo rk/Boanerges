@@ -250,6 +250,11 @@
         "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/Webster"
     },
     {
+        "short": "WEB",
+        "name": "World English Bible",
+        "url": "https://ebible.org/sword/zip/engweb2025peb.zip"
+    },
+    {
         "short": "Weymouth",
         "name": "Weymouth NT (1912)",
         "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/Weymouth"

@@ -163,7 +163,8 @@ return [
      * Define your own scripts to run before and after the build process.
      */
     'prebuild' => [
-        // 'npm run build',
+        'npm run build', // Run a command before the build
+        'php artisan optimize', // Run another command before the build
     ],
 
     'postbuild' => [
