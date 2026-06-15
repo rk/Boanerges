@@ -1,16 +1,19 @@
 <script lang="ts">
-    import ScribePreviewModal from '@/components/scribe/ScribePreviewModal.svelte';
-    import ScribeVerseField from '@/components/scribe/ScribeVerseField.svelte';
+    import { tick } from 'svelte';
+
     import ChapterHeading from '@/components/reader/ChapterHeading.svelte';
+    import ScribePreviewModal from '@/components/scribe/ScribePreviewModal.svelte';
+    import ScribeVerseSpan from '@/components/scribe/ScribeVerseSpan.svelte';
+    import { getReaderStyle } from '@/lib/readability.svelte.ts';
     import {
         effectiveParagraphStart,
         entriesFromScribeVerses,
         fetchScribeDraft,
         scheduleScribeSave,
-        serializeScribeDraft,
-        type ScribeDraftEntry,
+        serializeScribeDraft
+        
     } from '@/lib/scribe.svelte.ts';
-    import { getReaderStyle } from '@/lib/readability.svelte.ts';
+import type {ScribeDraftEntry} from '@/lib/scribe.svelte.ts';
     import { study } from '@/lib/study.svelte.ts';
     import type { Verse } from '@/lib/types/bible';
 
@@ -27,9 +30,11 @@
     let entries = $state<Record<number, ScribeDraftEntry>>({});
     let loading = $state(true);
     let previewOpen = $state(false);
+    let spanComponents = $state<Record<number, { setText: (text: string, options?: { force?: boolean }) => void } | undefined>>({});
 
     const readerStyle = $derived(getReaderStyle());
     const verseNumbers = $derived(verses.map((verse) => verse.number));
+    const documentKey = $derived(`${study.bookId}-${study.chapter}`);
     const hasParagraphOverrides = $derived(
         Object.values(entries).some((entry) => entry.paragraphStartOverride !== undefined),
     );
@@ -41,17 +46,22 @@
 
         loading = true;
         entries = {};
+        spanComponents = {};
 
         void fetchScribeDraft(bookId, chapterNumber)
-            .then((draft) => {
+            .then(async (draft) => {
                 if (! cancelled) {
                     entries = entriesFromScribeVerses(draft);
                     loading = false;
+                    await tick();
+                    hydrateSpans(true);
                 }
             })
-            .catch(() => {
+            .catch(async () => {
                 if (! cancelled) {
                     loading = false;
+                    await tick();
+                    hydrateSpans(true);
                 }
             });
 
@@ -59,6 +69,12 @@
             cancelled = true;
         };
     });
+
+    function hydrateSpans(force = false): void {
+        for (const verseNumber of verseNumbers) {
+            spanComponents[verseNumber]?.setText(entries[verseNumber]?.text ?? '', { force });
+        }
+    }
 
     function persist(): void {
         scheduleScribeSave(
@@ -136,25 +152,28 @@
         </div>
     </div>
 
-
     {#if loading}
         <div class="flex flex-1 items-center justify-center">
             <span class="loading loading-spinner loading-md text-primary"></span>
         </div>
     {:else}
-        {#each verses as verse (verse.number)}
-            <ScribeVerseField
-                {verse}
-                value={entries[verse.number]?.text ?? ''}
-                paragraphStart={effectiveParagraphStart(
-                    verse.number,
-                    verse.paragraphStart,
-                    entries[verse.number]?.paragraphStartOverride,
-                )}
-                onupdate={(value) => updateVerse(verse.number, value)}
-                onToggleParagraph={() => toggleParagraphStart(verse.number)}
-            />
-        {/each}
+        {#key documentKey}
+            <div class="scribe-document reader-prose" role="region" aria-label="Scribe draft">
+                {#each verses as verse (verse.number)}
+                    <ScribeVerseSpan
+                        bind:this={spanComponents[verse.number]}
+                        verseNumber={verse.number}
+                        paragraphStart={effectiveParagraphStart(
+                            verse.number,
+                            verse.paragraphStart,
+                            entries[verse.number]?.paragraphStartOverride,
+                        )}
+                        oninput={(value) => updateVerse(verse.number, value)}
+                        onToggleParagraph={() => toggleParagraphStart(verse.number)}
+                    />
+                {/each}
+            </div>
+        {/key}
     {/if}
 </div>
 
