@@ -1,8 +1,8 @@
 <script lang="ts">
+    import ChapterNavDivider from '@/components/reader/ChapterNavDivider.svelte';
     import ParagraphText from '@/components/reader/ParagraphText.svelte';
     import ReaderPane from '@/components/reader/ReaderPane.svelte';
     import ScrollSyncToggle from '@/components/reader/ScrollSyncToggle.svelte';
-    import ChapterNavDivider from '@/components/reader/ChapterNavDivider.svelte';
     import { bible, bookAbbrev, fetchChapter, loadBooks } from '@/lib/bible.svelte.ts';
     import { getReaderStyle } from '@/lib/readability.svelte.ts';
     import {

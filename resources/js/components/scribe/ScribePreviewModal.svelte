@@ -1,10 +1,10 @@
 <script lang="ts">
-    import ScribeParagraphText from '@/components/scribe/ScribeParagraphText.svelte';
     import ChapterHeading from '@/components/reader/ChapterHeading.svelte';
+    import ScribeParagraphText from '@/components/scribe/ScribeParagraphText.svelte';
     import { toPreviewVerses } from '@/lib/paragraphs.ts';
+    import { getReaderStyle } from '@/lib/readability.svelte.ts';
     import { effectiveParagraphStart } from '@/lib/scribe.svelte.ts';
     import type { ScribeDraftEntry } from '@/lib/scribe.svelte.ts';
-    import { getReaderStyle } from '@/lib/readability.svelte.ts';
     import type { Verse } from '@/lib/types/bible';
 
     let {

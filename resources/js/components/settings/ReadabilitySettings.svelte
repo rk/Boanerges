@@ -5,10 +5,10 @@
         setFontFamily,
         setFontSize,
         setLineHeight,
-        setTheme,
-        type ReaderFontFamily,
-        type ReaderTheme,
+        setTheme
     } from '@/lib/readability.svelte.ts';
+
+    import type {ReaderFontFamily, ReaderTheme} from '@/lib/readability.svelte.ts';
 
     let { onclose }: { onclose: () => void } = $props();
 

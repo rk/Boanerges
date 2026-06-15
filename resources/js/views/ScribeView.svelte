@@ -1,7 +1,7 @@
 <script lang="ts">
-    import ScribeEditor from '@/components/scribe/ScribeEditor.svelte';
     import ReaderPane from '@/components/reader/ReaderPane.svelte';
     import VerseText from '@/components/reader/VerseText.svelte';
+    import ScribeEditor from '@/components/scribe/ScribeEditor.svelte';
     import { bible, fetchChapter, loadBooks } from '@/lib/bible.svelte.ts';
     import { getReaderStyle } from '@/lib/readability.svelte.ts';
     import { study } from '@/lib/study.svelte.ts';

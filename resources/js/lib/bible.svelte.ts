@@ -1,3 +1,4 @@
+import { SvelteMap } from 'svelte/reactivity';
 import {
     books as booksRoute,
     catalog as catalogRoute,
@@ -24,8 +25,8 @@ export const bible = $state({
     managerError: null as string | null,
 });
 
-const chapterCache = new Map<string, Chapter>();
-const chapterInflight = new Map<string, Promise<Chapter>>();
+const chapterCache = new SvelteMap<string, Chapter>();
+const chapterInflight = new SvelteMap<string, Promise<Chapter>>();
 
 async function jsonFetch<T>(url: string, init?: RequestInit): Promise<T> {
     const response = await fetch(url, {
@@ -40,6 +41,7 @@ async function jsonFetch<T>(url: string, init?: RequestInit): Promise<T> {
 
     if (! response.ok) {
         const body = (await response.json().catch(() => null)) as { message?: string } | null;
+
         throw new Error(body?.message ?? `Request failed: ${response.status}`);
     }
 
@@ -106,6 +108,7 @@ export async function installTranslation(module: string): Promise<void> {
         await Promise.all([loadTranslations(), loadCatalog(true)]);
     } catch (error) {
         bible.managerError = error instanceof Error ? error.message : 'Installation failed.';
+
         throw error;
     } finally {
         bible.installingModule = null;
@@ -122,6 +125,7 @@ export async function uninstallTranslation(module: string): Promise<void> {
         await Promise.all([loadTranslations(), loadCatalog(true)]);
     } catch (error) {
         bible.managerError = error instanceof Error ? error.message : 'Removal failed.';
+
         throw error;
     } finally {
         bible.uninstallingModule = null;

@@ -1,6 +1,6 @@
-import type { Auth } from '@/types/auth';
 import type { ReadabilitySettings } from '@/lib/types/readability';
 import type { StudySettings } from '@/lib/types/study';
+import type { Auth } from '@/types/auth';
 
 // Extend ImportMeta interface for Vite...
 declare module 'vite/client' {

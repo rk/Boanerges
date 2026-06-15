@@ -1,5 +1,6 @@
+import { SvelteSet } from 'svelte/reactivity';
 import { updateStudy as updateStudySettings } from '@/actions/App/Http/Controllers/SettingsController';
-import { getAdjacentChapter, bible, invalidateTranslations, loadTranslations } from '@/lib/bible.svelte.ts';
+import { getAdjacentChapter, bible } from '@/lib/bible.svelte.ts';
 import { patchJson } from '@/lib/patchJson';
 import type { ViewMode } from '@/lib/types/bible';
 import type { StudySettings } from '@/lib/types/study';
@@ -117,7 +118,7 @@ export function setScrollSync(enabled: boolean): void {
 }
 
 export function syncStudyTranslationSelection(): void {
-    const installedIds = new Set(bible.translations.map((translation) => translation.id));
+    const installedIds = new SvelteSet(bible.translations.map((translation) => translation.id));
 
     if (! installedIds.has(study.translationId)) {
         study.translationId = 'asv';

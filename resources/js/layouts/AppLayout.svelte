@@ -1,13 +1,13 @@
 <script lang="ts">
-    import PanelLeftClose from '@lucide/svelte/icons/panel-left-close';
     import { page } from '@inertiajs/svelte';
+    import PanelLeftClose from '@lucide/svelte/icons/panel-left-close';
     import type { Snippet } from 'svelte';
 
-    import AppSidebar from '@/components/sidebar/AppSidebar.svelte';
-    import ReadabilitySettings from '@/components/settings/ReadabilitySettings.svelte';
     import SaveStatus from '@/components/scribe/SaveStatus.svelte';
-    import { hydrateReadability } from '@/lib/readability.svelte.ts';
+    import ReadabilitySettings from '@/components/settings/ReadabilitySettings.svelte';
+    import AppSidebar from '@/components/sidebar/AppSidebar.svelte';
     import { loadBooks, loadTranslations } from '@/lib/bible.svelte.ts';
+    import { hydrateReadability } from '@/lib/readability.svelte.ts';
     import { closeSettings, hydrateStudy, study } from '@/lib/study.svelte.ts';
     import type { ReadabilitySettings as ReadabilitySettingsType } from '@/lib/types/readability';
     import type { StudySettings as StudySettingsType } from '@/lib/types/study';

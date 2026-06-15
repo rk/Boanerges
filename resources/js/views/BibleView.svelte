@@ -1,13 +1,13 @@
 <script lang="ts">
+    import ParagraphText from '@/components/reader/ParagraphText.svelte';
+    import ReaderPane from '@/components/reader/ReaderPane.svelte';
     import { fetchChapter, getAdjacentChapter, loadBooks, bookAbbrev, bible } from '@/lib/bible.svelte.ts';
+    import { getReaderStyle } from '@/lib/readability.svelte.ts';
     import {
         goToNextChapter,
         goToPreviousChapter,
         study,
     } from '@/lib/study.svelte.ts';
-    import ParagraphText from '@/components/reader/ParagraphText.svelte';
-    import ReaderPane from '@/components/reader/ReaderPane.svelte';
-    import { getReaderStyle } from '@/lib/readability.svelte.ts';
     import type { Chapter, ChapterNavTarget } from '@/lib/types/bible';
 
     let currentChapter = $state<Chapter | null>(null);

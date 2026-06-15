@@ -1,10 +1,10 @@
 <script lang="ts">
     import AppHead from '@/components/AppHead.svelte';
     import AppLayout from '@/layouts/AppLayout.svelte';
+    import { study } from '@/lib/study.svelte.ts';
     import BibleView from '@/views/BibleView.svelte';
     import ComparisonView from '@/views/ComparisonView.svelte';
     import ScribeView from '@/views/ScribeView.svelte';
-    import { study } from '@/lib/study.svelte.ts';
 </script>
 
 <AppHead title="Study" />
