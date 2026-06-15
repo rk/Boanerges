@@ -1,4 +1,5 @@
 <script lang="ts">
+    import FormattedVerseText from '@/components/reader/FormattedVerseText.svelte';
     import { buildScribePreviewParagraphs } from '@/lib/paragraphs.ts';
     import type { Verse } from '@/lib/types/bible';
 
@@ -16,7 +17,7 @@
                 {/if}
                 {#if segment.showVerseNumber}
                     <sup class="text-primary mr-0.5 text-xs">{segment.verseNumber}</sup>
-                {/if}{segment.text}
+                {/if}<FormattedVerseText text={segment.text} />
             {/each}
         </p>
     {/each}

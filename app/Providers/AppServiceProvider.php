@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Services\Bible\BibleModuleManager;
+use App\Services\Bible\Markup\VerseMarkupConverterFactory;
+use App\Services\Bible\Markup\VerseTextFormatter;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +19,8 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(BibleModuleManager::class);
+
+        $this->app->singleton(VerseTextFormatter::class, fn (): VerseTextFormatter => VerseMarkupConverterFactory::defaultFormatter());
     }
 
     /**
