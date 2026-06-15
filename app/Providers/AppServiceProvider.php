@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use App\Services\Bible\BibleModuleManager;
-use App\Services\Bible\Markup\PairTagVerseMarkupConverter;
+use App\Services\Bible\Markup\VerseMarkupConverterFactory;
 use App\Services\Bible\Markup\VerseTextFormatter;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
@@ -20,12 +20,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(BibleModuleManager::class);
 
-        $this->app->singleton(VerseTextFormatter::class, function (): VerseTextFormatter {
-            return new VerseTextFormatter([
-                // GBF italic (e.g. YLT supplied words)
-                new PairTagVerseMarkupConverter('FI', 'Fi', 'em'),
-            ]);
-        });
+        $this->app->singleton(VerseTextFormatter::class, fn (): VerseTextFormatter => VerseMarkupConverterFactory::defaultFormatter());
     }
 
     /**

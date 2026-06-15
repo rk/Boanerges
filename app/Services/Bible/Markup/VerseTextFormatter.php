@@ -4,6 +4,8 @@ namespace App\Services\Bible\Markup;
 
 final class VerseTextFormatter
 {
+    private const int MAX_PASSES = 4;
+
     /**
      * @param  list<VerseMarkupConverter>  $converters
      */
@@ -20,9 +22,7 @@ final class VerseTextFormatter
         /** @var array<string, string> $placeholders */
         $placeholders = [];
 
-        foreach ($this->converters as $converter) {
-            $text = $converter->convert($text, $placeholders);
-        }
+        $text = $this->convert($text, $placeholders);
 
         $text = htmlspecialchars($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
@@ -32,6 +32,20 @@ final class VerseTextFormatter
                 $html,
                 $text,
             );
+        }
+
+        return $text;
+    }
+
+    /**
+     * @param  array<string, string>  $placeholders
+     */
+    public function convert(string $text, array &$placeholders): string
+    {
+        for ($pass = 0; $pass < self::MAX_PASSES; $pass++) {
+            foreach ($this->converters as $converter) {
+                $text = $converter->convert($text, $placeholders, $this);
+            }
         }
 
         return $text;

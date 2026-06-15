@@ -7,5 +7,5 @@ interface VerseMarkupConverter
     /**
      * @param  array<string, string>  $placeholders
      */
-    public function convert(string $text, array &$placeholders): string;
+    public function convert(string $text, array &$placeholders, ?VerseTextFormatter $formatter = null): string;
 }

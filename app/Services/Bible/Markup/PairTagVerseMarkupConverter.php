@@ -4,16 +4,19 @@ namespace App\Services\Bible\Markup;
 
 final class PairTagVerseMarkupConverter implements VerseMarkupConverter
 {
+    use CreatesVerseMarkupPlaceholders;
+
     public function __construct(
         private string $openTag,
         private string $closeTag,
         private string $htmlTag,
+        private ?string $class = null,
     ) {}
 
     /**
      * @param  array<string, string>  $placeholders
      */
-    public function convert(string $text, array &$placeholders): string
+    public function convert(string $text, array &$placeholders, ?VerseTextFormatter $formatter = null): string
     {
         $pattern = '/<'
             .preg_quote($this->openTag, '/')
@@ -23,13 +26,15 @@ final class PairTagVerseMarkupConverter implements VerseMarkupConverter
 
         return (string) preg_replace_callback(
             $pattern,
-            function (array $matches) use (&$placeholders): string {
-                $placeholder = "\x7Fboanerges-markup-".count($placeholders)."\x7F";
-                $placeholders[$placeholder] = '<'.$this->htmlTag.'>'
-                    .htmlspecialchars($matches[1], ENT_QUOTES | ENT_HTML5, 'UTF-8')
-                    .'</'.$this->htmlTag.'>';
+            function (array $matches) use (&$placeholders, $formatter): string {
+                $inner = $formatter !== null
+                    ? $formatter->convert($matches[1], $placeholders)
+                    : $matches[1];
 
-                return $placeholder;
+                return $this->createPlaceholder(
+                    $this->wrapContent($this->htmlTag, $inner, $this->class, escape: $formatter === null),
+                    $placeholders,
+                );
             },
             $text,
         );

@@ -44,7 +44,7 @@ class ChapterReader
                 books: $book->name,
                 chapters: $chapter,
                 verses: $verseNumber,
-                clean: true,
+                clean: false,
                 join: '',
             );
 

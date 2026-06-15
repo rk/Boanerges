@@ -53,6 +53,30 @@
     line-height: var(--reader-line-height, 1.7);
 }
 
+.reader-prose :where(.words-of-jesus) {
+    color: var(--color-error);
+}
+
+.reader-prose :where(.divine-name) {
+    font-variant: small-caps;
+}
+
+.reader-prose :where(.foreign, .ot-quote) {
+    font-style: italic;
+}
+
+.reader-prose :where(.small-caps) {
+    font-variant: small-caps;
+}
+
+.reader-prose :where(.underline) {
+    text-decoration: underline;
+}
+
+.reader-prose :where(.trans-change) {
+    font-style: italic;
+}
+
 /* Drawer collapse helpers — is-drawer-open/close variants are not emitted in this build */
 .drawer:has(> .drawer-toggle:not(:checked)) > .drawer-side {
     overflow: visible;
