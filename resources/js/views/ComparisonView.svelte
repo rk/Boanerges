@@ -133,16 +133,15 @@
                     <ChapterNavDivider
                         direction="prev"
                         label={`${prevNav.chapter}`}
-                        layout="vertical"
+                        layout="compact"
                         onclick={goToPreviousChapter}
                     />
                 {/if}
-                <div class="divider divider-vertical flex-1"></div>
                 {#if nextNav}
                     <ChapterNavDivider
                         direction="next"
                         label={`${nextNav.chapter}`}
-                        layout="vertical"
+                        layout="compact"
                         onclick={goToNextChapter}
                     />
                 {/if}

@@ -11,7 +11,7 @@
         fetchScribeDraft,
         scheduleScribeSave,
         serializeScribeDraft
-        
+
     } from '@/lib/scribe.svelte.ts';
 import type {ScribeDraftEntry} from '@/lib/scribe.svelte.ts';
     import { study } from '@/lib/study.svelte.ts';
@@ -136,7 +136,7 @@ import type {ScribeDraftEntry} from '@/lib/scribe.svelte.ts';
     }
 </script>
 
-<div class="flex h-full min-h-0 flex-col overflow-y-auto px-4 py-4" style={readerStyle}>
+<div class="flex h-full min-h-0 flex-col overflow-y-auto px-4 py-4 border-base-300 border-x" style={readerStyle}>
     <div class="flex justify-between">
         <ChapterHeading title="{book} {chapter}" />
 

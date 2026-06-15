@@ -10,7 +10,7 @@
         translationAbbrev,
         prevNav,
         nextNav,
-        navLayout = 'vertical',
+        navLayout = 'divider',
         onprev,
         onnext,
         onscroll,
@@ -21,7 +21,7 @@
         translationAbbrev?: string;
         prevNav?: ChapterNavTarget;
         nextNav?: ChapterNavTarget;
-        navLayout?: 'horizontal' | 'vertical';
+        navLayout?: 'horizontal' | 'divider';
         onprev?: () => void;
         onnext?: () => void;
         onscroll?: () => void;

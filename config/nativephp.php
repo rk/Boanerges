@@ -34,7 +34,7 @@ return [
     /**
      * The copyright notice for your application.
      */
-    'copyright' => env('NATIVEPHP_APP_COPYRIGHT', 'Copyright 2026 Robert Kosek'),
+    'copyright' => env('NATIVEPHP_APP_COPYRIGHT', 'Copyright 2026 by Robert Kosek'),
 
     /**
      * The description of your application.
@@ -81,6 +81,11 @@ return [
      * You may use glob / wildcard patterns here.
      */
     'cleanup_exclude_files' => [
+        '.agents',
+        '.cursor',
+        '.forge',
+        '.github',
+        '_doc',
         'build',
         'temp',
         'content',
