@@ -2,12 +2,14 @@
 
 namespace App\Services\Bible;
 
+use App\Services\Bible\Markup\VerseTextFormatter;
 use rk\PhpSword\SwordBible;
 
 class ChapterReader
 {
     public function __construct(
         private BookCatalog $bookCatalog,
+        private VerseTextFormatter $verseTextFormatter,
     ) {}
 
     /**
@@ -48,7 +50,7 @@ class ChapterReader
 
             $verse = [
                 'number' => $verseNumber,
-                'text' => trim($text),
+                'text' => trim($this->verseTextFormatter->format($text)),
             ];
 
             if ($this->isParagraphStart($raw)) {

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import FormattedVerseText from '@/components/reader/FormattedVerseText.svelte';
     import { groupVersesIntoParagraphs } from '@/lib/paragraphs.ts';
     import type { Verse } from '@/lib/types/bible';
 
@@ -14,7 +15,7 @@
                 {#if index > 0}
                     {' '}
                 {/if}
-                <sup class="text-primary mr-0.5 text-xs">{verse.number}</sup>{verse.text}
+                <sup class="text-primary mr-0.5 text-xs">{verse.number}</sup><FormattedVerseText text={verse.text} />
             {/each}
         </p>
     {/each}
