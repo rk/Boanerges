@@ -73,3 +73,55 @@
 .drawer:has(> .drawer-toggle:checked) .sidebar-shell {
     width: 18rem;
 }
+
+.scribe-document {
+    margin-top: 0.5rem;
+}
+
+.scribe-verse-wrap {
+    display: inline;
+}
+
+.scribe-verse-wrap[data-paragraph-start='true'] {
+    display: block;
+    margin-top: 1em;
+}
+
+.scribe-verse-chrome {
+    display: inline-block;
+    margin-right: 0.125rem;
+    vertical-align: super;
+    user-select: none;
+    opacity: 0.35;
+}
+
+.scribe-verse-wrap:focus-within .scribe-verse-chrome,
+.scribe-verse-chrome:hover {
+    opacity: 1;
+}
+
+.scribe-verse {
+    display: inline;
+    min-width: 2ch;
+    min-height: 1lh;
+    white-space: pre-wrap;
+    outline: none;
+}
+
+.scribe-verse:empty {
+    display: inline-block;
+    min-width: 4ch;
+    background-color: color-mix(in oklch, var(--color-base-300) 55%, transparent);
+    border-radius: var(--radius-field);
+}
+
+.scribe-verse::before {
+    content: attr(data-verse);
+    margin-right: 0.125rem;
+    font-size: 0.75em;
+    line-height: 1;
+    vertical-align: super;
+    color: var(--color-primary);
+    user-select: none;
+    pointer-events: none;
+}
