@@ -20,7 +20,7 @@ class TranslationCatalog
             return collect();
         }
 
-        /** @var list<array{short: string, name: string, url: string}> $entries */
+        /** @var list<array{short: string, name: string, url: string, about: string|null}> $entries */
         $entries = json_decode($contents, true, flags: JSON_THROW_ON_ERROR);
 
         return collect($entries)->map(

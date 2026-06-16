@@ -113,8 +113,17 @@ class TranslationInstaller
             join: '',
         ));
 
+        // In case of NT-only translations, append Mt 1:1 for verification.
+        $text .= trim($bible->get(
+            books: 'Matthew',
+            chapters: 1,
+            verses: 1,
+            clean: true,
+            join: '',
+        ));
+
         if ($text === '') {
-            abort(502, "Smoke test failed for {$moduleKey}.");
+            abort(502, "Verification of {$moduleKey} failed. Could not find safe reference text.");
         }
     }
 

@@ -1,4 +1,5 @@
 export type ChapterNavTarget = {
+    bookId: string;
     bookAbbrev: string;
     chapter: number;
 };

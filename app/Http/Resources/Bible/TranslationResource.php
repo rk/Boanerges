@@ -18,6 +18,7 @@ class TranslationResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'abbrev' => $this->abbrev,
+            'about' => $this->about ?? "https://crosswire.org/sword/modules/ModInfo.jsp?modName={$this->abbrev}",
             'bundled' => $this->bundled,
         ];
     }

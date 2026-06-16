@@ -11,6 +11,7 @@
     import { closeSettings, hydrateStudy, study } from '@/lib/study.svelte.ts';
     import type { ReadabilitySettings as ReadabilitySettingsType } from '@/lib/types/readability';
     import type { StudySettings as StudySettingsType } from '@/lib/types/study';
+    import SpeedDial from '@/components/SpeedDial.svelte';
 
     let { children }: { children: Snippet } = $props();
 
@@ -52,6 +53,8 @@
         <label for={drawerId} aria-label="Close sidebar" class="drawer-overlay lg:hidden"></label>
         <AppSidebar {drawerId} />
     </div>
+
+    <SpeedDial />
 </div>
 
 {#if study.settingsOpen}

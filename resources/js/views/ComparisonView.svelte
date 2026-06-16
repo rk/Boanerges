@@ -64,6 +64,7 @@
 
     function chapterNavTarget(bookId: string, chapterNumber: number): ChapterNavTarget {
         return {
+            bookId,
             bookAbbrev: bookAbbrev(bookId),
             chapter: chapterNumber,
         };
@@ -132,7 +133,7 @@
                 {#if prevNav}
                     <ChapterNavDivider
                         direction="prev"
-                        label={`${prevNav.chapter}`}
+                        label={`${study.bookId != prevNav.bookId ? prevNav.bookAbbrev + ' ' : ''}${prevNav.chapter}`}
                         layout="compact"
                         onclick={goToPreviousChapter}
                     />
@@ -140,7 +141,7 @@
                 {#if nextNav}
                     <ChapterNavDivider
                         direction="next"
-                        label={`${nextNav.chapter}`}
+                        label={`${study.bookId != nextNav.bookId ? nextNav.bookAbbrev + ' ' : ''}${nextNav.chapter}`}
                         layout="compact"
                         onclick={goToNextChapter}
                     />

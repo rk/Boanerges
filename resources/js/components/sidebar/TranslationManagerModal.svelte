@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Trash2, Plus, Search } from '@lucide/svelte';
     import {
         bible,
         closeTranslationManager,
@@ -56,10 +57,11 @@
             English translations available for download. Bundled translations ship with the app.
         </p>
 
-        <label class="input input-bordered mt-4 flex items-center gap-2">
+        <label class="input input-bordered mt-4">
+            <Search size="14" />
             <input
                 type="search"
-                class="grow"
+                class="grow py-2"
                 placeholder="Search translations…"
                 bind:value={query}
             />
@@ -79,7 +81,7 @@
             {:else}
                 <ul class="divide-base-300 divide-y">
                     {#each filtered as entry (entry.module)}
-                        <li class="flex items-start justify-between gap-3 py-3">
+                        <li class="flex items-center justify-between gap-3 py-3">
                             <div class="min-w-0">
                                 <p class="truncate font-medium">{entry.name}</p>
                                 <div class="mt-1 flex flex-wrap gap-1">
@@ -99,27 +101,31 @@
                                 {:else if entry.installed}
                                     <button
                                         type="button"
-                                        class="btn btn-ghost btn-xs"
+                                        class="btn btn-error btn-sm btn-square"
                                         disabled={bible.uninstallingModule === entry.module}
                                         onclick={() => handleUninstall(entry)}
                                     >
                                         {#if bible.uninstallingModule === entry.module}
                                             <span class="loading loading-spinner loading-xs"></span>
                                         {:else}
-                                            Remove
+                                            <div class="tooltip tooltip-left" data-tip="Remove">
+                                                <Trash2 size="16" />
+                                            </div>
                                         {/if}
                                     </button>
                                 {:else}
                                     <button
                                         type="button"
-                                        class="btn btn-primary btn-xs"
+                                        class="btn btn-primary btn-sm btn-square"
                                         disabled={bible.installingModule === entry.module}
                                         onclick={() => handleInstall(entry)}
                                     >
                                         {#if bible.installingModule === entry.module}
                                             <span class="loading loading-spinner loading-xs"></span>
                                         {:else}
-                                            Install
+                                            <span class="tooltip tooltip-left" data-tip="Install">
+                                                <Plus size="16" />
+                                            </span>
                                         {/if}
                                     </button>
                                 {/if}

@@ -1,272 +1,220 @@
 [
     {
         "short": "AB",
-        "name": "The Apostles' Bible",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/AB"
+        "name": "The Apostles' Bible"
     },
     {
         "short": "ABP",
-        "name": "Apostolic Bible Polyglot English Text",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/ABP"
+        "name": "Apostolic Bible Polyglot English Text"
     },
     {
         "short": "ACV",
-        "name": "A Conservative Version",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/ACV"
+        "name": "A Conservative Version"
     },
     {
         "short": "AKJV",
-        "name": "American King James Version",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/AKJV"
+        "name": "American King James Version"
     },
     {
         "short": "ASV",
-        "name": "American Standard Version (1901)",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/ASV"
+        "name": "American Standard Version (1901)"
     },
     {
         "short": "Anderson",
-        "name": "Henry Tompkins Anderson’s 1864 New Testament",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/Anderson"
+        "name": "Henry Tompkins Anderson’s 1864 New Testament"
     },
     {
         "short": "BBE",
-        "name": "1949/1964 Bible in Basic English",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/BBE"
+        "name": "1949/1964 Bible in Basic English"
     },
     {
         "short": "BSB",
-        "name": "Berean Standard Bible",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/BSB"
+        "name": "Berean Standard Bible"
     },
     {
         "short": "BWE",
-        "name": "Bible in Worldwide English",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/BWE"
+        "name": "Bible in Worldwide English"
     },
     {
         "short": "CPDV",
-        "name": "Catholic Public Domain Version",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/CPDV"
+        "name": "Catholic Public Domain Version"
     },
     {
         "short": "Common",
-        "name": "The Common Edition: New Testament",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/Common"
+        "name": "The Common Edition: New Testament"
     },
     {
         "short": "DRC",
-        "name": "Douay-Rheims Bible, Challoner Revision",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/DRC"
+        "name": "Douay-Rheims Bible, Challoner Revision"
     },
     {
         "short": "Darby",
-        "name": "Darby Bible (1889)",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/Darby"
+        "name": "Darby Bible (1889)"
     },
     {
         "short": "EMTV",
-        "name": "English Majority Text Version, 2012 Edition with Greek Explanatory Notes",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/EMTV"
+        "name": "English Majority Text Version, 2012 Edition with Greek Explanatory Notes"
     },
     {
         "short": "Etheridge",
-        "name": "The Peschito Syriac New Testament: Translated into English by John Wesley Etheridge",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/Etheridge"
+        "name": "The Peschito Syriac New Testament: Translated into English by John Wesley Etheridge"
     },
     {
         "short": "Geneva1599",
-        "name": "Geneva Bible (1599)",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/Geneva1599"
+        "name": "Geneva Bible (1599)"
     },
     {
         "short": "Godbey",
-        "name": "1902 William Baxter Godbey NT",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/Godbey"
+        "name": "1902 William Baxter Godbey NT"
     },
     {
         "short": "GodsWord",
-        "name": "GOD'S WORD to the Nations",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/GodsWord"
+        "name": "GOD'S WORD to the Nations"
     },
     {
         "short": "Haweis",
-        "name": "Thomas Haweis 1795 New Testament",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/Haweis"
+        "name": "Thomas Haweis 1795 New Testament"
     },
     {
         "short": "ISV",
-        "name": "International Standard Version",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/ISV"
+        "name": "International Standard Version"
     },
     {
         "short": "JPS",
-        "name": "Jewish Publication Society Old Testament",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/JPS"
+        "name": "Jewish Publication Society Old Testament"
     },
     {
         "short": "Jubilee2000",
-        "name": "English Jubilee 2000 Bible",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/Jubilee2000"
+        "name": "English Jubilee 2000 Bible"
     },
     {
         "short": "KJV",
-        "name": "King James Version (1769) with Strongs Numbers and Morphology and CatchWords",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/KJV"
+        "name": "King James Version (1769) with Strongs Numbers and Morphology and CatchWords"
     },
     {
         "short": "KJVA",
-        "name": "King James Version (1769) with Strongs Numbers and Morphology and CatchWords, including Apocrypha (without glosses)",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/KJVA"
+        "name": "King James Version (1769) with Strongs Numbers and Morphology and CatchWords, including Apocrypha (without glosses)"
     },
     {
         "short": "KJVPCE",
-        "name": "King James Version: Pure Cambridge Edition",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/KJVPCE"
+        "name": "King James Version: Pure Cambridge Edition"
     },
     {
         "short": "LEB",
-        "name": "The Lexham English Bible",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/LEB"
+        "name": "The Lexham English Bible"
     },
     {
         "short": "LITV",
-        "name": "Green's Literal Translation",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/LITV"
+        "name": "Green's Literal Translation"
     },
     {
         "short": "LO",
-        "name": "The Living Oracles NT",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/LO"
+        "name": "The Living Oracles NT"
     },
     {
         "short": "MKJV",
-        "name": "Green's Modern King James Version",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/MKJV"
+        "name": "Green's Modern King James Version"
     },
     {
         "short": "Montgomery",
-        "name": "Montgomery New Testament",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/Montgomery"
+        "name": "Montgomery New Testament"
     },
     {
         "short": "Murdock",
-        "name": "James Murdock's Translation of the Syriac Peshitta",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/Murdock"
+        "name": "James Murdock's Translation of the Syriac Peshitta"
     },
     {
         "short": "NETfree",
-        "name": "Free version of New English Translation with limited notes",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/NETfree"
+        "name": "Free version of New English Translation with limited notes"
     },
     {
         "short": "NETtext",
-        "name": "New English Translation text only with footnote markers",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/NETtext"
+        "name": "New English Translation text only with footnote markers"
     },
     {
         "short": "NHEB",
-        "name": "New Heart English Bible",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/NHEB"
+        "name": "New Heart English Bible"
     },
     {
         "short": "NHEBJE",
-        "name": "New Heart English Bible: Jehovah Edition",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/NHEBJE"
+        "name": "New Heart English Bible: Jehovah Edition"
     },
     {
         "short": "NHEBME",
-        "name": "New Heart English Bible: Messianic Edition",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/NHEBME"
+        "name": "New Heart English Bible: Messianic Edition"
     },
     {
         "short": "Noyes",
-        "name": "1869 Noyes Translation",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/Noyes"
+        "name": "1869 Noyes Translation"
     },
     {
         "short": "OEB",
-        "name": "Open English Bible (US Spelling)",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/OEB"
+        "name": "Open English Bible (US Spelling)"
     },
     {
         "short": "OEBcth",
-        "name": "Open English Bible (Commonwealth Spelling)",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/OEBcth"
+        "name": "Open English Bible (Commonwealth Spelling)"
     },
     {
         "short": "OrthJBC",
-        "name": "The Orthodox Jewish Brit Chadasha",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/OrthJBC"
+        "name": "The Orthodox Jewish Brit Chadasha"
     },
     {
         "short": "RKJNT",
-        "name": "Revised King James New Testament",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/RKJNT"
+        "name": "Revised King James New Testament"
     },
     {
         "short": "RLT",
-        "name": "Revised Literal Translation (2018) of the King James Version with Strongs Numbers and Morphology",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/RLT"
+        "name": "Revised Literal Translation (2018) of the King James Version with Strongs Numbers and Morphology"
     },
     {
         "short": "RNKJV",
-        "name": "Restored Name King James Version",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/RNKJV"
+        "name": "Restored Name King James Version"
     },
     {
         "short": "RWebster",
-        "name": "Revised Webster Version (1833)",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/RWebster"
+        "name": "Revised Webster Version (1833)"
     },
     {
         "short": "Rotherham",
-        "name": "The Emphasised Bible by J. B. Rotherham",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/Rotherham"
+        "name": "The Emphasised Bible by J. B. Rotherham"
     },
     {
         "short": "SPE",
-        "name": "Samaritan Pentateuch in English",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/SPE"
+        "name": "Samaritan Pentateuch in English"
     },
     {
         "short": "Twenty",
-        "name": "Twentieth Century New Testament",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/Twenty"
+        "name": "Twentieth Century New Testament"
     },
     {
         "short": "Tyndale",
-        "name": "William Tyndale Bible (1525/1530)",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/Tyndale"
+        "name": "William Tyndale Bible (1525/1530)"
     },
     {
         "short": "UKJV",
-        "name": "Updated King James Version",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/UKJV"
+        "name": "Updated King James Version"
     },
     {
         "short": "Webster",
-        "name": "Webster Bible",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/Webster"
+        "name": "Webster Bible"
     },
     {
-        "short": "WEB",
+        "short": "engweb2025peb",
         "name": "World English Bible",
-        "url": "https://ebible.org/sword/zip/engweb2025peb.zip"
+        "url": "https://ebible.org/sword/zip/engweb2025peb.zip",
+        "about": "https://ebible.org/eng-web/webfaq.htm#update"
     },
     {
         "short": "Weymouth",
-        "name": "Weymouth NT (1912)",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/Weymouth"
+        "name": "Weymouth NT (1912)"
     },
     {
         "short": "Worsley",
-        "name": "1770 John Worsley NT",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/Worsley"
+        "name": "1770 John Worsley NT"
     },
     {
         "short": "YLT",
-        "name": "Young's Literal Translation (1898)",
-        "url": "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/YLT"
+        "name": "Young's Literal Translation (1898)"
     }
 ]
