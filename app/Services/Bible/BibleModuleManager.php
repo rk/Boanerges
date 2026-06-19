@@ -57,9 +57,20 @@ class BibleModuleManager
 
     public function isModuleInstalled(string $moduleKey): bool
     {
+        return $this->resolveModuleKey($moduleKey) !== null;
+    }
+
+    public function resolveModuleKey(string $moduleKey): ?string
+    {
         $modules = $this->modules();
 
-        return array_key_exists($moduleKey, $modules->modules);
+        foreach (array_keys($modules->modules) as $key) {
+            if (strcasecmp($key, $moduleKey) === 0) {
+                return $key;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -88,8 +99,10 @@ class BibleModuleManager
 
     public function open(string $moduleKey): SwordBible
     {
-        if (isset($this->openModules[$moduleKey])) {
-            return $this->openModules[$moduleKey];
+        $resolvedKey = $this->resolveModuleKey($moduleKey) ?? $moduleKey;
+
+        if (isset($this->openModules[$resolvedKey])) {
+            return $this->openModules[$resolvedKey];
         }
 
         if (! $this->isInstalled()) {
@@ -98,13 +111,13 @@ class BibleModuleManager
 
         $modules = $this->modules();
 
-        if (! array_key_exists($moduleKey, $modules->modules)) {
+        if ($this->resolveModuleKey($moduleKey) === null) {
             throw BibleModuleNotInstalledException::missing($moduleKey);
         }
 
-        $this->openModules[$moduleKey] = $modules->getBibleFromModule($moduleKey);
+        $this->openModules[$resolvedKey] = $modules->getBibleFromModule($resolvedKey);
 
-        return $this->openModules[$moduleKey];
+        return $this->openModules[$resolvedKey];
     }
 
     public function clearCache(): void

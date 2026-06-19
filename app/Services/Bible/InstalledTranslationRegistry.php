@@ -3,13 +3,14 @@
 namespace App\Services\Bible;
 
 use App\Data\TranslationConfig;
+use App\Enums\TranslationInstallStatus;
+use App\Models\Translation;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class InstalledTranslationRegistry
 {
     public function __construct(
-        private BibleModuleManager $modules,
         private TranslationCatalog $catalog,
     ) {}
 
@@ -18,38 +19,26 @@ class InstalledTranslationRegistry
      */
     public function all(): Collection
     {
-        $installed = $this->modules->installedModules();
-
-        return collect($installed)->map(function (array $module): TranslationConfig {
-            $moduleKey = $module['key'];
-            $catalogEntry = $this->catalog->all()->first(
-                fn($entry) => strcasecmp($entry->short, $moduleKey) === 0,
-            );
-
-            $name = $catalogEntry?->name
-                ?? (string) ($module['description'] ?? $moduleKey);
-
-            return new TranslationConfig(
-                id: strtolower($moduleKey),
-                module: $moduleKey,
-                name: $name,
-                abbrev: $moduleKey,
-                bundled: $module['bundled'],
-            );
-        })->sortBy('name')->values();
+        return Translation::query()
+            ->where('install_status', TranslationInstallStatus::Ready)
+            ->orderBy('name')
+            ->get()
+            ->map(fn(Translation $translation): TranslationConfig => $this->mapConfig($translation))
+            ->values();
     }
 
     public function find(string $id): TranslationConfig
     {
-        $translation = $this->all()->first(
-            fn(TranslationConfig $translation): bool => $translation->id === strtolower($id),
-        );
+        $translation = Translation::query()
+            ->where('abbrev', strtolower($id))
+            ->where('install_status', TranslationInstallStatus::Ready)
+            ->first();
 
         if ($translation === null) {
             abort(404, "Translation \"{$id}\" is not installed.");
         }
 
-        return $translation;
+        return $this->mapConfig($translation);
     }
 
     public function findByModule(string $moduleKey): TranslationConfig
@@ -59,7 +48,10 @@ class InstalledTranslationRegistry
 
     public function isInstalled(string $moduleKey): bool
     {
-        return $this->modules->isModuleInstalled($moduleKey);
+        return Translation::query()
+            ->where('abbrev', strtolower($moduleKey))
+            ->where('install_status', TranslationInstallStatus::Ready)
+            ->exists();
     }
 
     public function isBundled(string $moduleKey): bool
@@ -69,5 +61,30 @@ class InstalledTranslationRegistry
             array_map('strtoupper', config('boanerges.bundled_modules', [])),
             true,
         );
+    }
+
+    public function findModel(string $abbrev): ?Translation
+    {
+        return Translation::query()->where('abbrev', strtolower($abbrev))->first();
+    }
+
+    public function toConfig(Translation $translation): TranslationConfig
+    {
+        return new TranslationConfig(
+            id: $translation->abbrev,
+            module: strtoupper($translation->abbrev),
+            name: $translation->name,
+            abbrev: strtoupper($translation->abbrev),
+            bundled: $translation->bundled,
+            about: $translation->about,
+            installStatus: $translation->install_status->value,
+            installStep: $translation->install_step,
+            installError: $translation->install_error,
+        );
+    }
+
+    private function mapConfig(Translation $translation): TranslationConfig
+    {
+        return $this->toConfig($translation);
     }
 }

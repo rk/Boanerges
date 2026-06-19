@@ -1,11 +1,16 @@
 <?php
 
-use App\Services\Bible\BibleModuleManager;
+use App\Enums\TranslationInstallStatus;
+use App\Models\Translation;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function (): void {
     if (! is_dir(Storage::disk('extras')->path('sword/mods.d'))) {
         $this->markTestSkipped('ASV SWORD module not installed. Run `php artisan bible:verify-asv`.');
+    }
+
+    if (! Translation::query()->where('abbrev', 'asv')->where('install_status', TranslationInstallStatus::Ready)->exists()) {
+        $this->markTestSkipped('ASV not imported to database yet.');
     }
 });
 
@@ -61,19 +66,19 @@ test('returns unprocessable for invalid chapter', function (): void {
     $response->assertUnprocessable();
 })->group('sword');
 
-test('returns service unavailable when module files are missing', function (): void {
-    $manager = Mockery::mock(BibleModuleManager::class);
-    $manager->shouldReceive('installedModules')
-        ->andReturn([
-            ['key' => 'ASV', 'description' => 'American Standard Version', 'bundled' => true],
-        ]);
-    $manager->shouldReceive('open')
-        ->once()
-        ->andThrow(App\Exceptions\BibleModuleNotInstalledException::missing('ASV'));
+test('search finds genesis reference text', function (): void {
+    $response = $this->getJson(route('bible.search', ['q' => 'beginning', 'translation' => 'asv']));
 
-    $this->instance(BibleModuleManager::class, $manager);
+    $response->assertSuccessful();
+    expect(collect($response->json('results'))->firstWhere('bookId', 'gen'))->not->toBeNull();
+});
+
+test('returns not found when translation is not ready', function (): void {
+    Translation::query()->where('abbrev', 'asv')->update([
+        'install_status' => TranslationInstallStatus::Importing,
+    ]);
 
     $response = $this->getJson(route('bible.books.index', ['translation' => 'asv']));
 
-    $response->assertServiceUnavailable();
+    $response->assertNotFound();
 });

@@ -4,9 +4,11 @@ import {
     catalog as catalogRoute,
     chapter as chapterRoute,
     install as installRoute,
+    installStatus as installStatusRoute,
     translations as translationsRoute,
     uninstall as uninstallRoute,
 } from '@/actions/App/Http/Controllers/BibleController';
+import { watchInstallProgress } from '@/lib/nativeBroadcast.ts';
 import type { Book, CatalogTranslation, Chapter, Translation } from '@/lib/types/bible';
 
 export const bible = $state({
@@ -51,23 +53,45 @@ async function jsonFetch<T>(url: string, init?: RequestInit): Promise<T> {
 export function openTranslationManager(): void {
     bible.translationManagerOpen = true;
     bible.managerError = null;
-    void loadCatalog();
+    void Promise.all([loadTranslations(true), loadCatalog(true)]);
 }
 
 export function closeTranslationManager(): void {
     bible.translationManagerOpen = false;
     bible.managerError = null;
+    void loadTranslations(true);
+}
+
+export function invalidateInstalledTranslations(): void {
+    bible.translationsLoaded = false;
+    bible.translations = [];
+    bible.books = [];
+    bible.booksTranslationId = null;
 }
 
 export function invalidateTranslations(): void {
-    bible.translationsLoaded = false;
+    invalidateInstalledTranslations();
     bible.catalogLoaded = false;
-    bible.translations = [];
     bible.catalog = [];
 }
 
-export async function loadTranslations(): Promise<void> {
-    if (bible.translationsLoaded) {
+export function patchCatalogEntry(
+    module: string,
+    patch: Partial<Pick<CatalogTranslation, 'installed' | 'install_status'>>,
+): void {
+    const index = bible.catalog.findIndex(
+        (entry) => entry.module.toLowerCase() === module.toLowerCase(),
+    );
+
+    if (index === -1) {
+        return;
+    }
+
+    bible.catalog[index] = { ...bible.catalog[index], ...patch };
+}
+
+export async function loadTranslations(force = false): Promise<void> {
+    if (bible.translationsLoaded && ! force) {
         return;
     }
 
@@ -101,12 +125,69 @@ export async function loadCatalog(force = false): Promise<void> {
 export async function installTranslation(module: string): Promise<void> {
     bible.installingModule = module;
     bible.managerError = null;
+    patchCatalogEntry(module, { installed: false, install_status: 'pending' });
 
     try {
         await jsonFetch(installRoute.url(module), { method: 'POST' });
-        invalidateTranslations();
-        await Promise.all([loadTranslations(), loadCatalog(true)]);
+
+        const status = await jsonFetch<{
+            install_status: string;
+            step: string;
+            install_error?: string | null;
+        }>(installStatusRoute.url(module));
+
+        patchCatalogEntry(module, { install_status: status.install_status, installed: false });
+
+        if (status.install_status === 'ready') {
+            invalidateInstalledTranslations();
+            await Promise.all([loadTranslations(true), loadCatalog(true)]);
+
+            return;
+        }
+
+        if (status.install_status === 'failed') {
+            throw new Error(status.install_error ?? 'Installation failed.');
+        }
+
+        await new Promise<void>((resolve, reject) => {
+            let settled = false;
+
+            const finish = (callback: () => void): void => {
+                if (settled) {
+                    return;
+                }
+
+                settled = true;
+                stop();
+                callback();
+            };
+
+            const stop = watchInstallProgress(
+                'App\\Events\\TranslationInstallProgress',
+                installStatusRoute.url(module),
+                (payload) => {
+                    const installStatus = payload.install_status ?? payload.step;
+
+                    patchCatalogEntry(module, {
+                        install_status: installStatus,
+                        installed: installStatus === 'ready' || payload.step === 'ready',
+                    });
+
+                    if (payload.install_status === 'ready' || payload.step === 'ready') {
+                        finish(resolve);
+                    }
+
+                    if (payload.install_status === 'failed' || payload.step === 'failed') {
+                        finish(() => reject(new Error(payload.install_error ?? 'Installation failed.')));
+                    }
+                },
+            );
+        });
+
+        invalidateInstalledTranslations();
+        await Promise.all([loadTranslations(true), loadCatalog(true)]);
     } catch (error) {
+        patchCatalogEntry(module, { installed: false, install_status: 'failed' });
         bible.managerError = error instanceof Error ? error.message : 'Installation failed.';
 
         throw error;
@@ -118,11 +199,12 @@ export async function installTranslation(module: string): Promise<void> {
 export async function uninstallTranslation(module: string): Promise<void> {
     bible.uninstallingModule = module;
     bible.managerError = null;
+    patchCatalogEntry(module, { installed: false, install_status: null });
 
     try {
         await jsonFetch(uninstallRoute.url(module), { method: 'DELETE' });
-        invalidateTranslations();
-        await Promise.all([loadTranslations(), loadCatalog(true)]);
+        invalidateInstalledTranslations();
+        await Promise.all([loadTranslations(true), loadCatalog(true)]);
     } catch (error) {
         bible.managerError = error instanceof Error ? error.message : 'Removal failed.';
 

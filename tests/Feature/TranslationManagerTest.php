@@ -8,26 +8,14 @@ beforeEach(function (): void {
     if (! is_dir(Storage::disk('extras')->path('sword/mods.d'))) {
         $this->markTestSkipped('ASV SWORD module not installed.');
     }
-
-    $this->localSwordPath = Storage::disk('local')->path('modules/bible');
 });
 
 afterEach(function (): void {
-    if (! isset($this->localSwordPath) || ! is_dir($this->localSwordPath)) {
-        return;
-    }
+    $translation = \App\Models\Translation::query()->where('abbrev', 'kjv')->first();
 
-    $iterator = new RecursiveIteratorIterator(
-        new RecursiveDirectoryIterator($this->localSwordPath, FilesystemIterator::SKIP_DOTS),
-        RecursiveIteratorIterator::CHILD_FIRST,
-    );
-
-    foreach ($iterator as $file) {
-        if ($file->isDir()) {
-            @rmdir($file->getPathname());
-        } else {
-            @unlink($file->getPathname());
-        }
+    if ($translation !== null) {
+        app(\App\Services\Bible\TranslationSchemaManager::class)->dropTables('kjv');
+        $translation->delete();
     }
 
     app(BibleModuleManager::class)->clearCache();
@@ -46,7 +34,7 @@ test('catalog lists english translations with install status', function (): void
     expect(collect($response->json('translations'))->count())->toBeGreaterThan(50);
 });
 
-test('installed translations are discovered from disk', function (): void {
+test('installed translations are discovered from database', function (): void {
     $response = $this->getJson(route('bible.translations.index'));
 
     $response->assertSuccessful();
@@ -81,7 +69,7 @@ test('translation can be installed and uninstalled', function (): void {
 
     $install = $this->postJson(route('bible.translations.install', ['module' => 'KJV']));
 
-    $install->assertSuccessful();
+    $install->assertAccepted();
     $install->assertJsonPath('translation.id', 'kjv');
 
     $this->getJson(route('bible.translations.index'))
@@ -107,7 +95,7 @@ test('installing an already installed translation returns conflict', function ()
         $catalog->url => Http::response(file_get_contents($fixture)),
     ]);
 
-    $this->postJson(route('bible.translations.install', ['module' => 'KJV']))->assertSuccessful();
+    $this->postJson(route('bible.translations.install', ['module' => 'KJV']))->assertAccepted();
 
     $this->postJson(route('bible.translations.install', ['module' => 'KJV']))
         ->assertConflict();

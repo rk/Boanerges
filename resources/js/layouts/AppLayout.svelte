@@ -12,6 +12,8 @@
     import type { ReadabilitySettings as ReadabilitySettingsType } from '@/lib/types/readability';
     import type { StudySettings as StudySettingsType } from '@/lib/types/study';
     import SpeedDial from '@/components/SpeedDial.svelte';
+    import SearchModal from '@/components/search/SearchModal.svelte';
+    import CrossReferencesPanel from '@/components/crossrefs/CrossReferencesPanel.svelte';
 
     let { children }: { children: Snippet } = $props();
 
@@ -26,6 +28,18 @@
         const translationId = study.translationId;
 
         loadTranslations().then(() => loadBooks(translationId));
+    });
+
+    $effect(() => {
+        if (bible.translationManagerOpen) {
+            return;
+        }
+
+        if (! bible.translationsLoaded) {
+            return;
+        }
+
+        void loadBooks(study.translationId);
     });
 </script>
 
@@ -56,6 +70,9 @@
 
     <SpeedDial />
 </div>
+
+<SearchModal />
+<CrossReferencesPanel />
 
 {#if study.settingsOpen}
     <ReadabilitySettings onclose={closeSettings} />
