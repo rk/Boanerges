@@ -1,18 +1,49 @@
 <script lang="ts">
-    import { BookMarked } from '@lucide/svelte';
-    import { crossrefs, loadCrossReferences } from '@/lib/crossrefs.svelte.ts';
-    import { study, setBook, setChapter } from '@/lib/study.svelte.ts';
+    import { BookMarked, Search } from '@lucide/svelte';
+    import { bible } from '@/lib/bible.svelte.ts';
+    import {
+        closeCrossReferences,
+        crossrefs,
+        scheduleCrossReferenceLookup,
+        scriptureReferenceForCurrentVerse,
+    } from '@/lib/crossrefs.svelte.ts';
+    import {
+        formatScriptureReference,
+        formatCrossReference,
+        parseScriptureReference,
+    } from '@/lib/scriptureReference';
+    import { study, goToVerseReference } from '@/lib/study.svelte.ts';
     import type { CrossReference } from '@/lib/types/bible';
 
     let dialog: HTMLDialogElement | undefined = $state();
-    let selectedVerse = $state<number | null>(null);
+    let referenceInput = $state('');
+
+    const parsedReference = $derived(parseScriptureReference(referenceInput, bible.books));
+    const referenceLabel = $derived(
+        parsedReference
+            ? formatScriptureReference(
+                parsedReference.bookId,
+                parsedReference.chapter,
+                parsedReference.verse,
+                bible.books,
+            )
+            : null,
+    );
+    const referenceError = $derived(
+        referenceInput.trim() !== '' && parsedReference === null
+            ? 'Enter a reference like Mark 1:1'
+            : null,
+    );
 
     $effect(() => {
         if (crossrefs.open) {
             dialog?.showModal();
 
-            if (selectedVerse !== null) {
-                void loadCrossReferences(study.bookId, study.chapter, selectedVerse);
+            if (crossrefs.initialReference !== null) {
+                referenceInput = crossrefs.initialReference;
+                crossrefs.initialReference = null;
+            } else if (referenceInput.trim() === '') {
+                referenceInput = scriptureReferenceForCurrentVerse(bible.books);
             }
         } else {
             dialog?.close();
@@ -20,24 +51,30 @@
     });
 
     $effect(() => {
-        if (crossrefs.open && selectedVerse !== null) {
-            void loadCrossReferences(study.bookId, study.chapter, selectedVerse);
+        if (! crossrefs.open) {
+            return;
         }
+
+        scheduleCrossReferenceLookup(referenceInput, bible.books);
     });
 
     export function openForVerse(verse: number): void {
-        selectedVerse = verse;
+        crossrefs.initialReference = formatScriptureReference(
+            study.bookId,
+            study.chapter,
+            verse,
+            bible.books,
+        );
         crossrefs.open = true;
     }
 
     function handleClose(): void {
-        crossrefs.open = false;
-        selectedVerse = null;
+        referenceInput = '';
+        closeCrossReferences();
     }
 
     function goTo(ref: CrossReference): void {
-        setBook(ref.bookId);
-        setChapter(ref.chapter);
+        goToVerseReference(ref.bookId, ref.chapter, ref.verse, ref.endVerse);
         handleClose();
     }
 </script>
@@ -48,10 +85,20 @@
             <BookMarked size="18" /> Cross References
         </h3>
 
-        {#if selectedVerse !== null}
-            <p class="text-base-content/70 mt-1 text-sm">
-                {study.bookId.toUpperCase()} {study.chapter}:{selectedVerse}
-            </p>
+        <label class="input input-bordered mt-4">
+            <Search size="14" />
+            <input
+                type="search"
+                class="grow py-2"
+                placeholder="Mark 1:1"
+                bind:value={referenceInput}
+            />
+        </label>
+
+        {#if referenceError}
+            <p class="text-error mt-2 text-sm">{referenceError}</p>
+        {:else if referenceLabel}
+            <p class="text-base-content/70 mt-2 text-sm">{referenceLabel}</p>
         {/if}
 
         <div class="mt-4 min-h-0 flex-1 overflow-y-auto">
@@ -59,8 +106,12 @@
                 <div class="flex justify-center py-8">
                     <span class="loading loading-spinner loading-md text-primary"></span>
                 </div>
+            {:else if referenceInput.trim() === ''}
+                <p class="text-base-content/60 py-4 text-sm">Enter a verse reference to look up cross references.</p>
+            {:else if referenceError}
+                <p class="text-base-content/60 py-4 text-sm">Could not parse that reference.</p>
             {:else if crossrefs.references.length === 0}
-                <p class="text-base-content/60 py-4 text-sm">Select a verse or no references found.</p>
+                <p class="text-base-content/60 py-4 text-sm">No cross references found.</p>
             {:else}
                 <ul class="divide-base-300 divide-y">
                     {#each crossrefs.references as ref (ref.bookId + ref.chapter + ref.verse + ref.rank)}
@@ -70,8 +121,8 @@
                                 class="hover:bg-base-200 flex w-full items-center justify-between px-2 py-3 text-left"
                                 onclick={() => goTo(ref)}
                             >
-                                <span class="font-medium uppercase">
-                                    {ref.bookId} {ref.chapter}:{ref.verse}{#if ref.endVerse && ref.endVerse !== ref.verse}–{ref.endVerse}{/if}
+                                <span class="font-medium">
+                                    {formatCrossReference(ref, bible.books)}
                                 </span>
                                 <span class="badge badge-ghost badge-sm">{ref.rank}</span>
                             </button>

@@ -57,6 +57,7 @@ export type SearchResult = {
 export type CrossReference = {
     rank: number;
     bookId: string;
+    bookName?: string;
     chapter: number;
     verse: number;
     endVerse: number | null;

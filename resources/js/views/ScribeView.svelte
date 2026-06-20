@@ -6,15 +6,25 @@
     import { getReaderStyle } from '@/lib/readability.svelte.ts';
     import { study } from '@/lib/study.svelte.ts';
     import type { Chapter } from '@/lib/types/bible';
+    import { verseNumbersInRange } from '@/lib/verseHighlight';
+    import { createVerseHighlightScroller } from '@/lib/verseHighlightScroll';
 
     let chapterA = $state<Chapter | null>(null);
     let chapterB = $state<Chapter | null>(null);
     let loading = $state(true);
+    let leftScroll = $state<HTMLElement | null>(null);
+    let rightScroll = $state<HTMLElement | null>(null);
 
+    const highlightScroller = createVerseHighlightScroller();
     const readerStyle = $derived(getReaderStyle());
 
     const translationA = $derived(bible.translations.find((item) => item.id === study.translationId));
     const translationB = $derived(bible.translations.find((item) => item.id === study.translationBId));
+    const highlightedVerses = $derived(
+        study.verseHighlight
+            ? verseNumbersInRange(study.verseHighlight.verse, study.verseHighlight.endVerse)
+            : new Set<number>(),
+    );
 
     $effect(() => {
         const bookId = study.bookId;
@@ -49,6 +59,26 @@
             cancelled = true;
         };
     });
+
+    $effect(() => {
+        if (! study.verseHighlight) {
+            highlightScroller.reset();
+        }
+    });
+
+    $effect(() => {
+        const highlight = study.verseHighlight;
+
+        if (! highlight || loading || ! chapterA) {
+            return;
+        }
+
+        void highlightScroller.scrollTo(
+            [leftScroll, rightScroll],
+            highlight,
+            `${study.bookId}:${study.chapter}`,
+        );
+    });
 </script>
 
 <div class="grid h-full min-h-0 grid-cols-3" style={readerStyle}>
@@ -57,14 +87,14 @@
             <span class="loading loading-spinner loading-lg text-primary"></span>
         </div>
     {:else}
-        <ReaderPane chapter={chapterA} translationAbbrev={translationA?.abbrev}>
-            <VerseText verses={chapterA.verses} />
+        <ReaderPane chapter={chapterA} translationAbbrev={translationA?.abbrev} bind:scrollRef={leftScroll}>
+            <VerseText verses={chapterA.verses} {highlightedVerses} />
         </ReaderPane>
 
         <ScribeEditor book={chapterA.book} chapter={chapterA.chapter} verses={chapterA.verses} />
 
-        <ReaderPane chapter={chapterB} translationAbbrev={translationB?.abbrev}>
-            <VerseText verses={chapterB.verses} />
+        <ReaderPane chapter={chapterB} translationAbbrev={translationB?.abbrev} bind:scrollRef={rightScroll}>
+            <VerseText verses={chapterB.verses} {highlightedVerses} />
         </ReaderPane>
     {/if}
 </div>

@@ -2,6 +2,7 @@
 
 namespace App\Services\Bible;
 
+use App\Jobs\Bible\ImportCrossReferencesJob;
 use App\Services\Bible\Import\OpenBibleVerseIdMapper;
 use Illuminate\Support\Facades\DB;
 
@@ -9,15 +10,21 @@ class CrossReferenceService
 {
     public function isImported(): bool
     {
-        return DB::table('import_meta')->where('key', 'cross_references')->whereNotNull('completed_at')->exists();
+        return DB::table('import_meta')->where('key', ImportCrossReferencesJob::META_KEY)->whereNotNull('completed_at')->exists();
     }
 
     /**
-     * @return list<array{rank: int, bookId: string, chapter: int, verse: int, endVerse: int|null}>
+     * @return list<array{rank: int, bookId: string, bookName: string, chapter: int, verse: int, endVerse: int|null}>
      */
     public function forVerse(string $bookId, int $chapter, int $verse): array
     {
-        $sourceId = $this->verseIdFor($bookId, $chapter, $verse);
+        $osisBookId = OsisBookId::normalize($bookId);
+
+        if ($osisBookId === null) {
+            return [];
+        }
+
+        $sourceId = $this->verseIdFor($osisBookId, $chapter, $verse);
 
         if ($sourceId === null) {
             return [];
@@ -25,7 +32,7 @@ class CrossReferenceService
 
         $rows = DB::table('cross_references')
             ->where('source_verse_id', $sourceId)
-            ->orderByDesc('rank')
+            ->orderBy('rank')
             ->limit(100)
             ->get();
 
@@ -48,6 +55,7 @@ class CrossReferenceService
             $results[] = [
                 'rank' => (int) $row->rank,
                 'bookId' => $target['book_id'],
+                'bookName' => OsisBookId::displayName($target['book_id']),
                 'chapter' => $target['chapter'],
                 'verse' => $target['verse'],
                 'endVerse' => $endVerse,
@@ -60,7 +68,7 @@ class CrossReferenceService
     private function verseIdFor(string $bookId, int $chapter, int $verse): ?int
     {
         $id = DB::table('cross_reference_verses')
-            ->where('book_id', strtolower($bookId))
+            ->where('book_id', $bookId)
             ->where('chapter', $chapter)
             ->where('verse', $verse)
             ->value('id');

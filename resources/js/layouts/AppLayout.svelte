@@ -6,7 +6,7 @@
     import SaveStatus from '@/components/scribe/SaveStatus.svelte';
     import ReadabilitySettings from '@/components/settings/ReadabilitySettings.svelte';
     import AppSidebar from '@/components/sidebar/AppSidebar.svelte';
-    import { loadBooks, loadTranslations } from '@/lib/bible.svelte.ts';
+    import { bible, loadBooks, loadTranslations } from '@/lib/bible.svelte.ts';
     import { hydrateReadability } from '@/lib/readability.svelte.ts';
     import { closeSettings, hydrateStudy, study } from '@/lib/study.svelte.ts';
     import type { ReadabilitySettings as ReadabilitySettingsType } from '@/lib/types/readability';

@@ -30,7 +30,7 @@ class DbBookCatalog
             ->orderBy('id')
             ->get()
             ->map(fn($book) => [
-                'id' => $book->osis_id,
+                'id' => OsisBookId::normalize($book->osis_id) ?? $book->osis_id,
                 'name' => $book->name,
                 'abbrev' => strtoupper(substr($book->osis_id, 0, 3)),
                 'testament' => $book->testament,
@@ -49,7 +49,13 @@ class DbBookCatalog
         $abbrev = $this->schema->validateAbbrev($abbrev);
         $table = $this->schema->booksTable($abbrev);
 
-        $book = DB::table($table)->where('osis_id', strtolower($bookId))->first();
+        $canonical = OsisBookId::normalize($bookId);
+
+        if ($canonical === null) {
+            abort(404, "Book \"{$bookId}\" not found in {$abbrev}.");
+        }
+
+        $book = DB::table($table)->whereIn('osis_id', OsisBookId::lookupValues($canonical))->first();
 
         if ($book === null) {
             abort(404, "Book \"{$bookId}\" not found in {$abbrev}.");

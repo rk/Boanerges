@@ -3,6 +3,7 @@
 namespace App\Services\Bible\Import;
 
 use App\Services\Bible\Markup\VerseTextFormatter;
+use App\Services\Bible\OsisBookId;
 use App\Services\Bible\TranslationSchemaManager;
 use Illuminate\Support\Facades\DB;
 use ZipArchive;
@@ -134,9 +135,9 @@ class UsfmImporter
             if (preg_match($this->markerPattern(self::ID_MARKER) . '\s+(\S+)/u', $line, $matches)) {
                 $flushBook();
 
-                $osisId = $this->osisIdFromUsfmCode($matches[1]);
+                $osisId = OsisBookId::normalize($matches[1]);
 
-                if (! $this->isCanonBook($osisId)) {
+                if ($osisId === null) {
                     continue;
                 }
 
@@ -209,22 +210,6 @@ class UsfmImporter
     private function markerPattern(string $marker): string
     {
         return '/^' . preg_quote($marker, '/');
-    }
-
-    private function osisIdFromUsfmCode(string $code): string
-    {
-        return strtolower(trim($code));
-    }
-
-    private function isCanonBook(string $osisId): bool
-    {
-        foreach (BibleCanon::books() as $book) {
-            if ($book['osis'] === $osisId) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private function plainTextFromUsfm(string $text): string

@@ -13,11 +13,20 @@ class ImportCrossReferencesJob implements ShouldQueue
 {
     use Queueable;
 
+    public const META_KEY = 'cross_references_v2';
+
     public int $timeout = 600;
+
+    public function __construct(
+        private bool $force = false,
+    ) {}
 
     public function handle(): void
     {
-        if (DB::table('import_meta')->where('key', 'cross_references')->whereNotNull('completed_at')->exists()) {
+        if (
+            ! $this->force
+            && DB::table('import_meta')->where('key', self::META_KEY)->whereNotNull('completed_at')->exists()
+        ) {
             return;
         }
 
@@ -65,17 +74,30 @@ class ImportCrossReferencesJob implements ShouldQueue
         $lineCount = 0;
 
         while (($line = fgets($handle)) !== false) {
-            $parts = explode("\t", trim($line));
+            $line = trim($line);
+
+            if ($line === '' || str_starts_with($line, 'From Verse')) {
+                continue;
+            }
+
+            $parts = explode("\t", $line);
 
             if (count($parts) < 3) {
                 continue;
             }
 
+            $source = OpenBibleVerseIdMapper::verseIdsFromReference($parts[0]);
+            $target = OpenBibleVerseIdMapper::verseIdsFromReference($parts[1]);
+
+            if ($source === null || $target === null) {
+                continue;
+            }
+
             $refs[] = [
-                'source_verse_id' => (int) $parts[0],
-                'rank' => (int) $parts[1],
-                'target_start_id' => (int) $parts[2],
-                'target_end_id' => isset($parts[3]) && $parts[3] !== '' ? (int) $parts[3] : null,
+                'source_verse_id' => $source['start'],
+                'rank' => (int) $parts[2],
+                'target_start_id' => $target['start'],
+                'target_end_id' => $target['end'],
             ];
 
             if (count($refs) >= 1000) {
@@ -97,7 +119,7 @@ class ImportCrossReferencesJob implements ShouldQueue
         }
 
         DB::table('import_meta')->updateOrInsert(
-            ['key' => 'cross_references'],
+            ['key' => self::META_KEY],
             ['completed_at' => now()],
         );
 

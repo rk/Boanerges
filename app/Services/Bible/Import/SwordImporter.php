@@ -3,6 +3,7 @@
 namespace App\Services\Bible\Import;
 
 use App\Services\Bible\BibleModuleManager;
+use App\Services\Bible\OsisBookId;
 use App\Services\Bible\Markup\VerseTextFormatter;
 use App\Services\Bible\TranslationSchemaManager;
 use Illuminate\Support\Facades\DB;
@@ -29,7 +30,7 @@ class SwordImporter
             foreach ($testamentBooks as $book) {
                 $bookId = DB::table($booksTable)->insertGetId([
                     'name' => $book->name,
-                    'osis_id' => strtolower($book->osisName),
+                    'osis_id' => OsisBookId::normalize(strtolower($book->osisName)) ?? strtolower($book->osisName),
                     'testament' => strtolower($testament),
                     'chapters' => $book->numChapters,
                 ]);

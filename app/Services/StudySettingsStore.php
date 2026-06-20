@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Services\Bible\OsisBookId;
+
 class StudySettingsStore
 {
     public const KEY = 'study';
@@ -25,7 +27,10 @@ class StudySettingsStore
     public function get(): array
     {
         /** @var array{activeView: string, bookId: string, chapter: int, translationId: string, translationBId: string} */
-        return $this->settings->get(self::KEY, $this->defaults());
+        $settings = $this->settings->get(self::KEY, $this->defaults());
+        $settings['bookId'] = OsisBookId::normalize($settings['bookId']) ?? $settings['bookId'];
+
+        return $settings;
     }
 
     /**
@@ -34,6 +39,10 @@ class StudySettingsStore
      */
     public function update(array $settings): array
     {
+        if (isset($settings['bookId']) && is_string($settings['bookId'])) {
+            $settings['bookId'] = OsisBookId::normalize($settings['bookId']) ?? $settings['bookId'];
+        }
+
         /** @var array{activeView: string, bookId: string, chapter: int, translationId: string, translationBId: string} */
         return $this->settings->update(self::KEY, $settings, $this->defaults());
     }

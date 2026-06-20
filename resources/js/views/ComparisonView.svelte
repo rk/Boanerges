@@ -13,13 +13,18 @@
         study,
     } from '@/lib/study.svelte.ts';
     import type { Chapter, ChapterNavTarget } from '@/lib/types/bible';
+    import { verseNumbersInRange } from '@/lib/verseHighlight';
+    import { createVerseHighlightScroller } from '@/lib/verseHighlightScroll';
 
-    let leftScroll: HTMLElement | null = $state(null);
-    let rightScroll: HTMLElement | null = $state(null);
+    let leftScroll = $state<HTMLElement | null>(null);
+    let rightScroll = $state<HTMLElement | null>(null);
     let syncing = $state(false);
+    let suppressScrollSync = $state(false);
     let chapterA = $state<Chapter | null>(null);
     let chapterB = $state<Chapter | null>(null);
     let loading = $state(true);
+
+    const highlightScroller = createVerseHighlightScroller();
 
     const previousChapter = $derived(getPreviousChapter());
     const nextChapter = $derived(getNextChapter());
@@ -27,6 +32,11 @@
 
     const translationA = $derived(bible.translations.find((item) => item.id === study.translationId));
     const translationB = $derived(bible.translations.find((item) => item.id === study.translationBId));
+    const highlightedVerses = $derived(
+        study.verseHighlight
+            ? verseNumbersInRange(study.verseHighlight.verse, study.verseHighlight.endVerse)
+            : new Set<number>(),
+    );
 
     $effect(() => {
         const bookId = study.bookId;
@@ -62,6 +72,41 @@
         };
     });
 
+    $effect(() => {
+        if (! study.verseHighlight) {
+            highlightScroller.reset();
+        }
+    });
+
+    $effect(() => {
+        const highlight = study.verseHighlight;
+
+        if (! highlight || loading || ! chapterA) {
+            return;
+        }
+
+        let cancelled = false;
+
+        void (async () => {
+            suppressScrollSync = study.scrollSync;
+
+            await highlightScroller.scrollTo(
+                [leftScroll, rightScroll],
+                highlight,
+                `${study.bookId}:${study.chapter}`,
+            );
+
+            if (! cancelled) {
+                suppressScrollSync = false;
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+            suppressScrollSync = false;
+        };
+    });
+
     function chapterNavTarget(bookId: string, chapterNumber: number): ChapterNavTarget {
         return {
             bookId,
@@ -81,7 +126,7 @@
     );
 
     function syncScroll(source: HTMLElement, target: HTMLElement | null): void {
-        if (! study.scrollSync || ! target || syncing) {
+        if (! study.scrollSync || ! target || syncing || suppressScrollSync) {
             return;
         }
 
@@ -126,7 +171,7 @@
                 bind:scrollRef={leftScroll}
                 onscroll={handleLeftScroll}
             >
-                <ParagraphText verses={chapterA.verses} />
+                <ParagraphText verses={chapterA.verses} {highlightedVerses} />
             </ReaderPane>
 
             <div class="border-base-300 flex w-12 flex-col items-center justify-between border-x py-4">
@@ -154,7 +199,7 @@
                 bind:scrollRef={rightScroll}
                 onscroll={handleRightScroll}
             >
-                <ParagraphText verses={chapterB.verses} />
+                <ParagraphText verses={chapterB.verses} {highlightedVerses} />
             </ReaderPane>
         </div>
     {/if}

@@ -3,6 +3,7 @@
 namespace App\Services\Bible\Import;
 
 use App\Services\Bible\Markup\VerseTextFormatter;
+use App\Services\Bible\OsisBookId;
 use App\Services\Bible\TranslationSchemaManager;
 use Illuminate\Support\Facades\DB;
 
@@ -77,12 +78,6 @@ class AccordanceImporter
 
     private function bookNameToOsis(string $name): string
     {
-        $map = [
-            'Genesis' => 'gen',
-            'Matthew' => 'mat',
-            'John' => 'jhn',
-        ];
-
-        return $map[$name] ?? strtolower(substr(preg_replace('/[^a-z]/i', '', $name), 0, 3));
+        return OsisBookId::normalize($name) ?? strtolower(substr(preg_replace('/[^a-z]/i', '', $name), 0, 3));
     }
 }

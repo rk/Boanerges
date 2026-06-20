@@ -48,7 +48,7 @@ class SearchService
                 }
 
                 $results[] = [
-                    'bookId' => $bookRow->osis_id,
+                    'bookId' => OsisBookId::normalize($bookRow->osis_id) ?? $bookRow->osis_id,
                     'chapter' => (int) $row->chapter,
                     'verse' => (int) $row->verse,
                     'snippet' => strip_tags((string) $row->snippet, '<mark>'),

@@ -55,7 +55,7 @@ class DbChapterReader
 
         return [
             'book' => $book->name,
-            'bookAbbrev' => strtoupper(substr($book->osis_id, 0, 3)),
+            'bookAbbrev' => strtoupper(substr(OsisBookId::normalize($book->osis_id) ?? $book->osis_id, 0, 3)),
             'chapter' => $chapter,
             'verses' => $verses,
         ];

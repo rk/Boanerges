@@ -3,7 +3,10 @@
     import { groupVersesIntoParagraphs } from '@/lib/paragraphs.ts';
     import type { Verse } from '@/lib/types/bible';
 
-    let { verses }: { verses: Verse[] } = $props();
+    let { verses, highlightedVerses = new Set<number>() }: {
+        verses: Verse[];
+        highlightedVerses?: Set<number>;
+    } = $props();
 
     const paragraphs = $derived(groupVersesIntoParagraphs(verses));
 </script>
@@ -15,7 +18,11 @@
                 {#if index > 0}
                     {' '}
                 {/if}
-                <sup class="text-primary mr-0.5 text-xs">{verse.number}</sup><FormattedVerseText text={verse.text} />
+                <span
+                    id="verse-{verse.number}"
+                    data-verse={verse.number}
+                    class={highlightedVerses.has(verse.number) ? 'rounded-sm bg-primary/15 px-0.5 [box-decoration-break:clone]' : undefined}
+                ><sup class="text-primary mr-0.5 text-xs">{verse.number}</sup><FormattedVerseText text={verse.text} /></span>
             {/each}
         </p>
     {/each}

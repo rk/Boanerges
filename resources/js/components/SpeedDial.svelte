@@ -2,7 +2,7 @@
     import { Menu, Search, NotebookPen, Printer, BookMarked, MessageSquareText } from '@lucide/svelte';
     import { openSearch } from '@/lib/search.svelte.ts';
     import { openCrossReferences } from '@/lib/crossrefs.svelte.ts';
-    import { study } from '@/lib/study.svelte.ts';
+    import { bible } from '@/lib/bible.svelte.ts';
 </script>
 
 <div class="fab">
@@ -24,7 +24,7 @@
         <button
             type="button"
             class="btn btn-lg btn-circle"
-            onclick={() => openCrossReferences(study.chapter > 0 ? 1 : 1)}
+            onclick={() => openCrossReferences(bible.books)}
         >
             <BookMarked />
         </button>
