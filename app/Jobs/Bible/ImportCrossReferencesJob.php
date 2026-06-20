@@ -64,7 +64,7 @@ class ImportCrossReferencesJob implements ShouldQueue
 
         DB::table('cross_references')->delete();
 
-        $handle = fopen($path, 'r');
+        $handle = fopen($path, 'rb');
 
         if ($handle === false) {
             throw new \RuntimeException('Failed to open cross-reference data.');

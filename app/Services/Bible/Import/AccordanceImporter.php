@@ -27,7 +27,7 @@ class AccordanceImporter
         $bookMaxChapter = [];
         $currentBook = null;
 
-        $handle = fopen($path, 'r');
+        $handle = fopen($path, 'rb');
 
         if ($handle === false) {
             throw new \RuntimeException('Failed to open Accordance file.');
