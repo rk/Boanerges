@@ -15,7 +15,8 @@
         "laravel/tinker": "^3.0",
         "laravel/wayfinder": "^0.1.14",
         "nativephp/desktop": "^2.2",
-        "rk/php-sword": "^0.2.6"
+        "rk/php-sword": "^0.2.6",
+        "ext-zip": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.24",

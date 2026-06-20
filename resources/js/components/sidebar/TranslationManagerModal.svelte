@@ -2,6 +2,7 @@
     import { Trash2, Plus, Search, Info } from '@lucide/svelte';
     import {
         bible,
+        bookAbbrev,
         closeTranslationManager,
         installTranslation,
         loadTranslations,
@@ -9,6 +10,7 @@
     } from '@/lib/bible.svelte.ts';
     import { syncStudyTranslationSelection } from '@/lib/study.svelte.ts';
     import type { CatalogTranslation } from '@/lib/types/bible';
+    import RadialProgress from '@/components/RadialProgress.svelte';
 
     let dialog: HTMLDialogElement | undefined = $state();
     let query = $state('');
@@ -141,7 +143,7 @@
                                         onclick={() => handleInstall(entry)}
                                     >
                                         {#if bible.installingModule === entry.module}
-                                            <span class="loading loading-spinner loading-xs"></span>
+                                            <RadialProgress abbrev={entry.abbrev} />
                                         {:else}
                                             <span class="tooltip tooltip-left" data-tip="Install">
                                                 <Plus size="16" />

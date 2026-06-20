@@ -41,11 +41,13 @@ class Translation extends Model
 
     public function updateProgress(TranslationInstallStatus $status, string $step, int $percent): void
     {
-        $this->update([
-            'install_status' => $status,
-            'install_step' => $step,
-            'install_error' => null,
-        ]);
+        if ($this->install_status !== $status || $this->install_step !== $step) {
+            $this->update([
+                'install_status' => $status,
+                'install_step' => $step,
+                'install_error' => null,
+            ]);
+        }
 
         event(new \App\Events\TranslationInstallProgress(
             abbrev: $this->abbrev,

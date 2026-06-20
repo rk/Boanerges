@@ -62,7 +62,7 @@ class TranslationImportPipeline
             return;
         }
 
-        $translation->updateProgress(TranslationInstallStatus::Downloading, 'downloading', 5);
+        $translation->updateProgress(TranslationInstallStatus::Downloading, 'downloading', 0);
 
         $entry = $this->catalog->find($translation->abbrev);
         $zipPath = Storage::disk('local')->path('tmp/' . $entry->short . '.module.zip');
@@ -94,7 +94,7 @@ class TranslationImportPipeline
             $this->downloadedPath = $zipPath;
         }
 
-        $translation->updateProgress(TranslationInstallStatus::Downloading, 'downloaded', 20);
+        $translation->updateProgress(TranslationInstallStatus::Downloading, 'downloaded', 10);
 
         $this->syncMetadata($translation);
     }
@@ -107,43 +107,58 @@ class TranslationImportPipeline
 
     public function createSchema(Translation $translation): void
     {
-        $translation->updateProgress(TranslationInstallStatus::CreatingSchema, 'creating_schema', 30);
         $this->schema->dropTables($translation->abbrev);
         $this->schema->createTables($translation->abbrev);
+        $translation->updateProgress(TranslationInstallStatus::CreatingSchema, 'creating_schema', 20);
     }
 
     public function importVerses(Translation $translation): void
     {
-        $translation->updateProgress(TranslationInstallStatus::Importing, 'importing', 50);
-
-        match ($this->importAs($translation)) {
-            'usfm' => $this->usfmImporter->importFromZip(
-                $translation->abbrev,
-                $this->downloadedPath ?? throw new \RuntimeException('Missing USFM source.'),
-            ),
-            'accordance' => $this->accordanceImporter->importFromFile(
-                $translation->abbrev,
-                $this->downloadedPath ?? throw new \RuntimeException('Missing Accordance source.'),
-            ),
-            default => $this->swordImporter->import($translation->abbrev, $translation->abbrev),
-        };
+        switch ($this->importAs($translation)) {
+            case 'usfm':
+                $translation->updateProgress(TranslationInstallStatus::Importing, 'importing', 70);
+                $this->usfmImporter->importFromZip(
+                    $translation->abbrev,
+                    $this->downloadedPath ?? throw new \RuntimeException('Missing USFM source.'),
+                );
+                break;
+            case 'accordance':
+                $translation->updateProgress(TranslationInstallStatus::Importing, 'importing', 70);
+                $this->accordanceImporter->importFromFile(
+                    $translation->abbrev,
+                    $this->downloadedPath ?? throw new \RuntimeException('Missing Accordance source.'),
+                );
+                break;
+            default:
+                $this->swordImporter->progressConfigure(
+                    20,
+                    50,
+                    static function (float $percent) use ($translation) {
+                        $translation->updateProgress(TranslationInstallStatus::Importing, 'importing', round($percent));
+                    },
+                );
+                $this->swordImporter->import($translation->abbrev, $translation->abbrev);
+                break;
+        }
     }
 
     public function verify(Translation $translation): void
     {
-        $translation->updateProgress(TranslationInstallStatus::Verifying, 'verifying', 75);
-
         if ($this->importAs($translation) === 'sword') {
             $this->swordImporter->verify($translation->abbrev);
         } elseif (! $this->hasVerse($translation->abbrev, 'gen', 1, 1) && ! $this->hasVerse($translation->abbrev, 'mat', 1, 1)) {
             throw new \RuntimeException('Verification failed: no reference verses found.');
         }
+
+        $translation->updateProgress(TranslationInstallStatus::Verifying, 'verifying', 75);
     }
 
     public function buildFtsIndex(Translation $translation): void
     {
         $translation->updateProgress(TranslationInstallStatus::Indexing, 'indexing', 85);
         $this->schema->rebuildFtsIndex($translation->abbrev, $this->verseTextFormatter);
+
+        $translation->updateProgress(TranslationInstallStatus::Indexing, 'indexing', 95);
 
         event(new FtsIndexProgress(
             abbrev: $translation->abbrev,

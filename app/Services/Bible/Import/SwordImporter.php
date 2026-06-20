@@ -2,6 +2,7 @@
 
 namespace App\Services\Bible\Import;
 
+use App\Services\BatchedInsertQueue;
 use App\Services\Bible\BibleModuleManager;
 use App\Services\Bible\OsisBookId;
 use App\Services\Bible\Markup\VerseTextFormatter;
@@ -10,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 
 class SwordImporter
 {
+    use ProgressEmitter;
+
     public function __construct(
         private BibleModuleManager $modules,
         private TranslationSchemaManager $schema,
@@ -26,7 +29,20 @@ class SwordImporter
         DB::table($booksTable)->delete();
         DB::table($versesTable)->delete();
 
-        foreach ($bible->getStructure()->getBooks() as $testament => $testamentBooks) {
+        $processor = new BatchedInsertQueue(
+            static fn (array $rows) => DB::table($versesTable)->insert($rows),
+        );
+
+        $structure = $bible->getStructure()->getBooks();
+
+        $maximum = 0;
+        $counter = 0;
+
+        foreach ($structure as $books) {
+            $maximum += count($books);
+        }
+
+        foreach ($structure as $testament => $testamentBooks) {
             foreach ($testamentBooks as $book) {
                 $bookId = DB::table($booksTable)->insertGetId([
                     'name' => $book->name,
@@ -47,7 +63,7 @@ class SwordImporter
                             join: '',
                         );
 
-                        DB::table($versesTable)->insert([
+                        $processor->push([
                             'book_id' => $bookId,
                             'chapter' => $chapter,
                             'verse' => $verse,
@@ -56,8 +72,12 @@ class SwordImporter
                         ]);
                     }
                 }
+
+                $this->onProgress(++$counter, $maximum);
             }
         }
+
+        $processor->done();
     }
 
     public function verify(string $moduleKey): void
