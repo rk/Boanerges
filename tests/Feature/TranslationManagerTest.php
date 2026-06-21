@@ -2,12 +2,9 @@
 
 use App\Services\Bible\BibleModuleManager;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
 
 beforeEach(function (): void {
-    if (! is_dir(Storage::disk('extras')->path('sword/mods.d'))) {
-        $this->markTestSkipped('ASV SWORD module not installed.');
-    }
+    seedBundledAsvForTests();
 });
 
 afterEach(function (): void {
@@ -54,6 +51,7 @@ test('bundled asv cannot be uninstalled via api', function (): void {
     $response->assertUnprocessable();
 });
 
+// FIXME: sync-installs KJV from fixture zip; keep as pipeline smoke test or stub the job in CI.
 test('translation can be installed and uninstalled', function (): void {
     $fixture = '/Users/robert/Code/php-sword/tests/resources/KJV.zip';
 

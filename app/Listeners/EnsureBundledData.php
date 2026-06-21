@@ -29,6 +29,10 @@ class EnsureBundledData
 
     public function handle(): void
     {
+        if (app()->environment('testing') && ! config('boanerges.seed_bundled_in_tests', false)) {
+            return;
+        }
+
         if (! Translation::query()->where('install_status', TranslationInstallStatus::Ready)->exists()) {
             foreach (config('boanerges.bundled_modules', []) as $module) {
                 $existing = Translation::query()->where('abbrev', strtolower($module))->first();

@@ -26,7 +26,8 @@ final class VerseTextFormatter
 
         $text = htmlspecialchars($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
-        foreach ($placeholders as $placeholder => $html) {
+        // Outer placeholders embed inner keys; restore inside-out.
+        foreach (array_reverse($placeholders, preserve_keys: true) as $placeholder => $html) {
             $text = str_replace(
                 htmlspecialchars($placeholder, ENT_QUOTES | ENT_HTML5, 'UTF-8'),
                 $html,
@@ -48,7 +49,7 @@ final class VerseTextFormatter
 
         $plain = $this->convert($text, $placeholders);
 
-        foreach ($placeholders as $placeholder => $html) {
+        foreach (array_reverse($placeholders, preserve_keys: true) as $placeholder => $html) {
             $plain = str_replace($placeholder, strip_tags($html), $plain);
         }
 

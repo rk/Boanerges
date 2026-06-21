@@ -1,5 +1,6 @@
 <?php
 
+use Database\Seeders\BundledAsvTestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -17,6 +18,11 @@ use Tests\TestCase;
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->in('Feature');
+
+function seedBundledAsvForTests(): void
+{
+    (new BundledAsvTestSeeder())->run();
+}
 
 /*
 |--------------------------------------------------------------------------

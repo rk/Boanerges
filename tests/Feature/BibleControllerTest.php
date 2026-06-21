@@ -2,16 +2,9 @@
 
 use App\Enums\TranslationInstallStatus;
 use App\Models\Translation;
-use Illuminate\Support\Facades\Storage;
 
 beforeEach(function (): void {
-    if (! is_dir(Storage::disk('extras')->path('sword/mods.d'))) {
-        $this->markTestSkipped('ASV SWORD module not installed. Run `php artisan bible:verify-asv`.');
-    }
-
-    if (! Translation::query()->where('abbrev', 'asv')->where('install_status', TranslationInstallStatus::Ready)->exists()) {
-        $this->markTestSkipped('ASV not imported to database yet.');
-    }
+    seedBundledAsvForTests();
 });
 
 test('lists installed translations', function (): void {

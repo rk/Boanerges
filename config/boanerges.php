@@ -9,6 +9,10 @@ return [
         'ASV',
     ],
 
+    // When true in testing, EnsureBundledData may run real SWORD imports (slow).
+    // Feature tests use BundledAsvTestSeeder instead; see Phase 2 SQL fixture plan there.
+    'seed_bundled_in_tests' => env('BOANERGES_SEED_BUNDLED_IN_TESTS', false),
+
     'readability' => [
         'fontSize' => 18,
         'lineHeight' => 1.7,

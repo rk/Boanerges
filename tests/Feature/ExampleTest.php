@@ -7,6 +7,8 @@ test('returns a successful response', function () {
 });
 
 test('renders the study page', function () {
+    seedBundledAsvForTests();
+
     $response = $this->get(route('home'));
 
     $response->assertOk();

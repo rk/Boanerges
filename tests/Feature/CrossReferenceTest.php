@@ -5,6 +5,7 @@ use App\Services\Bible\CrossReferenceService;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Storage;
 
+// FIXME: each test sync-imports the full cross-reference bundle; load once per file or use a SQL fixture.
 test('cross reference import job loads bundled data', function (): void {
     $path = Storage::disk('extras')->path('cross-references/cross_references.txt');
 

@@ -21,10 +21,10 @@ final class VerseMarkupConverterFactory
                 '/<index\b[^>]*>.*?<\/index>/is',
                 '/<milestone\b[^>]*\/>/is',
                 '/<milestone\b[^>]*>.*?<\/milestone>/is',
-                // GBF footnotes and comments
-                '/<FN[^>]*>.*?<\/Fn>/s',
-                '/<RF[^>]*>.*?<\/Rf>/s',
-                '/<CM>.*?<\/Cm>/s',
+                // GBF footnotes and comments (GBF close tags omit the slash, e.g. <Fn> not </Fn>)
+                '/<FN[^>]*>.*?<Fn>/s',
+                '/<RF[^>]*>.*?<Rf>/s',
+                '/<CM>.*?<Cm>/s',
             ]),
             new OsisHiVerseMarkupConverter(),
             new OsisSemanticVerseMarkupConverter(),
