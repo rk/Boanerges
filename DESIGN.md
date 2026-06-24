@@ -1,8 +1,43 @@
-# Boanergies Design
+# Boanerges Design
 
 - Our front-end design will be via DaisyUI, using the DaisyUI skill.
 - We will introduce each app component as a Svelte component.
 - Lucide for icons.
+
+## Revised Layout
+
+- There is a "splash" page that is shown on first launch, during which time the Bibles bundled with the app are imported
+  and installed. When 1+ translation is installed, this screen no longer displays.
+- The main layout of the app is the Bible view. It comprises several sections:
+  - The toolbar. It shows the brand, followed by actions that may be taken related to the user's current view.
+  - The view (main region), which should be highly optimized for readability.
+- There will be an Edit Settings dialog to allow control of font size, line height, and font family. It will also allow control over the theme.
+
+## The Toolbar
+
+The goal of the toolbar is improved UX by reducing user friction when:
+
+- Setting to single-column focus mode. It should display the primary translation with no distractions or other columns.
+- Setting to two-column mode, with free selection between what shows in the right-hand column: the secondary translation, notes, or the scribe pane.
+- Setting to three-column mode, with free selection between what shows in the two additional columns, as in two-column mode. (However, no two columns may show the same thing.)
+
+## The column displays / views
+
+When the primary translation navigates, all other columns should also navigate to the same chapter.
+
+### Bible View
+
+This is just a display of the Bible in the column, either primary translation or secondary translation.
+
+### Notes View
+
+This view displays a free text editor to the user that is saved for the chapter, unified across all translations.
+
+### Scribe View
+
+This view displays a verse-by-verse editable chapter, numbered and with paragraph breaks based upon the current primary translation.
+
+# Legacy Design
 
 ## Layouts
 
