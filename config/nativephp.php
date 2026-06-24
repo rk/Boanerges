@@ -6,7 +6,7 @@ return [
      * It is used to determine if the app needs to be updated.
      * Increment this value every time you release a new version of your app.
      */
-    'version' => env('NATIVEPHP_APP_VERSION', '1.0.0'),
+    'version' => env('NATIVEPHP_APP_VERSION', '0.5.0'),
 
     /**
      * The ID of your application. This should be a unique identifier
@@ -159,8 +159,8 @@ return [
         'default' => [
             'queues' => ['default'],
             'memory_limit' => 128,
-            'timeout' => 60,
-            'sleep' => 3,
+            'timeout' => 300,
+            'sleep' => 2,
         ],
     ],
 

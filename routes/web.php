@@ -1,9 +1,22 @@
 <?php
 
+use App\Enums\TranslationInstallStatus;
 use App\Http\Controllers\SettingsController;
+use App\Models\Translation;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 
-Route::inertia('/', 'Study')->name('home');
+Route::get('/', function () {
+    if (! Schema::hasTable('translations')) {
+        return inertia('Welcome');
+    }
+
+    $ready = Translation::query()->where('install_status', TranslationInstallStatus::Ready)->exists();
+
+    return $ready
+        ? inertia('Study')
+        : inertia('Welcome');
+})->name('home');
 
 Route::get('/settings/readability', [SettingsController::class, 'showReadability'])
     ->name('settings.readability.show');

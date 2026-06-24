@@ -37,6 +37,27 @@ final class VerseTextFormatter
         return $text;
     }
 
+    public function toPlainText(string $text): string
+    {
+        if ($text === '') {
+            return '';
+        }
+
+        /** @var array<string, string> $placeholders */
+        $placeholders = [];
+
+        $plain = $this->convert($text, $placeholders);
+
+        foreach ($placeholders as $placeholder => $html) {
+            $plain = str_replace($placeholder, strip_tags($html), $plain);
+        }
+
+        $plain = strip_tags($plain);
+        $plain = html_entity_decode($plain, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        return trim(preg_replace('/\s+/u', ' ', $plain) ?? '');
+    }
+
     /**
      * @param  array<string, string>  $placeholders
      */

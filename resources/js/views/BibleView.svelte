@@ -9,14 +9,23 @@
         study,
     } from '@/lib/study.svelte.ts';
     import type { Chapter, ChapterNavTarget } from '@/lib/types/bible';
+    import { verseNumbersInRange } from '@/lib/verseHighlight';
+    import { createVerseHighlightScroller } from '@/lib/verseHighlightScroll';
 
     let currentChapter = $state<Chapter | null>(null);
     let loading = $state(true);
+    let scrollRef = $state<HTMLElement | null>(null);
 
+    const highlightScroller = createVerseHighlightScroller();
     const previousChapter = $derived(getAdjacentChapter(study.bookId, study.chapter, 'prev'));
     const nextChapter = $derived(getAdjacentChapter(study.bookId, study.chapter, 'next'));
     const readerStyle = $derived(getReaderStyle());
     const translation = $derived(bible.translations.find((item) => item.id === study.translationId));
+    const highlightedVerses = $derived(
+        study.verseHighlight
+            ? verseNumbersInRange(study.verseHighlight.verse, study.verseHighlight.endVerse)
+            : new Set<number>(),
+    );
 
     $effect(() => {
         const translationId = study.translationId;
@@ -44,6 +53,26 @@
         return () => {
             cancelled = true;
         };
+    });
+
+    $effect(() => {
+        if (! study.verseHighlight) {
+            highlightScroller.reset();
+        }
+    });
+
+    $effect(() => {
+        const highlight = study.verseHighlight;
+
+        if (! highlight || loading || ! currentChapter) {
+            return;
+        }
+
+        void highlightScroller.scrollTo(
+            scrollRef,
+            highlight,
+            `${study.bookId}:${study.chapter}`,
+        );
     });
 
     function chapterNavTarget(bookId: string, chapterNumber: number): ChapterNavTarget {
@@ -78,8 +107,9 @@
                 {nextNav}
                 onprev={previousChapter ? goToPreviousChapter : undefined}
                 onnext={nextChapter ? goToNextChapter : undefined}
+                bind:scrollRef
             >
-                <ParagraphText verses={currentChapter.verses} />
+                <ParagraphText verses={currentChapter.verses} {highlightedVerses} />
             </ReaderPane>
         {/if}
     </div>

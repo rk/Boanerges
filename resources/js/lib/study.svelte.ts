@@ -4,6 +4,7 @@ import { getAdjacentChapter, bible } from '@/lib/bible.svelte.ts';
 import { patchJson } from '@/lib/patchJson';
 import type { ViewMode } from '@/lib/types/bible';
 import type { StudySettings } from '@/lib/types/study';
+import type { VerseHighlight } from '@/lib/verseHighlight';
 
 export const study = $state({
     activeView: 'bible' as ViewMode,
@@ -13,6 +14,7 @@ export const study = $state({
     translationBId: 'asv',
     scrollSync: false,
     settingsOpen: false,
+    verseHighlight: null as VerseHighlight | null,
 });
 
 let hydrated = false;
@@ -67,11 +69,25 @@ export function setView(view: ViewMode): void {
 export function setBook(nextBookId: string): void {
     study.bookId = nextBookId;
     study.chapter = 1;
+    study.verseHighlight = null;
     schedulePersist();
 }
 
 export function setChapter(nextChapter: number): void {
     study.chapter = nextChapter;
+    study.verseHighlight = null;
+    schedulePersist();
+}
+
+export function goToVerseReference(
+    bookId: string,
+    chapter: number,
+    verse: number,
+    endVerse: number | null = null,
+): void {
+    study.bookId = bookId;
+    study.chapter = chapter;
+    study.verseHighlight = { verse, endVerse };
     schedulePersist();
 }
 
@@ -91,6 +107,7 @@ export function goToPreviousChapter(): void {
     if (previous) {
         study.bookId = previous.bookId;
         study.chapter = previous.chapter;
+        study.verseHighlight = null;
         schedulePersist();
     }
 }
@@ -101,6 +118,7 @@ export function goToNextChapter(): void {
     if (next) {
         study.bookId = next.bookId;
         study.chapter = next.chapter;
+        study.verseHighlight = null;
         schedulePersist();
     }
 }

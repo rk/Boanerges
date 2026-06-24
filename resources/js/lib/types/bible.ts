@@ -34,12 +34,33 @@ export type Translation = {
     name: string;
     abbrev: string;
     bundled?: boolean;
+    install_status?: string | null;
+    install_step?: string | null;
+    install_error?: string | null;
 };
 
 export type CatalogTranslation = Translation & {
     module: string;
     installed: boolean;
     bundled: boolean;
+    about: string;
+};
+
+export type SearchResult = {
+    bookId: string;
+    chapter: number;
+    verse: number;
+    snippet: string;
+    translation: string;
+};
+
+export type CrossReference = {
+    rank: number;
+    bookId: string;
+    bookName?: string;
+    chapter: number;
+    verse: number;
+    endVerse: number | null;
 };
 
 export type ChapterNav = {

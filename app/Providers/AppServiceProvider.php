@@ -20,7 +20,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(BibleModuleManager::class);
 
-        $this->app->singleton(VerseTextFormatter::class, fn (): VerseTextFormatter => VerseMarkupConverterFactory::defaultFormatter());
+        $this->app->singleton(VerseTextFormatter::class, fn(): VerseTextFormatter => VerseMarkupConverterFactory::defaultFormatter());
     }
 
     /**

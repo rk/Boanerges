@@ -1,13 +1,16 @@
 <script lang="ts">
-    import { Trash2, Plus, Search } from '@lucide/svelte';
+    import { Trash2, Plus, Search, Info } from '@lucide/svelte';
     import {
         bible,
+        bookAbbrev,
         closeTranslationManager,
         installTranslation,
+        loadTranslations,
         uninstallTranslation,
     } from '@/lib/bible.svelte.ts';
     import { syncStudyTranslationSelection } from '@/lib/study.svelte.ts';
     import type { CatalogTranslation } from '@/lib/types/bible';
+    import RadialProgress from '@/components/RadialProgress.svelte';
 
     let dialog: HTMLDialogElement | undefined = $state();
     let query = $state('');
@@ -35,17 +38,31 @@
         }
     });
 
+    function isInstalling(entry: CatalogTranslation): boolean {
+        if (bible.installingModule === entry.module) {
+            return true;
+        }
+
+        return Boolean(
+            entry.install_status
+            && entry.install_status !== 'ready'
+            && entry.install_status !== 'failed',
+        );
+    }
+
     function handleClose(): void {
         closeTranslationManager();
     }
 
     async function handleInstall(entry: CatalogTranslation): Promise<void> {
         await installTranslation(entry.module);
+        await loadTranslations(true);
         syncStudyTranslationSelection();
     }
 
     async function handleUninstall(entry: CatalogTranslation): Promise<void> {
         await uninstallTranslation(entry.module);
+        await loadTranslations(true);
         syncStudyTranslationSelection();
     }
 </script>
@@ -74,23 +91,28 @@
         {/if}
 
         <div class="mt-4 min-h-0 flex-1 overflow-y-auto">
-            {#if bible.catalogLoading}
+            {#if bible.catalogLoading && bible.catalog.length === 0}
                 <div class="flex justify-center py-8">
                     <span class="loading loading-spinner loading-md text-primary"></span>
                 </div>
+            {:else if filtered.length === 0}
+                <p class="text-base-content/60 py-4 text-sm">No translations match your search.</p>
             {:else}
                 <ul class="divide-base-300 divide-y">
                     {#each filtered as entry (entry.module)}
                         <li class="flex items-center justify-between gap-3 py-3">
                             <div class="min-w-0">
-                                <p class="truncate font-medium">{entry.name}</p>
+                                <p class="font-medium flex items-center flex-nowrap gap-1">
+                                    <span class="truncate">{entry.name}</span> <a class="link link-secondary" href="{entry.about}" target="_blank"><Info size="14" /></a>
+                                </p>
                                 <div class="mt-1 flex flex-wrap gap-1">
                                     <span class="badge badge-outline badge-sm">{entry.abbrev}</span>
                                     {#if entry.bundled}
                                         <span class="badge badge-neutral badge-sm">Bundled</span>
-                                    {/if}
-                                    {#if entry.installed && ! entry.bundled}
+                                    {:else if entry.installed}
                                         <span class="badge badge-success badge-sm">Installed</span>
+                                    {:else if isInstalling(entry)}
+                                        <span class="badge badge-warning badge-sm">Installing</span>
                                     {/if}
                                 </div>
                             </div>
@@ -102,7 +124,7 @@
                                     <button
                                         type="button"
                                         class="btn btn-error btn-sm btn-square"
-                                        disabled={bible.uninstallingModule === entry.module}
+                                        disabled={bible.uninstallingModule === entry.module || isInstalling(entry)}
                                         onclick={() => handleUninstall(entry)}
                                     >
                                         {#if bible.uninstallingModule === entry.module}
@@ -117,11 +139,11 @@
                                     <button
                                         type="button"
                                         class="btn btn-primary btn-sm btn-square"
-                                        disabled={bible.installingModule === entry.module}
+                                        disabled={bible.installingModule !== null}
                                         onclick={() => handleInstall(entry)}
                                     >
                                         {#if bible.installingModule === entry.module}
-                                            <span class="loading loading-spinner loading-xs"></span>
+                                            <RadialProgress abbrev={entry.abbrev} />
                                         {:else}
                                             <span class="tooltip tooltip-left" data-tip="Install">
                                                 <Plus size="16" />

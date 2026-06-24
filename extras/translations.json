@@ -149,7 +149,10 @@
     },
     {
         "short": "OEB",
-        "name": "Open English Bible (US Spelling)"
+        "name": "Open English Bible (US Spelling)",
+        "url": "https://openenglishbible.org/oeb/2025.6/OEB-2025.6-US.usfm.zip",
+        "import_as": "usfm",
+        "markup_format": "usfm"
     },
     {
         "short": "OEBcth",

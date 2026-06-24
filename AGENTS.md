@@ -196,3 +196,21 @@ Use Wayfinder to generate TypeScript functions for Laravel routes. Import from `
 - IMPORTANT: Activate `inertia-svelte-development` when working with Inertia Svelte client-side patterns.
 
 </laravel-boost-guidelines>
+
+=== NativePHP ===
+
+NativePHP customizes aspects of Laravel, so when you plan, consult the `_doc/nativephp/docs/` vendored documentation to see how Laravel patterns are different in NativePHP.
+
+=== bible book ids ===
+
+# Bible book IDs
+
+Use **canonical OSIS book IDs** everywhere: routes, API JSON (`bookId`), study settings, cross references, search results, and scribe paths. These are the lowercase 3–4 character codes in `App\Services\Bible\Import\BibleCanon` (e.g. `gen`, `mat`, `mrk`, `1sa`, `jhn`).
+
+**Not** SWORD’s raw `osisName` values (`matt`, `mark`, `exod`, `1sam`, …). Importers normalize on write; readers normalize on read via `App\Services\Bible\OsisBookId`.
+
+- **Normalize input:** `OsisBookId::normalize($input)` — accepts canon IDs, SWORD IDs, USFM `\id` codes, and readable names (`Matthew`, `Mark`, `Psalms`).
+- **Display name:** `OsisBookId::displayName($canonicalId)` — English book name for UI when a translation catalog is unavailable. Frontend mirror: `canonBookName()` in `resources/js/lib/canonBookNames.ts`.
+- **DB lookup:** `OsisBookId::lookupValues($canonical)` — matches legacy rows until `php artisan bible:normalize-book-ids` rewrites them.
+- **Display:** use the translation’s book `name` (e.g. “Matthew”), never the raw ID in UI.
+- **User reference parsing:** `resources/js/lib/scriptureReference.ts` resolves against the loaded book catalog, which already exposes canonical IDs.

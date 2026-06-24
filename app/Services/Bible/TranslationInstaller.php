@@ -2,66 +2,77 @@
 
 namespace App\Services\Bible;
 
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
-use ZipArchive;
+use App\Data\CatalogEntry;
+use App\Enums\TranslationInstallStatus;
+use App\Jobs\Bible\InstallTranslationJob;
+use App\Models\Translation;
+use Illuminate\Support\Facades\Bus;
 
 class TranslationInstaller
 {
     public function __construct(
-        private BibleModuleManager $modules,
         private TranslationCatalog $catalog,
         private InstalledTranslationRegistry $registry,
     ) {}
 
-    /**
-     * Install a translation module from the catalog.
-     */
-    public function install(string $moduleKey): void
+    public function install(string $moduleKey): Translation
     {
         $entry = $this->catalog->find($moduleKey);
 
-        if ($this->registry->isBundled($entry->short)) {
+        if ($this->registry->isBundled($entry->short) && $this->registry->isInstalled($entry->short)) {
             abort(422, "The {$entry->short} translation is bundled with the app and cannot be installed separately.");
         }
 
-        if ($this->modules->isModuleInstalled($entry->short)) {
+        $existing = Translation::query()->where('abbrev', strtolower($entry->short))->first();
+
+        if ($existing?->isReady()) {
             abort(409, "The {$entry->short} translation is already installed.");
         }
 
-        $localRoot = $this->modules->localRoot();
-        $zipPath = Storage::disk('local')->path('tmp/' . $entry->short . '.sword-module.zip');
-
-        if (! is_dir(dirname($zipPath))) {
-            mkdir(dirname($zipPath), 0755, true);
+        if ($existing !== null && ! in_array($existing->install_status, [TranslationInstallStatus::Failed, TranslationInstallStatus::Pending], true)) {
+            abort(409, "The {$entry->short} translation is already being installed.");
         }
 
-        $response = Http::timeout(120)->sink($zipPath)->get($entry->url);
+        $translation = $existing ?? $this->createTranslationRecord($entry);
 
-        if (! $response->successful() || ! is_file($zipPath) || filesize($zipPath) === 0) {
-            @unlink($zipPath);
-            abort(502, "Failed to download the {$entry->short} translation.");
+        if ($existing !== null) {
+            $translation->update($this->catalogAttributes($entry, $existing->bundled));
         }
 
-        $zip = new ZipArchive();
+        $translation->update([
+            'install_status' => TranslationInstallStatus::Pending,
+            'install_step' => 'queued',
+            'install_error' => null,
+        ]);
 
-        if ($zip->open($zipPath) !== true) {
-            @unlink($zipPath);
-            abort(502, "Failed to open the downloaded archive for {$entry->short}.");
+        Bus::dispatch(new InstallTranslationJob($translation->id));
+
+        return $translation->fresh();
+    }
+
+    public function installBundled(string $moduleKey): Translation
+    {
+        $entry = $this->catalog->find($moduleKey);
+
+        $translation = Translation::query()->firstOrCreate(
+            ['abbrev' => strtolower($entry->short)],
+            $this->attributesFromCatalog($entry, bundled: true),
+        );
+
+        if ($translation->isReady()) {
+            return $translation;
         }
 
-        $zip->extractTo($localRoot);
-        $zip->close();
+        $translation->update([
+            'install_status' => TranslationInstallStatus::Pending,
+            'install_step' => 'queued',
+            'install_error' => null,
+            'bundled' => true,
+        ]);
 
-        @unlink($zipPath);
+        Bus::dispatch(new InstallTranslationJob($translation->id));
 
-        $this->modules->clearCache();
-
-        if (! $this->modules->isModuleInstalled($entry->short)) {
-            abort(502, "Installation failed: {$entry->short} module files were not found after extraction.");
-        }
-
-        $this->verify($entry->short);
+        return $translation->fresh();
     }
 
     public function uninstall(string $moduleKey): void
@@ -72,98 +83,37 @@ class TranslationInstaller
             abort(422, "The {$entry->short} translation is bundled with the app and cannot be removed.");
         }
 
-        if (! $this->modules->isModuleInstalled($entry->short)) {
+        $translation = Translation::query()->where('abbrev', strtolower($entry->short))->first();
+
+        if ($translation === null || ! $translation->isReady()) {
             abort(404, "The {$entry->short} translation is not installed.");
         }
 
-        $parsed = new \rk\PhpSword\SwordModules([$this->modules->localRoot()]);
-        $parsed->parseModules();
-
-        $resolvedKey = collect(array_keys($parsed->modules))
-            ->first(fn(string $key): bool => strcasecmp($key, $entry->short) === 0);
-
-        if ($resolvedKey === null) {
-            abort(422, "The {$entry->short} translation is not installed locally.");
-        }
-
-        $moduleFolder = $parsed->modulePaths[$resolvedKey];
-        $datapath = (string) ($parsed->modules[$resolvedKey]['datapath'] ?? '');
-        $moduleDataPath = $moduleFolder . DIRECTORY_SEPARATOR . $datapath;
-
-        $confPath = $this->findConfFile($this->modules->localRoot(), $entry->short);
-
-        if ($confPath !== null) {
-            @unlink($confPath);
-        }
-
-        $this->deleteDirectory($moduleDataPath);
-
-        $this->modules->clearCache();
+        app(TranslationSchemaManager::class)->dropTables($translation->abbrev);
+        $translation->delete();
     }
 
-    private function verify(string $moduleKey): void
+    private function createTranslationRecord(CatalogEntry $entry): Translation
     {
-        $bible = $this->modules->open($moduleKey);
-
-        $text = trim($bible->get(
-            books: 'Genesis',
-            chapters: 1,
-            verses: 1,
-            clean: true,
-            join: '',
-        ));
-
-        // In case of NT-only translations, append Mt 1:1 for verification.
-        $text .= trim($bible->get(
-            books: 'Matthew',
-            chapters: 1,
-            verses: 1,
-            clean: true,
-            join: '',
-        ));
-
-        if ($text === '') {
-            abort(502, "Verification of {$moduleKey} failed. Could not find safe reference text.");
-        }
+        return Translation::query()->create($this->catalogAttributes($entry));
     }
 
-    private function findConfFile(string $root, string $moduleKey): ?string
+    /** @return array<string, mixed> */
+    private function catalogAttributes(CatalogEntry $entry, bool $bundled = false): array
     {
-        $confDir = $root . DIRECTORY_SEPARATOR . 'mods.d';
-
-        if (! is_dir($confDir)) {
-            return null;
-        }
-
-        foreach (scandir($confDir) ?: [] as $file) {
-            if (strcasecmp(pathinfo($file, PATHINFO_FILENAME), $moduleKey) === 0 && str_ends_with(strtolower($file), '.conf')) {
-                return $confDir . DIRECTORY_SEPARATOR . $file;
-            }
-        }
-
-        return null;
+        return array_filter([
+            'abbrev' => strtolower($entry->short),
+            'name' => $entry->name,
+            'format' => $entry->markupFormat,
+            'install_status' => TranslationInstallStatus::Pending,
+            'install_step' => 'pending',
+            'bundled' => $bundled,
+        ], fn($value) => $value !== null);
     }
 
-    private function deleteDirectory(string $directory): void
+    /** @return array<string, mixed> */
+    private function attributesFromCatalog(CatalogEntry $entry, bool $bundled = false): array
     {
-        if (! is_dir($directory)) {
-            return;
-        }
-
-        foreach (scandir($directory) ?: [] as $item) {
-            if ($item === '.' || $item === '..') {
-                continue;
-            }
-
-            $path = $directory . DIRECTORY_SEPARATOR . $item;
-
-            if (is_dir($path)) {
-                $this->deleteDirectory($path);
-            } else {
-                @unlink($path);
-            }
-        }
-
-        @rmdir($directory);
+        return $this->catalogAttributes($entry, $bundled);
     }
 }

@@ -39,7 +39,7 @@ test('converts osis hi small caps and superscript', function (): void {
 
 test('converts osis transChange and divineName tags', function (): void {
     $input = 'darkness <transChange type="added">was</transChange> upon the face of the deep. '
-        .'<divineName>God</divineName> moved';
+        . '<divineName>God</divineName> moved';
 
     expect(defaultFormatter()->format($input))->toBe(
         'darkness <em>was</em> upon the face of the deep. <span class="divine-name">God</span> moved',
@@ -86,4 +86,16 @@ test('applies custom converters in registration order', function (): void {
 test('handles nested gbf markup across passes', function (): void {
     expect(defaultFormatter()->format('<FI><FB>bold italic<Fb><Fi>'))
         ->toBe('<em><strong>bold italic</strong></em>');
+});
+
+test('extracts plain text without markup for search indexing', function (): void {
+    $input = '<verse sID="Gen.1.1"/>In the beginning <w lemma="strong:H430">God</w> created<verse eID="Gen.1.1"/>';
+
+    expect(defaultFormatter()->toPlainText($input))
+        ->toBe('In the beginning God created');
+});
+
+test('plain text decodes entities from cleaned markup', function (): void {
+    expect(defaultFormatter()->toPlainText('Use <FI>am<Fi> & here'))
+        ->toBe('Use am & here');
 });
