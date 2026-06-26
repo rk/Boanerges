@@ -30,7 +30,7 @@ class ApplicationMenuBuilder
                 Menu::label('Search')->id('study.search')->hotkey('CmdOrCtrl+F'),
                 Menu::label('Cross-References')->id('study.cross-references')->hotkey('CmdOrCtrl+Shift+R'),
                 Menu::separator(),
-                Menu::label('Print')->id('study.print')->disabled(),
+                Menu::label('Print')->id('study.print')->hotkey('CmdOrCtrl+P'),
                 Menu::label('Feedback')->id('study.feedback')->disabled(),
             )->label('Study'),
             Menu::make(
