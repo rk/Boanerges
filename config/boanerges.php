@@ -21,10 +21,12 @@ return [
     ],
 
     'study' => [
-        'activeView' => 'bible',
+        'columnCount' => 1,
+        'columns' => [],
         'bookId' => 'gen',
         'chapter' => 15,
         'translationId' => 'asv',
         'translationBId' => 'asv',
+        'translationCId' => 'asv',
     ],
 ];

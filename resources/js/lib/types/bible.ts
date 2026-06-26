@@ -4,8 +4,6 @@ export type ChapterNavTarget = {
     chapter: number;
 };
 
-export type ViewMode = 'bible' | 'comparison' | 'scribe';
-
 export type Testament = 'ot' | 'nt';
 
 export type Verse = {

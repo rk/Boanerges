@@ -77,27 +77,6 @@
     font-style: italic;
 }
 
-/* Drawer collapse helpers — is-drawer-open/close variants are not emitted in this build */
-.drawer:has(> .drawer-toggle:not(:checked)) > .drawer-side {
-    overflow: visible;
-}
-
-.drawer:has(> .drawer-toggle:checked) .sidebar-collapsed-only {
-    display: none;
-}
-
-.drawer:has(> .drawer-toggle:not(:checked)) .sidebar-expanded-only {
-    display: none;
-}
-
-.drawer:has(> .drawer-toggle:not(:checked)) .sidebar-shell {
-    width: 3.5rem;
-}
-
-.drawer:has(> .drawer-toggle:checked) .sidebar-shell {
-    width: 18rem;
-}
-
 .scribe-document {
     margin-top: 0.5rem;
 }

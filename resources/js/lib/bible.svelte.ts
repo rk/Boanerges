@@ -276,6 +276,14 @@ export async function fetchChapter(
     return promise;
 }
 
+export function peekChapter(
+    translationId: string,
+    bookId: string,
+    chapterNumber: number,
+): Chapter | undefined {
+    return chapterCache.get(chapterKey(translationId, bookId, chapterNumber));
+}
+
 export function getAdjacentChapter(
     bookId: string,
     chapter: number,

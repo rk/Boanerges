@@ -1,5 +1,6 @@
 type NativeBridge = {
     on: (event: string, callback: (payload: unknown, event?: unknown) => void) => void;
+    contextMenu: (items: Array<{ label: string; click?: () => void }>) => void;
 };
 
 declare global {

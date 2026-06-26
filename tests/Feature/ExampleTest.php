@@ -19,10 +19,9 @@ test('scaffolded ui files exist', function () {
     $paths = [
         'resources/js/layouts/AppLayout.svelte',
         'resources/js/pages/Study.svelte',
-        'resources/js/views/BibleView.svelte',
-        'resources/js/views/ComparisonView.svelte',
-        'resources/js/views/ScribeView.svelte',
-        'resources/js/components/sidebar/AppSidebar.svelte',
+        'resources/js/components/layout/ColumnLayout.svelte',
+        'resources/js/components/layout/ChapterNavRail.svelte',
+        'resources/js/components/toolbar/StudyToolbar.svelte',
         'resources/js/components/reader/ReaderPane.svelte',
         'resources/js/components/scribe/ScribeEditor.svelte',
         'resources/js/components/settings/ReadabilitySettings.svelte',

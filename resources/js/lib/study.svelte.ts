@@ -1,17 +1,21 @@
 import { SvelteSet } from 'svelte/reactivity';
 import { updateStudy as updateStudySettings } from '@/actions/App/Http/Controllers/SettingsController';
 import { getAdjacentChapter, bible } from '@/lib/bible.svelte.ts';
+import { setCrossReferenceInput } from '@/lib/crossrefs.svelte.ts';
 import { patchJson } from '@/lib/patchJson';
-import type { ViewMode } from '@/lib/types/bible';
-import type { StudySettings } from '@/lib/types/study';
+import { crossReferencesTargetSlot, normalizeColumns, sanitizeStudySettings } from '@/lib/studyLayout';
+import { formatScriptureReference } from '@/lib/scriptureReference';
+import type { ColumnContentType, StudySettings } from '@/lib/types/study';
 import type { VerseHighlight } from '@/lib/verseHighlight';
 
 export const study = $state({
-    activeView: 'bible' as ViewMode,
+    columnCount: 1 as 1 | 2 | 3,
+    columns: [] as ColumnContentType[],
     bookId: 'gen',
     chapter: 15,
     translationId: 'asv',
     translationBId: 'asv',
+    translationCId: 'asv',
     scrollSync: false,
     settingsOpen: false,
     verseHighlight: null as VerseHighlight | null,
@@ -21,21 +25,27 @@ let hydrated = false;
 let persistTimeout: ReturnType<typeof setTimeout> | null = null;
 
 export function hydrateStudy(settings: StudySettings): void {
-    study.activeView = settings.activeView;
-    study.bookId = settings.bookId;
-    study.chapter = settings.chapter;
-    study.translationId = settings.translationId;
-    study.translationBId = settings.translationBId;
+    const sanitized = sanitizeStudySettings(settings);
+
+    study.columnCount = sanitized.columnCount;
+    study.columns = sanitized.columns;
+    study.bookId = sanitized.bookId;
+    study.chapter = sanitized.chapter;
+    study.translationId = sanitized.translationId;
+    study.translationBId = sanitized.translationBId;
+    study.translationCId = sanitized.translationCId;
     hydrated = true;
 }
 
 function studyPayload(): StudySettings {
     return {
-        activeView: study.activeView,
+        columnCount: study.columnCount,
+        columns: normalizeColumns(study.columnCount, study.columns),
         bookId: study.bookId,
         chapter: study.chapter,
         translationId: study.translationId,
         translationBId: study.translationBId,
+        translationCId: study.translationCId,
     };
 }
 
@@ -61,8 +71,16 @@ export function getNextChapter(): ReturnType<typeof getAdjacentChapter> {
     return getAdjacentChapter(study.bookId, study.chapter, 'next');
 }
 
-export function setView(view: ViewMode): void {
-    study.activeView = view;
+export function setColumnCount(count: 1 | 2 | 3): void {
+    study.columnCount = count;
+    study.columns = normalizeColumns(count, study.columns);
+    schedulePersist();
+}
+
+export function setColumnContent(slotIndex: number, type: ColumnContentType): void {
+    const columns = normalizeColumns(study.columnCount, [...study.columns]);
+    columns[slotIndex] = type;
+    study.columns = columns;
     schedulePersist();
 }
 
@@ -98,6 +116,11 @@ export function setTranslation(id: string): void {
 
 export function setTranslationB(id: string): void {
     study.translationBId = id;
+    schedulePersist();
+}
+
+export function setTranslationC(id: string): void {
+    study.translationCId = id;
     schedulePersist();
 }
 
@@ -146,6 +169,10 @@ export function syncStudyTranslationSelection(): void {
         study.translationBId = study.translationId;
     }
 
+    if (! installedIds.has(study.translationCId)) {
+        study.translationCId = study.translationBId;
+    }
+
     schedulePersist();
 }
 
@@ -159,4 +186,45 @@ export function chapterLabel(
     }
 
     return `${book} ${chapter}`;
+}
+
+export function ensureSearchColumn(): void {
+    if (study.columns.includes('search')) {
+        return;
+    }
+
+    if (study.columnCount === 1) {
+        setColumnCount(2);
+    }
+
+    const slotIndex = study.columns.findIndex((column) => column !== 'bible-secondary');
+
+    if (slotIndex >= 0) {
+        setColumnContent(slotIndex, 'search');
+
+        return;
+    }
+
+    setColumnContent(study.columns.length - 1, 'search');
+}
+
+export function ensureCrossReferencesColumn(reference?: string): void {
+    if (study.columnCount === 1) {
+        setColumnCount(2);
+    }
+
+    const slotIndex = crossReferencesTargetSlot(study.columnCount, study.columns);
+
+    if (study.columns[slotIndex] !== 'cross-references') {
+        setColumnContent(slotIndex, 'cross-references');
+    }
+
+    const resolvedReference = reference ?? formatScriptureReference(
+        study.bookId,
+        study.chapter,
+        study.verseHighlight?.verse ?? 1,
+        bible.books,
+    );
+
+    setCrossReferenceInput(resolvedReference);
 }

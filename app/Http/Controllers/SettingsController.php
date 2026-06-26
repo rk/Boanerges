@@ -6,6 +6,7 @@ use App\Http\Requests\UpdateReadabilitySettingsRequest;
 use App\Http\Requests\UpdateStudySettingsRequest;
 use App\Services\ReadabilitySettingsStore;
 use App\Services\StudySettingsStore;
+use App\Support\ApplicationMenuBuilder;
 use Illuminate\Http\JsonResponse;
 
 class SettingsController extends Controller
@@ -36,9 +37,13 @@ class SettingsController extends Controller
     public function updateStudy(
         UpdateStudySettingsRequest $request,
         StudySettingsStore $settings,
+        ApplicationMenuBuilder $menu,
     ): JsonResponse {
+        $study = $settings->update($request->validated());
+        $menu->register();
+
         return response()->json([
-            'study' => $settings->update($request->validated()),
+            'study' => $study,
         ]);
     }
 }

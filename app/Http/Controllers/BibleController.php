@@ -110,15 +110,15 @@ class BibleController extends Controller
             'q' => ['required', 'string', 'min:2'],
             'translation' => ['nullable', 'string'],
             'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'offset' => ['nullable', 'integer', 'min:0'],
         ]);
 
-        return response()->json([
-            'results' => $search->search(
-                query: $validated['q'],
-                translation: $validated['translation'] ?? null,
-                limit: $validated['limit'] ?? 50,
-            ),
-        ]);
+        return response()->json($search->search(
+            query: $validated['q'],
+            translation: $validated['translation'] ?? null,
+            limit: $validated['limit'] ?? 50,
+            offset: $validated['offset'] ?? 0,
+        ));
     }
 
     public function crossReferences(

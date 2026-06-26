@@ -1,9 +1,11 @@
-import type { ViewMode } from '@/lib/types/bible';
+export type ColumnContentType = 'bible-secondary' | 'notes' | 'scribe' | 'search' | 'cross-references';
 
 export type StudySettings = {
-    activeView: ViewMode;
+    columnCount: 1 | 2 | 3;
+    columns: ColumnContentType[];
     bookId: string;
     chapter: number;
     translationId: string;
     translationBId: string;
+    translationCId: string;
 };

@@ -66,6 +66,19 @@ test('search finds genesis reference text', function (): void {
     expect(collect($response->json('results'))->firstWhere('bookId', 'gen'))->not->toBeNull();
 });
 
+test('search supports pagination metadata', function (): void {
+    $response = $this->getJson(route('bible.search', [
+        'q' => 'beginning',
+        'translation' => 'asv',
+        'limit' => 5,
+        'offset' => 0,
+    ]));
+
+    $response->assertSuccessful();
+    $response->assertJsonStructure(['results', 'total', 'hasMore']);
+    expect($response->json('results'))->not->toBeEmpty();
+});
+
 test('returns not found when translation is not ready', function (): void {
     Translation::query()->where('abbrev', 'asv')->update([
         'install_status' => TranslationInstallStatus::Importing,

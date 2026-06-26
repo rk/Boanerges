@@ -37,7 +37,7 @@
 
 <dialog bind:this={dialog} class="modal" onclose={handleClose}>
     <div class="modal-box">
-        <h2 class="mb-4 text-lg font-bold">Readability</h2>
+        <h2 class="mb-4 text-lg font-bold">Edit Settings</h2>
 
         <div class="space-y-6">
             <label class="form-control">

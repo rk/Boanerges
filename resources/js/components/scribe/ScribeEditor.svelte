@@ -1,7 +1,6 @@
 <script lang="ts">
     import { tick } from 'svelte';
 
-    import ChapterHeading from '@/components/reader/ChapterHeading.svelte';
     import ScribePreviewModal from '@/components/scribe/ScribePreviewModal.svelte';
     import ScribeVerseSpan from '@/components/scribe/ScribeVerseSpan.svelte';
     import { getReaderStyle } from '@/lib/readability.svelte.ts';
@@ -137,19 +136,15 @@ import type {ScribeDraftEntry} from '@/lib/scribe.svelte.ts';
 </script>
 
 <div class="flex h-full min-h-0 flex-col overflow-y-auto px-4 py-4 border-base-300 border-x" style={readerStyle}>
-    <div class="flex justify-between">
-        <ChapterHeading title="{book} {chapter}" />
-
-        <div class="flex flex-wrap gap-2">
-            <button type="button" class="btn btn-ghost btn-sm" disabled={loading} onclick={() => (previewOpen = true)}>
-                Preview
+    <div class="mb-4 flex flex-wrap justify-end gap-2">
+        <button type="button" class="btn btn-ghost btn-sm" disabled={loading} onclick={() => (previewOpen = true)}>
+            Preview
+        </button>
+        {#if hasParagraphOverrides}
+            <button type="button" class="btn btn-ghost btn-sm" onclick={resetParagraphBreaks}>
+                Reset paragraph breaks
             </button>
-            {#if hasParagraphOverrides}
-                <button type="button" class="btn btn-ghost btn-sm" onclick={resetParagraphBreaks}>
-                    Reset paragraph breaks
-                </button>
-            {/if}
-        </div>
+        {/if}
     </div>
 
     {#if loading}

@@ -13,10 +13,14 @@ class SearchService
     ) {}
 
     /**
-     * @return list<array{bookId: string, chapter: int, verse: int, snippet: string, translation: string}>
+     * @return array{results: list<array{bookId: string, chapter: int, verse: int, snippet: string, translation: string}>, total: int, hasMore: bool}
      */
-    public function search(string $query, ?string $translation = null, int $limit = 50): array
-    {
+    public function search(
+        string $query,
+        ?string $translation = null,
+        int $limit = 50,
+        int $offset = 0,
+    ): array {
         $translations = $translation !== null
             ? [Translation::query()->where('abbrev', strtolower($translation))->where('install_status', TranslationInstallStatus::Ready)->firstOrFail()]
             : Translation::query()->where('install_status', TranslationInstallStatus::Ready)->get()->all();
@@ -34,8 +38,8 @@ class SearchService
                 "SELECT book_id, chapter, verse, snippet({$fts}, 0, '<mark>', '</mark>', '…', 32) AS snippet
                  FROM {$fts}
                  WHERE {$fts} MATCH ?
-                 LIMIT ?",
-                [$query, $limit],
+                 LIMIT ? OFFSET ?",
+                [$query, $limit + 1, $offset],
             );
 
             foreach ($rows as $row) {
@@ -57,7 +61,15 @@ class SearchService
             }
         }
 
-        return array_slice($results, 0, $limit);
+        $hasMore = count($results) > $limit;
+        $page = array_slice($results, 0, $limit);
+        $total = $offset + count($page) + ($hasMore ? 1 : 0);
+
+        return [
+            'results' => $page,
+            'total' => $total,
+            'hasMore' => $hasMore,
+        ];
     }
 
     /** @return list<string> */

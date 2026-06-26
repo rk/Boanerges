@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Support\ApplicationMenuBuilder;
 use Native\Desktop\Contracts\ProvidesPhpIni;
 use Native\Desktop\Facades\Window;
 
@@ -13,6 +14,8 @@ class NativeAppServiceProvider implements ProvidesPhpIni
      */
     public function boot(): void
     {
+        app(ApplicationMenuBuilder::class)->register();
+
         Window::open()
             ->title('Boanerges')
             ->width(1200)

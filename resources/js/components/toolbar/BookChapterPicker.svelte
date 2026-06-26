@@ -1,6 +1,6 @@
 <script lang="ts">
     import ArrowLeft from '@lucide/svelte/icons/arrow-left';
-    import Book from '@lucide/svelte/icons/book';
+    import ChevronDown from '@lucide/svelte/icons/chevron-down';
 
     import { bible, bookAbbrev } from '@/lib/bible.svelte.ts';
     import { study, setBook, setChapter } from '@/lib/study.svelte.ts';
@@ -18,7 +18,7 @@
 
     const currentBook = $derived(bible.books.find((book) => book.id === study.bookId));
     const locationLabel = $derived(
-        currentBook ? `${bookAbbrev(study.bookId)} ${study.chapter}` : 'Book & chapter',
+        currentBook ? `${currentBook.name} ${study.chapter}` : 'Book & chapter',
     );
 
     const booksInTestament = $derived(
@@ -50,7 +50,7 @@
         }
 
         const rect = triggerEl.getBoundingClientRect();
-        panelStyle = `top:${rect.top}px;left:${rect.right + 8}px;`;
+        panelStyle = `top:${rect.bottom + 4}px;left:${rect.left}px;`;
     }
 
     function togglePicker(event: MouseEvent): void {
@@ -139,19 +139,17 @@
     });
 </script>
 
-<li class="sidebar-collapsed-only my-2">
-    <button
-        bind:this={triggerEl}
-        type="button"
-        class="is-drawer-close:tooltip is-drawer-close:tooltip-right"
-        data-tip={locationLabel}
-        aria-label="Select book and chapter"
-        aria-expanded={open}
-        onclick={togglePicker}
-    >
-        <Book size={18} aria-hidden="true" />
-    </button>
-</li>
+<button
+    bind:this={triggerEl}
+    type="button"
+    class="btn btn-ghost btn-sm gap-1"
+    aria-label="Select book and chapter"
+    aria-expanded={open}
+    onclick={togglePicker}
+>
+    <span class="max-w-40 truncate">{locationLabel}</span>
+    <ChevronDown size={14} aria-hidden="true" />
+</button>
 
 {#if open}
     <div
@@ -162,72 +160,72 @@
         role="dialog"
         aria-label="Book and chapter picker"
     >
-            {#if step !== 'testament'}
+        {#if step !== 'testament'}
+            <button
+                type="button"
+                class="btn btn-ghost btn-xs mb-2 gap-1 px-1"
+                onclick={goBack}
+            >
+                <ArrowLeft size={14} aria-hidden="true" />
+                Back
+            </button>
+        {/if}
+
+        {#if step === 'testament'}
+            <p class="menu-title px-0">Testament</p>
+            <div class="join grid w-full grid-cols-2">
                 <button
                     type="button"
-                    class="btn btn-ghost btn-xs mb-2 gap-1 px-1"
-                    onclick={goBack}
+                    class="btn btn-sm join-item"
+                    class:btn-primary={currentBook?.testament === 'ot'}
+                    onclick={() => selectTestament('ot')}
                 >
-                    <ArrowLeft size={14} aria-hidden="true" />
-                    Back
+                    Old Testament
                 </button>
-            {/if}
-
-            {#if step === 'testament'}
-                <p class="menu-title px-0">Testament</p>
-                <div class="join grid w-full grid-cols-2">
-                    <button
-                        type="button"
-                        class="btn btn-sm join-item"
-                        class:btn-primary={currentBook?.testament === 'ot'}
-                        onclick={() => selectTestament('ot')}
-                    >
-                        Old Testament
-                    </button>
-                    <button
-                        type="button"
-                        class="btn btn-sm join-item"
-                        class:btn-primary={currentBook?.testament === 'nt'}
-                        onclick={() => selectTestament('nt')}
-                    >
-                        New Testament
-                    </button>
-                </div>
-            {:else if step === 'book'}
-                <p class="menu-title px-0">
-                    {selectedTestament === 'ot' ? 'Old Testament' : 'New Testament'}
-                </p>
-                {#if bible.booksLoading}
-                    <p class="text-base-content/60 px-1 py-2 text-sm">Loading…</p>
-                {:else}
-                    <ul class="menu menu-sm rounded-box bg-base-200 max-h-64 overflow-y-auto p-1">
-                        {#each booksInTestament as book (book.id)}
-                            <li>
-                                <button
-                                    type="button"
-                                    class:menu-active={study.bookId === book.id}
-                                    onclick={() => selectBook(book.id)}
-                                >
-                                    {book.name}
-                                </button>
-                            </li>
-                        {/each}
-                    </ul>
-                {/if}
+                <button
+                    type="button"
+                    class="btn btn-sm join-item"
+                    class:btn-primary={currentBook?.testament === 'nt'}
+                    onclick={() => selectTestament('nt')}
+                >
+                    New Testament
+                </button>
+            </div>
+        {:else if step === 'book'}
+            <p class="menu-title px-0">
+                {selectedTestament === 'ot' ? 'Old Testament' : 'New Testament'}
+            </p>
+            {#if bible.booksLoading}
+                <p class="text-base-content/60 px-1 py-2 text-sm">Loading…</p>
             {:else}
-                <p class="menu-title px-0">{pendingBook?.name ?? 'Chapter'}</p>
-                <div class="grid max-h-64 grid-cols-6 gap-1 overflow-y-auto">
-                    {#each chapterOptions as chapterNumber (chapterNumber)}
-                        <button
-                            type="button"
-                            class="btn btn-xs"
-                            class:btn-primary={pendingBookId === study.bookId && study.chapter === chapterNumber}
-                            onclick={() => selectChapter(chapterNumber)}
-                        >
-                            {chapterNumber}
-                        </button>
+                <ul class="menu menu-sm rounded-box bg-base-200 max-h-64 overflow-y-auto p-1">
+                    {#each booksInTestament as book (book.id)}
+                        <li>
+                            <button
+                                type="button"
+                                class:menu-active={study.bookId === book.id}
+                                onclick={() => selectBook(book.id)}
+                            >
+                                {book.name}
+                            </button>
+                        </li>
                     {/each}
-                </div>
+                </ul>
             {/if}
+        {:else}
+            <p class="menu-title px-0">{pendingBook?.name ?? 'Chapter'}</p>
+            <div class="grid max-h-64 grid-cols-6 gap-1 overflow-y-auto">
+                {#each chapterOptions as chapterNumber (chapterNumber)}
+                    <button
+                        type="button"
+                        class="btn btn-xs"
+                        class:btn-primary={pendingBookId === study.bookId && study.chapter === chapterNumber}
+                        onclick={() => selectChapter(chapterNumber)}
+                    >
+                        {chapterNumber}
+                    </button>
+                {/each}
+            </div>
+        {/if}
     </div>
 {/if}
