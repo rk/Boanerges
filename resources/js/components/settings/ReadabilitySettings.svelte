@@ -69,8 +69,8 @@
                 />
             </label>
 
-            <label class="input">
-                <b class="label">Justify Text</b>
+            <label class="label">
+                <b>Justify Text</b>
                 <input type="checkbox" bind:checked={readability.justifyText} class="toggle" onchange={(event) => setJustifyText(event.currentTarget.checked)} />
             </label>
 
