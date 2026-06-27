@@ -2,6 +2,7 @@
 
 use App\Services\Study\StudyPrintHtmlBuilder;
 use Illuminate\Support\Facades\Storage;
+use Native\Desktop\DataObjects\Printer;
 use Native\Desktop\Facades\System;
 
 beforeEach(function (): void {
@@ -13,6 +14,7 @@ function studyPrintPayload(array $overrides = []): array
 {
     return array_merge([
         'includeUserWork' => false,
+        'printerName' => null,
         'columnCount' => 1,
         'columns' => [],
         'bookId' => 'gen',
@@ -39,8 +41,26 @@ test('rejects invalid print payload', function (): void {
 test('returns service unavailable outside the desktop app', function (): void {
     config(['nativephp-internal.running' => false]);
 
+    $this->getJson(route('study.printers.index'))
+        ->assertStatus(503);
+
     $this->postJson(route('study.print'), studyPrintPayload())
         ->assertStatus(503);
+});
+
+test('lists available printers in the desktop app', function (): void {
+    config(['nativephp-internal.running' => true]);
+
+    System::shouldReceive('printers')
+        ->once()
+        ->andReturn([
+            new Printer('Brother_QL', 'Brother QL', 'Local printer', []),
+        ]);
+
+    $this->getJson(route('study.printers.index'))
+        ->assertSuccessful()
+        ->assertJsonPath('printers.0.name', 'Brother_QL')
+        ->assertJsonPath('printers.0.displayName', 'Brother QL');
 });
 
 test('prints portrait layout for a single column', function (): void {
@@ -51,9 +71,11 @@ test('prints portrait layout for a single column', function (): void {
         ->withArgs(function (string $html, $printer, array $settings): bool {
             expect($html)->toContain('Genesis 1 (ASV)')
                 ->and($html)->toContain('beginning')
+                ->and($printer)->toBeNull()
                 ->and($settings)->toMatchArray([
-                    'pageSize' => 'A4',
                     'landscape' => false,
+                    'silent' => false,
+                    'usePrinterDefaultPageSize' => true,
                 ]);
 
             return true;
@@ -61,6 +83,45 @@ test('prints portrait layout for a single column', function (): void {
 
     $this->postJson(route('study.print'), studyPrintPayload())
         ->assertNoContent();
+});
+
+test('prints to a selected printer with dialog and default page size', function (): void {
+    config(['nativephp-internal.running' => true]);
+
+    $printer = new Printer('Brother_QL', 'Brother QL', 'Local printer', []);
+
+    System::shouldReceive('printers')
+        ->once()
+        ->andReturn([$printer]);
+
+    System::shouldReceive('print')
+        ->once()
+        ->withArgs(function (string $html, ?Printer $selectedPrinter, array $settings) use ($printer): bool {
+            expect($selectedPrinter?->name)->toBe($printer->name)
+                ->and($settings)->toMatchArray([
+                    'landscape' => false,
+                    'silent' => false,
+                    'usePrinterDefaultPageSize' => true,
+                ]);
+
+            return true;
+        });
+
+    $this->postJson(route('study.print'), studyPrintPayload([
+        'printerName' => 'Brother_QL',
+    ]))->assertNoContent();
+});
+
+test('rejects an unavailable printer', function (): void {
+    config(['nativephp-internal.running' => true]);
+
+    System::shouldReceive('printers')
+        ->once()
+        ->andReturn([]);
+
+    $this->postJson(route('study.print'), studyPrintPayload([
+        'printerName' => 'Missing_Printer',
+    ]))->assertUnprocessable();
 });
 
 test('prints landscape layout with scribe lined area and no user draft text', function (): void {
@@ -76,7 +137,8 @@ test('prints landscape layout with scribe lined area and no user draft text', fu
             expect($html)->toContain('Scribe')
                 ->and($html)->toContain('class="line"')
                 ->and($html)->not->toContain('My private scribe draft')
-                ->and($settings['landscape'])->toBeTrue();
+                ->and($settings['landscape'])->toBeTrue()
+                ->and($settings['usePrinterDefaultPageSize'])->toBeTrue();
 
             return true;
         });

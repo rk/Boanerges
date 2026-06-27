@@ -2,7 +2,7 @@
     import FileText from '@lucide/svelte/icons/file-text';
     import NotebookPen from '@lucide/svelte/icons/notebook-pen';
 
-    import { printStudy, type PrintMode } from '@/lib/printStudy.ts';
+    import { fetchStudyPrinters, printStudy, type PrintMode, type StudyPrinter } from '@/lib/printStudy.ts';
 
     let {
         open = false,
@@ -14,16 +14,34 @@
 
     let dialog: HTMLDialogElement | undefined = $state();
     let printing = $state(false);
+    let loadingPrinters = $state(false);
     let error = $state<string | null>(null);
+    let printers = $state<StudyPrinter[]>([]);
+    let selectedPrinterName = $state('');
 
     $effect(() => {
         if (open) {
             error = null;
+            selectedPrinterName = '';
             dialog?.showModal();
+            void loadPrinters();
         } else {
             dialog?.close();
         }
     });
+
+    async function loadPrinters(): Promise<void> {
+        loadingPrinters = true;
+
+        try {
+            printers = await fetchStudyPrinters();
+        } catch (caught) {
+            printers = [];
+            error = caught instanceof Error ? caught.message : 'Could not load printers.';
+        } finally {
+            loadingPrinters = false;
+        }
+    }
 
     function handleClose(): void {
         if (printing) {
@@ -38,7 +56,7 @@
         error = null;
 
         try {
-            await printStudy(mode);
+            await printStudy(mode, selectedPrinterName);
             onclose?.();
         } catch (caught) {
             error = caught instanceof Error ? caught.message : 'Print failed.';
@@ -55,6 +73,25 @@
             Bible columns print the chapter text. Scribe always prints as lined space for handwriting.
         </p>
 
+        <fieldset class="fieldset mt-4">
+            <legend class="fieldset-legend">Printer</legend>
+            {#if loadingPrinters}
+                <span class="loading loading-spinner loading-sm text-primary"></span>
+            {:else}
+                <select
+                    class="select select-bordered w-full"
+                    bind:value={selectedPrinterName}
+                    disabled={printing}
+                    aria-label="Printer"
+                >
+                    <option value="">System default</option>
+                    {#each printers as printer (printer.name)}
+                        <option value={printer.name}>{printer.displayName}</option>
+                    {/each}
+                </select>
+            {/if}
+        </fieldset>
+
         {#if error}
             <div class="alert alert-error mt-4 text-sm">
                 <span>{error}</span>
@@ -65,7 +102,7 @@
             <button
                 type="button"
                 class="btn justify-start gap-3"
-                disabled={printing}
+                disabled={printing || loadingPrinters}
                 onclick={() => handlePrint('include-user-work')}
             >
                 <NotebookPen size={18} aria-hidden="true" />
@@ -78,7 +115,7 @@
             <button
                 type="button"
                 class="btn btn-outline justify-start gap-3"
-                disabled={printing}
+                disabled={printing || loadingPrinters}
                 onclick={() => handlePrint('blank-writing')}
             >
                 <FileText size={18} aria-hidden="true" />

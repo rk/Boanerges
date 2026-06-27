@@ -21,6 +21,7 @@ class PrintStudyRequest extends FormRequest
     {
         return [
             'includeUserWork' => ['required', 'boolean'],
+            'printerName' => ['nullable', 'string', 'max:255'],
             'columnCount' => ['required', 'integer', Rule::in([1, 2, 3])],
             'columns' => ['present', 'array'],
             'columns.*' => ['string', Rule::in(['bible-secondary', 'notes', 'scribe', 'search', 'cross-references'])],
