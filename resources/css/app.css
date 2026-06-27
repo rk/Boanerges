@@ -51,6 +51,7 @@
     font-family: var(--reader-font-family, var(--font-reader));
     font-size: var(--reader-font-size, 18px);
     line-height: var(--reader-line-height, 1.7);
+    text-align: var(--reader-text-align, left);
 }
 
 .reader-prose :where(.words-of-jesus) {

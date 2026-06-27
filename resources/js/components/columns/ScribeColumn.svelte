@@ -66,16 +66,14 @@
 
 <div class="flex h-full min-h-0 min-w-0 flex-col" style={readerStyle}>
     <ColumnHeader contentType="scribe" {slotIndex} showViewSelector>
-        {#snippet children()}
-            {#if currentChapter}
-                <ChapterHeading title="{currentChapter.book} {currentChapter.chapter}" />
-            {/if}
-            {#if scribe.saveStatus === 'saving'}
-                <LoaderCircle size={14} class="text-base-content/60 shrink-0 animate-spin" aria-label="Saving" />
-            {:else if scribe.saveStatus === 'saved'}
-                <CircleCheck size={14} class="text-success shrink-0" aria-label="Saved" />
-            {/if}
-        {/snippet}
+        {#if currentChapter}
+            <ChapterHeading title="{currentChapter.book} {currentChapter.chapter}" compact={true} />
+        {/if}
+        {#if scribe.saveStatus === 'saving'}
+            <LoaderCircle size={14} class="text-base-content/60 shrink-0 animate-spin" aria-label="Saving" />
+        {:else if scribe.saveStatus === 'saved'}
+            <CircleCheck size={14} class="text-success shrink-0" aria-label="Saved" />
+        {/if}
     </ColumnHeader>
 
     {#if loading || ! currentChapter}

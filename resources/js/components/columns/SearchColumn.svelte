@@ -29,17 +29,15 @@
 
 <div class="flex h-full min-h-0 min-w-0 flex-col">
     <ColumnHeader contentType="search" {slotIndex} showViewSelector>
-        {#snippet children()}
-            <label class="input input-bordered input-sm min-w-0 flex-1">
-                <Search size={14} aria-hidden="true" />
-                <input
-                    type="search"
-                    class="grow py-2"
-                    placeholder="Search scripture…"
-                    bind:value={query}
-                />
-            </label>
-        {/snippet}
+        <label class="input input-bordered input-sm min-w-0 flex-1">
+            <Search size={14} aria-hidden="true" />
+            <input
+                type="search"
+                class="grow py-2"
+                placeholder="Search scripture…"
+                bind:value={query}
+            />
+        </label>
     </ColumnHeader>
 
     <div class="min-h-0 flex-1 overflow-y-auto px-2 py-2">

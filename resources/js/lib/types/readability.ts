@@ -7,4 +7,5 @@ export type ReadabilitySettings = {
     lineHeight: number;
     theme: ReaderTheme;
     fontFamily: ReaderFontFamily;
+    justifyText: boolean;
 };

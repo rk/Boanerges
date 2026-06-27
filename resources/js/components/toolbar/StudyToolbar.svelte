@@ -18,7 +18,7 @@
 <header class="navbar bg-base-100 border-base-300 shrink-0 gap-2 border-b px-3">
     <span class="text-lg font-semibold shrink-0">Boanerges</span>
 
-    <div class="divider divider-horizontal mx-0 hidden h-6 sm:flex"></div>
+    <div class="divider divider-horizontal mx-0 hidden h-full sm:flex"></div>
 
     <BookChapterPicker />
 
@@ -31,7 +31,7 @@
         <BookPlus size={16} aria-hidden="true" />
     </button>
 
-    <div class="divider divider-horizontal mx-0 hidden h-6 md:flex"></div>
+    <div class="divider divider-horizontal mx-0 hidden h-full md:flex"></div>
 
     <div class="join hidden md:flex">
         {#each [1, 2, 3] as count (count)}

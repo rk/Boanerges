@@ -5,7 +5,8 @@
         setFontFamily,
         setFontSize,
         setLineHeight,
-        setTheme
+        setTheme,
+        setJustifyText
     } from '@/lib/readability.svelte.ts';
 
     import type {ReaderFontFamily, ReaderTheme} from '@/lib/readability.svelte.ts';
@@ -40,11 +41,9 @@
         <h2 class="mb-4 text-lg font-bold">Edit Settings</h2>
 
         <div class="space-y-6">
-            <label class="form-control">
-                <div class="label">
-                    <span class="label-text">Font size</span>
-                    <span class="label-text-alt">{readability.fontSize}px</span>
-                </div>
+            <label class="input w-full">
+                <b class="label">Font Size</b>
+                <span class="badge badge-soft badge-primary">{readability.fontSize}px</span>
                 <input
                     type="range"
                     min="14"
@@ -56,11 +55,9 @@
                 />
             </label>
 
-            <label class="form-control">
-                <div class="label">
-                    <span class="label-text">Line height</span>
-                    <span class="label-text-alt">{readability.lineHeight.toFixed(1)}</span>
-                </div>
+            <label class="input w-full">
+                <b class="label">Line Height</b>
+                <span class="badge badge-soft badge-primary">{readability.lineHeight.toFixed(1)}</span>
                 <input
                     type="range"
                     min="1.4"
@@ -70,6 +67,11 @@
                     value={readability.lineHeight}
                     oninput={(event) => setLineHeight(Number(event.currentTarget.value))}
                 />
+            </label>
+
+            <label class="input">
+                <b class="label">Justify Text</b>
+                <input type="checkbox" bind:checked={readability.justifyText} class="toggle" onchange={(event) => setJustifyText(event.currentTarget.checked)} />
             </label>
 
             <fieldset class="fieldset">

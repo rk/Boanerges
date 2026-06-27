@@ -38,6 +38,7 @@ class StudyPrintHtmlBuilder
             'fontFamily' => $this->printFontFamily((string) $readability['fontFamily']),
             'fontSize' => (int) $readability['fontSize'],
             'lineHeight' => (float) $readability['lineHeight'],
+            'justifyText' => (bool) $readability['justifyText'],
             'columns' => $columns,
         ])->render();
     }

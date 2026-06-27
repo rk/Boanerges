@@ -17,8 +17,9 @@
 
         body {
             font-family: {{ $fontFamily }};
-            font-size: {{ $fontSize }}pt;
+            font-size: {{ $fontSize }}px;
             line-height: {{ $lineHeight }};
+            text-align: {{ $justifyText ? 'justify' : 'left' }};
             color: #111;
         }
 
@@ -113,7 +114,7 @@
 <body>
     <div class="columns">
         @foreach ($columns as $column)
-            <div class="column">
+            <div class="column column-{{ $column['kind'] }}">
                 <div class="column-title">{{ $column['label'] }}</div>
 
                 @if (($column['kind'] ?? '') === 'bible')

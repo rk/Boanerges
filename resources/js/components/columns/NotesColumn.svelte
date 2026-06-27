@@ -54,16 +54,15 @@
 
 <div class="flex h-full min-h-0 min-w-0 flex-col" style={readerStyle}>
     <ColumnHeader contentType="notes" {slotIndex} showViewSelector>
-        {#snippet children()}
-            <ChapterHeading
-                title="{currentBook?.name ?? bookAbbrev(study.bookId)} {study.chapter}"
-            />
-            {#if notes.saveStatus === 'saving'}
-                <LoaderCircle size={14} class="text-base-content/60 shrink-0 animate-spin" aria-label="Saving" />
-            {:else if notes.saveStatus === 'saved'}
-                <CircleCheck size={14} class="text-success shrink-0" aria-label="Saved" />
-            {/if}
-        {/snippet}
+        <ChapterHeading
+            title="Notes ({currentBook?.name ?? bookAbbrev(study.bookId)} {study.chapter})"
+            compact={true}
+        />
+        {#if notes.saveStatus === 'saving'}
+            <LoaderCircle size={14} class="text-base-content/60 shrink-0 animate-spin" aria-label="Saving" />
+        {:else if notes.saveStatus === 'saved'}
+            <CircleCheck size={14} class="text-success shrink-0" aria-label="Saved" />
+        {/if}
     </ColumnHeader>
 
     {#if loading}
@@ -72,8 +71,8 @@
         </div>
     {:else}
         <textarea
-            class="textarea textarea-ghost min-h-0 flex-1 resize-none rounded-none px-6 py-4 text-base leading-relaxed focus:outline-none"
-            value={content}
+            class="textarea textarea-ghost min-h-0 w-full flex-1 resize-none rounded-none px-6 py-4 text-base leading-relaxed focus:outline-none"
+            bind:value={content}
             oninput={handleInput}
             placeholder="Notes for this chapter…"
             aria-label="Chapter notes"

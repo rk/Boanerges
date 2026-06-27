@@ -46,18 +46,16 @@
 
 <div class="flex h-full min-h-0 min-w-0 flex-col">
     <ColumnHeader contentType="cross-references" {slotIndex} showViewSelector>
-        {#snippet children()}
-            <label class="input input-bordered input-sm min-w-0 flex-1">
-                <Bookmark size={14} aria-hidden="true" />
-                <input
-                    type="search"
-                    class="grow py-2"
-                    placeholder="Mark 1:1"
-                    bind:value={referenceInput}
-                    aria-label="Verse reference for cross references"
-                />
-            </label>
-        {/snippet}
+        <label class="input input-bordered input-sm min-w-0 flex-1">
+            <Bookmark size={14} aria-hidden="true" />
+            <input
+                type="search"
+                class="grow py-2"
+                placeholder="Mark 1:1"
+                bind:value={referenceInput}
+                aria-label="Verse reference for cross references"
+            />
+        </label>
     </ColumnHeader>
 
     <div class="min-h-0 flex-1 overflow-y-auto px-2 py-2">
