@@ -16,15 +16,21 @@ class StudyPrintController extends Controller
         ]);
     }
 
-    public function store(PrintStudyRequest $request, StudyPrintService $print): Response
+    public function store(PrintStudyRequest $request, StudyPrintService $print): JsonResponse|Response
     {
         $printerName = $request->validated('printerName');
 
-        $print->print(
+        $path = $print->print(
             $request->studySettings(),
             (bool) $request->validated('includeUserWork'),
             is_string($printerName) ? $printerName : null,
         );
+
+        if ($path !== null) {
+            return response()->json([
+                'path' => $path,
+            ]);
+        }
 
         return response()->noContent();
     }

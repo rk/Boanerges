@@ -2,7 +2,7 @@
     import FileText from '@lucide/svelte/icons/file-text';
     import NotebookPen from '@lucide/svelte/icons/notebook-pen';
 
-    import { fetchStudyPrinters, printStudy, type PrintMode, type StudyPrinter } from '@/lib/printStudy.ts';
+    import { fetchStudyPrinters, printStudy, PRINT_TO_PDF, type PrintMode, type StudyPrinter } from '@/lib/printStudy.ts';
 
     let {
         open = false,
@@ -16,12 +16,14 @@
     let printing = $state(false);
     let loadingPrinters = $state(false);
     let error = $state<string | null>(null);
+    let success = $state<string | null>(null);
     let printers = $state<StudyPrinter[]>([]);
     let selectedPrinterName = $state('');
 
     $effect(() => {
         if (open) {
             error = null;
+            success = null;
             selectedPrinterName = '';
             dialog?.showModal();
             void loadPrinters();
@@ -54,9 +56,16 @@
     async function handlePrint(mode: PrintMode): Promise<void> {
         printing = true;
         error = null;
+        success = null;
 
         try {
-            await printStudy(mode, selectedPrinterName);
+            const path = await printStudy(mode, selectedPrinterName);
+
+            if (path) {
+                success = `PDF saved to ${path}`;
+                return;
+            }
+
             onclose?.();
         } catch (caught) {
             error = caught instanceof Error ? caught.message : 'Print failed.';
@@ -85,12 +94,19 @@
                     aria-label="Printer"
                 >
                     <option value="">System default</option>
+                    <option value={PRINT_TO_PDF}>Print to PDF</option>
                     {#each printers as printer (printer.name)}
                         <option value={printer.name}>{printer.displayName}</option>
                     {/each}
                 </select>
             {/if}
         </fieldset>
+
+        {#if success}
+            <div class="alert alert-success mt-4 text-sm">
+                <span>{success}</span>
+            </div>
+        {/if}
 
         {#if error}
             <div class="alert alert-error mt-4 text-sm">

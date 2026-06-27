@@ -1,6 +1,7 @@
 <?php
 
 use App\Services\Study\StudyPrintHtmlBuilder;
+use App\Services\Study\StudyPrintService;
 use Illuminate\Support\Facades\Storage;
 use Native\Desktop\DataObjects\Printer;
 use Native\Desktop\Facades\System;

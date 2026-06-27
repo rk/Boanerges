@@ -4,10 +4,16 @@ import { normalizeColumns } from '@/lib/studyLayout';
 
 export type PrintMode = 'include-user-work' | 'blank-writing';
 
+export const PRINT_TO_PDF = '__pdf__';
+
 export type StudyPrinter = {
     name: string;
     displayName: string;
     description: string;
+};
+
+type PrintStudyResponse = {
+    path?: string;
 };
 
 async function jsonFetch<T>(url: string, init?: RequestInit): Promise<T> {
@@ -40,8 +46,8 @@ export async function fetchStudyPrinters(): Promise<StudyPrinter[]> {
     return data.printers;
 }
 
-export async function printStudy(mode: PrintMode, printerName = ''): Promise<void> {
-    await jsonFetch<void>(printStudyRoute.url(), {
+export async function printStudy(mode: PrintMode, printerName = ''): Promise<string | null> {
+    const data = await jsonFetch<PrintStudyResponse | undefined>(printStudyRoute.url(), {
         method: 'POST',
         body: JSON.stringify({
             includeUserWork: mode === 'include-user-work',
@@ -55,4 +61,6 @@ export async function printStudy(mode: PrintMode, printerName = ''): Promise<voi
             translationCId: study.translationCId,
         }),
     });
+
+    return data?.path ?? null;
 }
