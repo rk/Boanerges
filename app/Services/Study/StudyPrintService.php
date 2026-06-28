@@ -61,6 +61,7 @@ class StudyPrintService
             'landscape' => $landscape,
             'silent' => false,
             'usePrinterDefaultPageSize' => true,
+            'printBackground' => true,
         ]);
 
         return null;
@@ -73,6 +74,7 @@ class StudyPrintService
     {
         $pdf = System::printToPDF($html, [
             'landscape' => $landscape,
+            'printBackground' => true,
         ]);
 
         $filename = sprintf(

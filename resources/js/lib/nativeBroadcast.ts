@@ -16,7 +16,7 @@ function registerListener(eventClass: string, callback: (payload: unknown) => vo
     if (! listeners.has(eventClass)) {
         listeners.set(eventClass, new Set());
 
-        if (window.Native) {
+        if (typeof window !== 'undefined' && window.Native) {
             wireEventListener(eventClass);
         }
     }

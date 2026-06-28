@@ -20,6 +20,7 @@ return [
         'lineHeight' => 1.7,
         'theme' => 'light',
         'fontFamily' => 'serif',
+        'justifyText' => true,
     ],
 
     'study' => [

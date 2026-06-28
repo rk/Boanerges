@@ -28,6 +28,7 @@ class UpdateReadabilitySettingsRequest extends FormRequest
             'lineHeight' => ['required', 'numeric', 'min:1.4', 'max:2'],
             'theme' => ['required', 'string', Rule::in(['light', 'dark', 'sepia'])],
             'fontFamily' => ['required', 'string', Rule::in(['sans-serif', 'serif'])],
+            'justifyText' => ['required', 'boolean'],
         ];
     }
 }

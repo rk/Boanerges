@@ -72,6 +72,7 @@ function schedulePersist(): void {
             lineHeight: readability.lineHeight,
             theme: readability.theme,
             fontFamily: readability.fontFamily,
+            justifyText: readability.justifyText,
         });
     }, 300);
 }

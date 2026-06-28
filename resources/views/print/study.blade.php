@@ -34,6 +34,7 @@
             min-width: 0;
             padding: 0 4mm;
             border-right: 1px solid #ccc;
+            align-items: stretch;
         }
 
         .column:last-child {
@@ -46,6 +47,7 @@
             margin-bottom: 0.75em;
             padding-bottom: 0.35em;
             border-bottom: 1px solid #ddd;
+            flex-grow: 0;
         }
 
         .column-subtitle {
@@ -69,14 +71,17 @@
         }
 
         .lined-block {
-            min-height: 70vh;
+            height: 100%;
             background-image: repeating-linear-gradient(
+                to bottom,
                 transparent,
                 transparent calc({{ $lineHeight }}em - 1px),
-                #ccc calc({{ $lineHeight }}em - 1px),
-                #ccc {{ $lineHeight }}em
+                #000 calc({{ $lineHeight }}em - 1px),
+                #000 {{ $lineHeight }}em
             );
-            background-attachment: local;
+            background-size: {{ $lineHeight }}em {{ $lineHeight }}em;
+            background-repeat: repeat;
+            background-position: top;
         }
 
         .scribe-verse {
@@ -127,7 +132,7 @@
                                 <p>
                                     @foreach ($paragraph as $index => $part)
                                         @if ($index > 0)&nbsp;@endif
-                                        <sup>{{ $part['number'] }}</sup>{{ $part['text'] }}
+                                        <sup>{{ $part['number'] }}</sup>{!! $part['text'] !!}
                                     @endforeach
                                 </p>
                                 @php $paragraph = []; @endphp
@@ -138,7 +143,7 @@
                             <p>
                                 @foreach ($paragraph as $index => $part)
                                     @if ($index > 0)&nbsp;@endif
-                                    <sup>{{ $part['number'] }}</sup>{{ $part['text'] }}
+                                    <sup>{{ $part['number'] }}</sup>{!! $part['text'] !!}
                                 @endforeach
                             </p>
                         @endif
@@ -150,12 +155,7 @@
                     <div class="lined-block" aria-hidden="true"></div>
                 @elseif (($column['kind'] ?? '') === 'scribe')
                     <div class="column-subtitle">Scribe</div>
-                    @foreach ($column['linedVerses'] as $verse)
-                        <div @class(['scribe-verse', 'paragraph-start' => $verse['paragraphStart'] ?? false])>
-                            <sup>{{ $verse['number'] }}</sup>
-                            <span class="line"></span>
-                        </div>
-                    @endforeach
+                    <div class="lined-block"></div>
                 @elseif (($column['kind'] ?? '') === 'message')
                     <p class="message">{{ $column['message'] }}</p>
                 @endif
