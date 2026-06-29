@@ -17,6 +17,7 @@ test('readability settings can be updated', function () {
         'lineHeight' => 1.8,
         'theme' => 'dark',
         'fontFamily' => 'sans-serif',
+        'justifyText' => true,
     ]);
 
     $response->assertSuccessful();
