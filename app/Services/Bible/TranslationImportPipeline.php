@@ -133,8 +133,12 @@ class TranslationImportPipeline
                 $this->swordImporter->progressConfigure(
                     20,
                     50,
-                    static function (float $percent) use ($translation) {
-                        $translation->updateProgress(TranslationInstallStatus::Importing, 'importing', round($percent));
+                    static function (float $percent) use ($translation): void {
+                        $translation->updateProgress(
+                            TranslationInstallStatus::Importing,
+                            'importing',
+                            (int) round($percent),
+                        );
                     },
                 );
                 $this->swordImporter->import($translation->abbrev, $translation->abbrev);

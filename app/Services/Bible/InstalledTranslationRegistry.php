@@ -10,10 +10,6 @@ use Illuminate\Support\Str;
 
 class InstalledTranslationRegistry
 {
-    public function __construct(
-        private TranslationCatalog $catalog,
-    ) {}
-
     /**
      * @return Collection<int, TranslationConfig>
      */
@@ -77,7 +73,7 @@ class InstalledTranslationRegistry
             abbrev: strtoupper($translation->abbrev),
             bundled: $translation->bundled,
             about: $translation->about,
-            installStatus: $translation->install_status->value,
+            installStatus: $translation->installStatusValue(),
             installStep: $translation->install_step,
             installError: $translation->install_error,
         );

@@ -9,7 +9,7 @@ trait CreatesVerseMarkupPlaceholders
      */
     protected function createPlaceholder(string $html, array &$placeholders): string
     {
-        $placeholder = "\x7Fboanerges-markup-".count($placeholders)."\x7F";
+        $placeholder = "\x7Fboanerges-markup-" . count($placeholders) . "\x7F";
         $placeholders[$placeholder] = $html;
 
         return $placeholder;
@@ -26,12 +26,12 @@ trait CreatesVerseMarkupPlaceholders
             : $content;
 
         if ($class === null) {
-            return '<'.$htmlTag.'>'.$inner.'</'.$htmlTag.'>';
+            return '<' . $htmlTag . '>' . $inner . '</' . $htmlTag . '>';
         }
 
-        return '<'.$htmlTag
-            .' class="'.htmlspecialchars($class, ENT_QUOTES | ENT_HTML5, 'UTF-8').'">'
-            .$inner
-            .'</'.$htmlTag.'>';
+        return '<' . $htmlTag
+            . ' class="' . htmlspecialchars($class, ENT_QUOTES | ENT_HTML5, 'UTF-8') . '">'
+            . $inner
+            . '</' . $htmlTag . '>';
     }
 }

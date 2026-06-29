@@ -23,14 +23,14 @@ class StudyPrintService
             abort(503, 'Printing is only available in the desktop app.');
         }
 
-        return array_map(
-            fn(Printer $printer): array => [
+        return array_values(array_map(
+            fn (Printer $printer): array => [
                 'name' => $printer->name,
                 'displayName' => $printer->displayName,
                 'description' => $printer->description,
             ],
             System::printers(),
-        );
+        ));
     }
 
     /**

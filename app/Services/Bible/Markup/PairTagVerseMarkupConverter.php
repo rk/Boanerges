@@ -19,10 +19,10 @@ final class PairTagVerseMarkupConverter implements VerseMarkupConverter
     public function convert(string $text, array &$placeholders, ?VerseTextFormatter $formatter = null): string
     {
         $pattern = '/<'
-            .preg_quote($this->openTag, '/')
-            .'>(.*?)<'
-            .preg_quote($this->closeTag, '/')
-            .'>/s';
+            . preg_quote($this->openTag, '/')
+            . '>(.*?)<'
+            . preg_quote($this->closeTag, '/')
+            . '>/s';
 
         return (string) preg_replace_callback(
             $pattern,

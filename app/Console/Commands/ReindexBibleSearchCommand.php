@@ -113,7 +113,7 @@ class ReindexBibleSearchCommand extends Command
         $this->line('Translations in this database:');
 
         foreach ($rows as $row) {
-            $this->line("  {$row->abbrev}: {$row->install_status->value}");
+            $this->line("  {$row->abbrev}: {$row->installStatusValue()}");
         }
 
         if ($abbrev !== null) {

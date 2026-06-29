@@ -9,5 +9,7 @@ parameters:
         - config/
         - database/
         - routes/
+    stubFiles:
+        - phpstan/System.stub.php
 
     level: 7

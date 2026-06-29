@@ -5,6 +5,15 @@ namespace App\Models;
 use App\Enums\TranslationInstallStatus;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property string $abbrev
+ * @property string $name
+ * @property string|null $format
+ * @property string|null $install_step
+ * @property string|null $install_error
+ * @property bool $bundled
+ * @property TranslationInstallStatus $install_status
+ */
 class Translation extends Model
 {
     /** @var list<string> */
@@ -37,6 +46,13 @@ class Translation extends Model
     public function isReady(): bool
     {
         return $this->install_status === TranslationInstallStatus::Ready;
+    }
+
+    public function installStatusValue(): string
+    {
+        $status = $this->install_status;
+
+        return $status instanceof TranslationInstallStatus ? $status->value : (string) $status;
     }
 
     public function updateProgress(TranslationInstallStatus $status, string $step, int $percent): void

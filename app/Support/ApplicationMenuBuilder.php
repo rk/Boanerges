@@ -2,13 +2,14 @@
 
 namespace App\Support;
 
-use App\Events\PrintClicked;
 use App\Services\StudySettingsStore;
 use Native\Desktop\Facades\Menu;
 
 class ApplicationMenuBuilder
 {
-    public function __construct(private StudySettingsStore $studySettings) {}
+    public function __construct(
+        private StudySettingsStore $studySettings,
+    ) {}
 
     public function register(): void
     {
