@@ -57,7 +57,13 @@ function initNativeBridge(): void {
 }
 
 function wireEventListener(eventClass: string): void {
-    window.Native.on(eventClass, (payload) => {
+    const native = window.Native;
+
+    if (!native) {
+        return;
+    }
+
+    native.on(eventClass, (payload) => {
         listeners.get(eventClass)?.forEach((cb) => cb(payload));
     });
 }

@@ -21,7 +21,7 @@
         translationAbbrev?: string;
         prevNav?: ChapterNavTarget;
         nextNav?: ChapterNavTarget;
-        navLayout?: 'horizontal' | 'divider';
+        navLayout?: 'compact' | 'divider';
         onprev?: () => void;
         onnext?: () => void;
         onscroll?: () => void;

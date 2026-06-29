@@ -42,7 +42,9 @@ readonly class CatalogEntry
         );
     }
 
-    /** @return 'sword'|'usfm'|'accordance' */
+    /** @param  array<string, mixed>  $attributes
+     * @return 'sword'|'usfm'|'accordance'
+     */
     private static function resolveImportAs(array $attributes): string
     {
         if (isset($attributes['import_as'])) {
