@@ -2,9 +2,11 @@
     let {
         title,
         translationAbbrev,
+        compact,
     }: {
         title: string;
         translationAbbrev?: string;
+        compact?: boolean;
     } = $props();
 
     const heading = $derived(
@@ -12,4 +14,4 @@
     );
 </script>
 
-<h1 class="reader-prose mb-4 text-center text-2xl font-semibold">{heading}</h1>
+<h1 class={["reader-prose text-center font-semibold", compact ? "m-0 text-lg" : "mb-4 text-2xl"]}>{heading}</h1>

@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Events\PrintClicked;
 use App\Services\StudySettingsStore;
 use Native\Desktop\Facades\Menu;
 
@@ -30,8 +31,9 @@ class ApplicationMenuBuilder
                 Menu::label('Search')->id('study.search')->hotkey('CmdOrCtrl+F'),
                 Menu::label('Cross-References')->id('study.cross-references')->hotkey('CmdOrCtrl+Shift+R'),
                 Menu::separator(),
-                Menu::label('Print')->id('study.print')->disabled(),
-                Menu::label('Feedback')->id('study.feedback')->disabled(),
+                Menu::label('Print')->id('study.print')->hotkey('CmdOrCtrl+P'),
+                Menu::link('mailto:' . config('boanerges.feedback_email'), 'Feedback')
+                    ->openInBrowser(),
             )->label('Study'),
             Menu::make(
                 Menu::radio('1 Column', $columnCount === 1)->id('view.columns.1'),

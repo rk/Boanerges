@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'feedback_email' => env('FEEDBACK_MAIL'),
+
     'bundled_sword_path' => 'sword',
     'local_sword_path' => 'modules/bible',
     'catalog_path' => 'translations.json',
@@ -18,6 +20,7 @@ return [
         'lineHeight' => 1.7,
         'theme' => 'light',
         'fontFamily' => 'serif',
+        'justifyText' => true,
     ],
 
     'study' => [

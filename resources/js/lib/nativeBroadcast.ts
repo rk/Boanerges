@@ -15,6 +15,10 @@ let initialized = false;
 function registerListener(eventClass: string, callback: (payload: unknown) => void): () => void {
     if (! listeners.has(eventClass)) {
         listeners.set(eventClass, new Set());
+
+        if (typeof window !== 'undefined' && window.Native) {
+            wireEventListener(eventClass);
+        }
     }
 
     listeners.get(eventClass)!.add(callback);
@@ -27,18 +31,28 @@ function initNativeBridge(): void {
         return;
     }
 
+    if (typeof window === 'undefined') {
+        return; // SSR detected
+    }
+
     initialized = true;
 
-    window.addEventListener('native:init', () => {
-        if (! window.Native) {
-            return;
-        }
-
+    const initFn = () => {
         for (const eventClass of listeners.keys()) {
-            window.Native.on(eventClass, (payload) => {
-                listeners.get(eventClass)?.forEach((cb) => cb(payload));
-            });
+            wireEventListener(eventClass);
         }
+    };
+
+    if (window.Native) {
+        initFn();
+    } else {
+        window.addEventListener('native:init', initFn);
+    }
+}
+
+function wireEventListener(eventClass: string): void {
+    window.Native.on(eventClass, (payload) => {
+        listeners.get(eventClass)?.forEach((cb) => cb(payload));
     });
 }
 

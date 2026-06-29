@@ -13,6 +13,7 @@ const defaults: ReadabilitySettings = {
     lineHeight: 1.7,
     theme: 'light',
     fontFamily: 'serif',
+    justifyText: true,
 };
 
 export type { ReaderFontFamily, ReaderTheme, ReadabilitySettings };
@@ -52,6 +53,7 @@ export function getReaderStyle(): string {
         `--reader-font-size: ${readability.fontSize}px`,
         `--reader-line-height: ${readability.lineHeight}`,
         `--reader-font-family: ${fontStacks[readability.fontFamily]}`,
+        `--reader-text-align: ${readability.justifyText ? 'justify' : undefined}`,
     ].join('; ');
 }
 
@@ -70,6 +72,7 @@ function schedulePersist(): void {
             lineHeight: readability.lineHeight,
             theme: readability.theme,
             fontFamily: readability.fontFamily,
+            justifyText: readability.justifyText,
         });
     }, 300);
 }
@@ -92,5 +95,10 @@ export function setTheme(value: ReaderTheme): void {
 
 export function setFontFamily(value: ReaderFontFamily): void {
     readability.fontFamily = value;
+    schedulePersist();
+}
+
+export function setJustifyText(value: boolean): void {
+    readability.justifyText = value;
     schedulePersist();
 }

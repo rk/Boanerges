@@ -1,5 +1,6 @@
 import { openTranslationManager } from '@/lib/bible.svelte.ts';
 import { onNativeEvent } from '@/lib/nativeBroadcast.ts';
+import { openPrintOptions } from '@/lib/printStudy.svelte.ts';
 import {
     ensureCrossReferencesColumn,
     ensureSearchColumn,
@@ -24,6 +25,9 @@ export function registerApplicationMenuHandlers(): void {
                 break;
             case 'study.cross-references':
                 ensureCrossReferencesColumn();
+                break;
+            case 'study.print':
+                openPrintOptions();
                 break;
             case 'file.manage-translations':
                 openTranslationManager();

@@ -139,13 +139,11 @@
             {slotIndex}
             showViewSelector={! isPrimary}
         >
-            {#snippet children()}
-                <Book size={14} class="text-base-content/70 shrink-0" aria-hidden="true" />
-                <TranslationSelect
-                    value={translationId}
-                    onchange={onTranslationChange}
-                />
-            {/snippet}
+            <Book size={14} class="text-base-content/70 shrink-0" aria-hidden="true" />
+            <TranslationSelect
+                value={translationId}
+                onchange={onTranslationChange}
+            />
         </ColumnHeader>
     {/if}
 
