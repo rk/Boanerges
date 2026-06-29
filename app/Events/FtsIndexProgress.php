@@ -20,6 +20,18 @@ class FtsIndexProgress implements ShouldBroadcastNow
     ) {}
 
     /**
+     * @return array<string, mixed>
+     */
+    public function broadcastWith(): array
+    {
+        return [
+            'abbrev' => $this->abbrev,
+            'step' => $this->step->value,
+            'percent' => $this->percent,
+        ];
+    }
+
+    /**
      * @return array<int, Channel>
      */
     public function broadcastOn(): array
