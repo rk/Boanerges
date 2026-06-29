@@ -11,13 +11,18 @@
             return;
         }
 
-        native.on('App\\Events\\TranslationInstallProgress', (payload: unknown) => {
-            const data = payload as { abbrev?: string; percent?: number };
+        native.on(
+            'App\\Events\\TranslationInstallProgress',
+            (payload: unknown) => {
+                const data = payload as { abbrev?: string; percent?: number };
 
-            if (abbrev.toLowerCase() === (data.abbrev ?? '').toLowerCase()) {
-                progress = data.percent ?? 0;
-            }
-        });
+                if (
+                    abbrev.toLowerCase() === (data.abbrev ?? '').toLowerCase()
+                ) {
+                    progress = data.percent ?? 0;
+                }
+            },
+        );
     });
 </script>
 
