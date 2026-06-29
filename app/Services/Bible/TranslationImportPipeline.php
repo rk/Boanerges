@@ -4,6 +4,7 @@ namespace App\Services\Bible;
 
 use App\Enums\CatalogImportFormat;
 use App\Enums\TranslationInstallStatus;
+use App\Enums\TranslationInstallStep;
 use App\Events\FtsIndexProgress;
 use App\Models\Translation;
 use App\Services\Bible\Import\AccordanceImporter;
@@ -57,13 +58,13 @@ class TranslationImportPipeline
         $importAs = $this->importAs($translation);
 
         if ($importAs === CatalogImportFormat::Sword && $this->modules->isModuleInstalled($translation->abbrev)) {
-            $translation->updateProgress(TranslationInstallStatus::Downloading, 'source_ready', 10);
+            $translation->updateProgress(TranslationInstallStatus::Downloading, TranslationInstallStep::SourceReady, 10);
             $this->syncMetadata($translation);
 
             return;
         }
 
-        $translation->updateProgress(TranslationInstallStatus::Downloading, 'downloading', 0);
+        $translation->updateProgress(TranslationInstallStatus::Downloading, TranslationInstallStep::Downloading, 0);
 
         $entry = $this->catalog->find($translation->abbrev);
         $zipPath = Storage::disk('local')->path('tmp/' . $entry->short . '.module.zip');
@@ -95,7 +96,7 @@ class TranslationImportPipeline
             $this->downloadedPath = $zipPath;
         }
 
-        $translation->updateProgress(TranslationInstallStatus::Downloading, 'downloaded', 10);
+        $translation->updateProgress(TranslationInstallStatus::Downloading, TranslationInstallStep::Downloaded, 10);
 
         $this->syncMetadata($translation);
     }
@@ -110,21 +111,21 @@ class TranslationImportPipeline
     {
         $this->schema->dropTables($translation->abbrev);
         $this->schema->createTables($translation->abbrev);
-        $translation->updateProgress(TranslationInstallStatus::CreatingSchema, 'creating_schema', 20);
+        $translation->updateProgress(TranslationInstallStatus::CreatingSchema, TranslationInstallStep::CreatingSchema, 20);
     }
 
     public function importVerses(Translation $translation): void
     {
         switch ($this->importAs($translation)) {
             case CatalogImportFormat::Usfm:
-                $translation->updateProgress(TranslationInstallStatus::Importing, 'importing', 70);
+                $translation->updateProgress(TranslationInstallStatus::Importing, TranslationInstallStep::Importing, 70);
                 $this->usfmImporter->importFromZip(
                     $translation->abbrev,
                     $this->downloadedPath ?? throw new \RuntimeException('Missing USFM source.'),
                 );
                 break;
             case CatalogImportFormat::Accordance:
-                $translation->updateProgress(TranslationInstallStatus::Importing, 'importing', 70);
+                $translation->updateProgress(TranslationInstallStatus::Importing, TranslationInstallStep::Importing, 70);
                 $this->accordanceImporter->importFromFile(
                     $translation->abbrev,
                     $this->downloadedPath ?? throw new \RuntimeException('Missing Accordance source.'),
@@ -137,7 +138,7 @@ class TranslationImportPipeline
                     static function (float $percent) use ($translation): void {
                         $translation->updateProgress(
                             TranslationInstallStatus::Importing,
-                            'importing',
+                            TranslationInstallStep::Importing,
                             (int) round($percent),
                         );
                     },
@@ -155,19 +156,19 @@ class TranslationImportPipeline
             throw new \RuntimeException('Verification failed: no reference verses found.');
         }
 
-        $translation->updateProgress(TranslationInstallStatus::Verifying, 'verifying', 75);
+        $translation->updateProgress(TranslationInstallStatus::Verifying, TranslationInstallStep::Verifying, 75);
     }
 
     public function buildFtsIndex(Translation $translation): void
     {
-        $translation->updateProgress(TranslationInstallStatus::Indexing, 'indexing', 85);
+        $translation->updateProgress(TranslationInstallStatus::Indexing, TranslationInstallStep::Indexing, 85);
         $this->schema->rebuildFtsIndex($translation->abbrev, $this->verseTextFormatter);
 
-        $translation->updateProgress(TranslationInstallStatus::Indexing, 'indexing', 95);
+        $translation->updateProgress(TranslationInstallStatus::Indexing, TranslationInstallStep::Indexing, 95);
 
         event(new FtsIndexProgress(
             abbrev: $translation->abbrev,
-            step: 'indexed',
+            step: TranslationInstallStep::Indexed,
             percent: 95,
         ));
     }
@@ -176,13 +177,13 @@ class TranslationImportPipeline
     {
         $translation->update([
             'install_status' => TranslationInstallStatus::Ready,
-            'install_step' => 'ready',
+            'install_step' => TranslationInstallStep::Ready,
             'install_error' => null,
         ]);
 
         event(new \App\Events\TranslationInstallProgress(
             abbrev: $translation->abbrev,
-            step: 'ready',
+            step: TranslationInstallStep::Ready,
             percent: 100,
         ));
     }

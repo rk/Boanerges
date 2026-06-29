@@ -3,6 +3,7 @@
 namespace App\Data;
 
 use App\Enums\CatalogImportFormat;
+use App\Enums\VerseMarkupFormat;
 
 readonly class CatalogEntry
 {
@@ -12,7 +13,7 @@ readonly class CatalogEntry
         public string $url,
         public ?string $about = null,
         public CatalogImportFormat $importAs = CatalogImportFormat::Sword,
-        public ?string $markupFormat = null,
+        public ?VerseMarkupFormat $markupFormat = null,
     ) {}
 
     public function id(): string
@@ -62,20 +63,20 @@ readonly class CatalogEntry
     }
 
     /** @param  array<string, mixed>  $attributes */
-    private static function resolveMarkupFormat(array $attributes, CatalogImportFormat $importAs): ?string
+    private static function resolveMarkupFormat(array $attributes, CatalogImportFormat $importAs): ?VerseMarkupFormat
     {
         if (isset($attributes['markup_format'])) {
-            return strtolower((string) $attributes['markup_format']);
+            return VerseMarkupFormat::tryFrom(strtolower((string) $attributes['markup_format']));
         }
 
         $format = $attributes['format'] ?? null;
 
         if ($format !== null && CatalogImportFormat::tryFrom((string) $format) === null) {
-            return strtolower((string) $format);
+            return VerseMarkupFormat::tryFrom(strtolower((string) $format));
         }
 
         return match ($importAs) {
-            CatalogImportFormat::Usfm => 'usfm',
+            CatalogImportFormat::Usfm => VerseMarkupFormat::Usfm,
             default => null,
         };
     }

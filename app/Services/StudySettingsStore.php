@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\StudyColumnType;
 use App\Services\Bible\OsisBookId;
 
 class StudySettingsStore
@@ -81,8 +82,14 @@ class StudySettingsStore
         $activeView = (string) ($stored['activeView'] ?? 'bible');
 
         $layout = match ($activeView) {
-            'comparison' => ['columnCount' => 2, 'columns' => ['bible-secondary']],
-            'scribe' => ['columnCount' => 3, 'columns' => ['scribe', 'bible-secondary']],
+            'comparison' => [
+                'columnCount' => 2,
+                'columns' => [StudyColumnType::BibleSecondary->value],
+            ],
+            'scribe' => [
+                'columnCount' => 3,
+                'columns' => [StudyColumnType::Scribe->value, StudyColumnType::BibleSecondary->value],
+            ],
             default => ['columnCount' => 1, 'columns' => []],
         };
 
@@ -103,11 +110,14 @@ class StudySettingsStore
      */
     private function sanitizeColumns(int $columnCount, array $columns): array
     {
-        $allowed = ['bible-secondary', 'notes', 'scribe', 'search', 'cross-references'];
+        $allowed = array_map(
+            static fn (StudyColumnType $type): string => $type->value,
+            StudyColumnType::cases(),
+        );
 
         $filtered = array_values(array_filter(
             $columns,
-            fn($column) => is_string($column) && in_array($column, $allowed, true),
+            fn ($column) => is_string($column) && in_array($column, $allowed, true),
         ));
 
         return $this->normalizeColumnSlots($columnCount, $filtered);
@@ -123,7 +133,7 @@ class StudySettingsStore
         $normalized = array_slice($columns, 0, $needed);
 
         while (count($normalized) < $needed) {
-            $normalized[] = 'bible-secondary';
+            $normalized[] = StudyColumnType::BibleSecondary->value;
         }
 
         return $normalized;

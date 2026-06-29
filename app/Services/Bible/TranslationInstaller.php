@@ -4,6 +4,7 @@ namespace App\Services\Bible;
 
 use App\Data\CatalogEntry;
 use App\Enums\TranslationInstallStatus;
+use App\Enums\TranslationInstallStep;
 use App\Jobs\Bible\InstallTranslationJob;
 use App\Models\Translation;
 use Illuminate\Support\Facades\Bus;
@@ -41,7 +42,7 @@ class TranslationInstaller
 
         $translation->update([
             'install_status' => TranslationInstallStatus::Pending,
-            'install_step' => 'queued',
+            'install_step' => TranslationInstallStep::Queued,
             'install_error' => null,
         ]);
 
@@ -65,7 +66,7 @@ class TranslationInstaller
 
         $translation->update([
             'install_status' => TranslationInstallStatus::Pending,
-            'install_step' => 'queued',
+            'install_step' => TranslationInstallStep::Queued,
             'install_error' => null,
             'bundled' => true,
         ]);
@@ -104,9 +105,9 @@ class TranslationInstaller
         return array_filter([
             'abbrev' => strtolower($entry->short),
             'name' => $entry->name,
-            'format' => $entry->markupFormat,
+            'format' => $entry->markupFormat?->value,
             'install_status' => TranslationInstallStatus::Pending,
-            'install_step' => 'pending',
+            'install_step' => TranslationInstallStep::Pending,
             'bundled' => $bundled,
         ], fn($value) => $value !== null);
     }

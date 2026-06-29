@@ -20,8 +20,8 @@ class TranslationResource extends JsonResource
             'abbrev' => $this->abbrev,
             'about' => $this->about ?? "https://crosswire.org/sword/modules/ModInfo.jsp?modName={$this->abbrev}",
             'bundled' => $this->bundled,
-            'install_status' => $this->installStatus,
-            'install_step' => $this->installStep,
+            'install_status' => $this->installStatus?->value,
+            'install_step' => $this->installStep?->value,
             'install_error' => $this->installError,
         ];
     }

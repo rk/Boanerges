@@ -4,6 +4,7 @@ namespace App\Services\Bible;
 
 use App\Data\CatalogEntry;
 use App\Enums\CatalogImportFormat;
+use App\Enums\VerseMarkupFormat;
 use App\Models\Translation;
 use App\Services\Bible\Import\SwordConfReader;
 
@@ -22,7 +23,7 @@ class TranslationMetadataSync
         $updates = array_filter([
             'about' => $entry->about,
             'source' => $entry->url,
-            'format' => $entry->markupFormat,
+            'format' => $entry->markupFormat?->value,
         ], fn($value) => $value !== null && $value !== '');
 
         if ($updates !== []) {
@@ -42,7 +43,8 @@ class TranslationMetadataSync
 
         $updates = array_filter([
             'name' => $metadata['name'],
-            'format' => $metadata['format'],
+            'format' => VerseMarkupFormat::tryFrom((string) ($metadata['format'] ?? ''))?->value
+                ?? $metadata['format'],
             'versification' => $metadata['versification'],
             'about' => $metadata['about'],
             'version_string' => $metadata['version_string'],
