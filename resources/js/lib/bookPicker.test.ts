@@ -6,12 +6,30 @@ import {
 import type { Book } from '@/lib/types/bible';
 
 const fullBible: Book[] = [
-    { id: 'gen', name: 'Genesis', abbrev: 'GEN', testament: 'ot', chapters: 50 },
-    { id: 'mat', name: 'Matthew', abbrev: 'MAT', testament: 'nt', chapters: 28 },
+    {
+        id: 'gen',
+        name: 'Genesis',
+        abbrev: 'GEN',
+        testament: 'ot',
+        chapters: 50,
+    },
+    {
+        id: 'mat',
+        name: 'Matthew',
+        abbrev: 'MAT',
+        testament: 'nt',
+        chapters: 28,
+    },
 ];
 
 const ntOnly: Book[] = [
-    { id: 'mat', name: 'Matthew', abbrev: 'MAT', testament: 'nt', chapters: 28 },
+    {
+        id: 'mat',
+        name: 'Matthew',
+        abbrev: 'MAT',
+        testament: 'nt',
+        chapters: 28,
+    },
 ];
 
 describe('activeBibleTranslationIds', () => {
@@ -80,13 +98,21 @@ describe('isBookAvailableInTranslations', () => {
 
     it('returns true when every translation has the book', () => {
         expect(
-            isBookAvailableInTranslations('gen', ['asv', 'web'], booksByTranslation),
+            isBookAvailableInTranslations(
+                'gen',
+                ['asv', 'web'],
+                booksByTranslation,
+            ),
         ).toBe(true);
     });
 
     it('returns false when any translation lacks the book', () => {
         expect(
-            isBookAvailableInTranslations('gen', ['asv', 'nt'], booksByTranslation),
+            isBookAvailableInTranslations(
+                'gen',
+                ['asv', 'nt'],
+                booksByTranslation,
+            ),
         ).toBe(false);
     });
 

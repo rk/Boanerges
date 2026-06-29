@@ -65,7 +65,8 @@
 
     const booksReady = $derived(
         activeTranslationIds.every(
-            (translationId) => getBooksForTranslation(translationId) !== undefined,
+            (translationId) =>
+                getBooksForTranslation(translationId) !== undefined,
         ),
     );
 

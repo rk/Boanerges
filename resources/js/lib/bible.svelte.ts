@@ -37,7 +37,9 @@ const chapterInflight = new SvelteMap<string, Promise<Chapter>>();
 const booksByTranslation = new SvelteMap<string, Book[]>();
 const booksInflight = new SvelteMap<string, Promise<Book[]>>();
 
-export function getBooksForTranslation(translationId: string): Book[] | undefined {
+export function getBooksForTranslation(
+    translationId: string,
+): Book[] | undefined {
     return booksByTranslation.get(translationId);
 }
 
@@ -285,9 +287,7 @@ async function fetchBooksFromApi(translationId: string): Promise<Book[]> {
 export async function fetchBooksForTranslations(
     translationIds: string[],
 ): Promise<void> {
-    const missing = translationIds.filter(
-        (id) => !booksByTranslation.has(id),
-    );
+    const missing = translationIds.filter((id) => !booksByTranslation.has(id));
 
     if (missing.length === 0) {
         return;
@@ -310,7 +310,9 @@ export async function loadBooks(translationId: string): Promise<void> {
     bible.booksLoading = true;
 
     try {
-        const books = booksByTranslation.get(translationId) ?? (await fetchBooksFromApi(translationId));
+        const books =
+            booksByTranslation.get(translationId) ??
+            (await fetchBooksFromApi(translationId));
         bible.books = books;
         bible.booksTranslationId = translationId;
     } finally {
