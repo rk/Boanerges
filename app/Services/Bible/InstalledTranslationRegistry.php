@@ -73,7 +73,7 @@ class InstalledTranslationRegistry
             abbrev: strtoupper($translation->abbrev),
             bundled: $translation->bundled,
             about: $translation->about,
-            installStatus: $translation->installStatusValue(),
+            installStatus: $translation->install_status,
             installStep: $translation->install_step,
             installError: $translation->install_error,
         );

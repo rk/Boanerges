@@ -198,6 +198,17 @@ Use Wayfinder to generate TypeScript functions for Laravel routes. Import from `
 
 </laravel-boost-guidelines>
 
+=== php enums ===
+
+# String-backed enums
+
+When a value is one of a fixed, known set of strings (status codes, import formats, column types, pipeline steps, etc.), use a string-backed PHP enum in `App\Enums` instead of raw strings or `@param 'a'|'b'` unions.
+
+- Cast Eloquent columns with `casts()` when the DB column stores enum values.
+- Serialize to JSON/API with `->value` (or let API resources call `->value` on nullable enums).
+- Parse external input (catalog JSON, request payloads) with `tryFrom()`; fall back to a safe default or `null` for unknown values.
+- TypeScript unions in `resources/js` can mirror PHP enums when the same fixed set crosses the wire.
+
 === NativePHP ===
 
 NativePHP customizes aspects of Laravel, so when you plan, consult the `_doc/nativephp/docs/` vendored documentation to see how Laravel patterns are different in NativePHP.

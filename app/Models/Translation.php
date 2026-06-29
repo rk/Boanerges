@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use App\Enums\TranslationInstallStatus;
+use App\Enums\TranslationInstallStep;
 use Illuminate\Database\Eloquent\Model;
 
 /**
  * @property string $abbrev
  * @property string $name
  * @property string|null $format
- * @property string|null $install_step
+ * @property TranslationInstallStep|null $install_step
  * @property string|null $install_error
  * @property bool $bundled
  * @property TranslationInstallStatus $install_status
@@ -39,6 +40,7 @@ class Translation extends Model
     {
         return [
             'install_status' => TranslationInstallStatus::class,
+            'install_step' => TranslationInstallStep::class,
             'bundled' => 'boolean',
         ];
     }
@@ -53,8 +55,16 @@ class Translation extends Model
         return $this->install_status->value;
     }
 
-    public function updateProgress(TranslationInstallStatus $status, string $step, int $percent): void
+    public function installStepValue(): ?string
     {
+        return $this->install_step?->value;
+    }
+
+    public function updateProgress(
+        TranslationInstallStatus $status,
+        TranslationInstallStep $step,
+        int $percent,
+    ): void {
         if ($this->install_status !== $status || $this->install_step !== $step) {
             $this->update([
                 'install_status' => $status,
@@ -74,12 +84,13 @@ class Translation extends Model
     {
         $this->update([
             'install_status' => TranslationInstallStatus::Failed,
+            'install_step' => TranslationInstallStep::Failed,
             'install_error' => $error,
         ]);
 
         event(new \App\Events\TranslationInstallProgress(
             abbrev: $this->abbrev,
-            step: 'failed',
+            step: TranslationInstallStep::Failed,
             percent: 0,
             error: $error,
         ));

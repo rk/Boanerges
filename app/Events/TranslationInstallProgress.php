@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Enums\TranslationInstallStep;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -14,10 +15,23 @@ class TranslationInstallProgress implements ShouldBroadcastNow
 
     public function __construct(
         public string $abbrev,
-        public string $step,
+        public TranslationInstallStep $step,
         public int $percent,
         public ?string $error = null,
     ) {}
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function broadcastWith(): array
+    {
+        return [
+            'abbrev' => $this->abbrev,
+            'step' => $this->step->value,
+            'percent' => $this->percent,
+            'error' => $this->error,
+        ];
+    }
 
     /**
      * @return array<int, Channel>

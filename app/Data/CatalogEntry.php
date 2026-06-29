@@ -2,16 +2,18 @@
 
 namespace App\Data;
 
+use App\Enums\CatalogImportFormat;
+use App\Enums\VerseMarkupFormat;
+
 readonly class CatalogEntry
 {
-    /** @param  'sword'|'usfm'|'accordance'  $importAs */
     public function __construct(
         public string $short,
         public string $name,
         public string $url,
         public ?string $about = null,
-        public string $importAs = 'sword',
-        public ?string $markupFormat = null,
+        public CatalogImportFormat $importAs = CatalogImportFormat::Sword,
+        public ?VerseMarkupFormat $markupFormat = null,
     ) {}
 
     public function id(): string
@@ -29,7 +31,6 @@ readonly class CatalogEntry
      */
     public static function fromArray(array $attributes): self
     {
-        /** @var 'sword'|'usfm'|'accordance' $importAs */
         $importAs = self::resolveImportAs($attributes);
 
         return new self(
@@ -38,19 +39,17 @@ readonly class CatalogEntry
             url: $attributes['url'] ?? "https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/{$attributes['short']}",
             about: $attributes['about'] ?? "https://crosswire.org/sword/modules/ModInfo.jsp?modName={$attributes['short']}",
             importAs: $importAs,
-            markupFormat: self::resolveMarkupFormat($attributes),
+            markupFormat: self::resolveMarkupFormat($attributes, $importAs),
         );
     }
 
-    /** @param  array<string, mixed>  $attributes
-     * @return 'sword'|'usfm'|'accordance'
-     */
-    private static function resolveImportAs(array $attributes): string
+    /** @param  array<string, mixed>  $attributes */
+    private static function resolveImportAs(array $attributes): CatalogImportFormat
     {
         if (isset($attributes['import_as'])) {
-            $importAs = (string) $attributes['import_as'];
+            $importAs = CatalogImportFormat::tryFrom((string) $attributes['import_as']);
 
-            if (in_array($importAs, ['sword', 'usfm', 'accordance'], true)) {
+            if ($importAs !== null) {
                 return $importAs;
             }
         }
@@ -58,26 +57,26 @@ readonly class CatalogEntry
         $format = $attributes['format'] ?? null;
 
         return match ($format) {
-            'sword', 'usfm', 'accordance' => $format,
-            default => 'sword',
+            'sword', 'usfm', 'accordance' => CatalogImportFormat::from($format),
+            default => CatalogImportFormat::Sword,
         };
     }
 
     /** @param  array<string, mixed>  $attributes */
-    private static function resolveMarkupFormat(array $attributes): ?string
+    private static function resolveMarkupFormat(array $attributes, CatalogImportFormat $importAs): ?VerseMarkupFormat
     {
         if (isset($attributes['markup_format'])) {
-            return strtolower((string) $attributes['markup_format']);
+            return VerseMarkupFormat::tryFrom(strtolower((string) $attributes['markup_format']));
         }
 
         $format = $attributes['format'] ?? null;
 
-        if ($format !== null && ! in_array($format, ['sword', 'usfm', 'accordance'], true)) {
-            return strtolower((string) $format);
+        if ($format !== null && CatalogImportFormat::tryFrom((string) $format) === null) {
+            return VerseMarkupFormat::tryFrom(strtolower((string) $format));
         }
 
-        return match (self::resolveImportAs($attributes)) {
-            'usfm' => 'usfm',
+        return match ($importAs) {
+            CatalogImportFormat::Usfm => VerseMarkupFormat::Usfm,
             default => null,
         };
     }

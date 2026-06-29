@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use App\Enums\TranslationInstallStatus;
+use App\Enums\TranslationInstallStep;
+use App\Enums\VerseMarkupFormat;
 use App\Models\Translation;
 use App\Services\Bible\Markup\VerseMarkupConverterFactory;
 use App\Services\Bible\TranslationSchemaManager;
@@ -32,9 +34,9 @@ class BundledAsvTestSeeder extends Seeder
         Translation::query()->create([
             'abbrev' => 'asv',
             'name' => 'American Standard Version',
-            'format' => 'osis',
+            'format' => VerseMarkupFormat::Osis->value,
             'install_status' => TranslationInstallStatus::Ready,
-            'install_step' => 'complete',
+            'install_step' => TranslationInstallStep::Ready,
             'bundled' => true,
         ]);
 

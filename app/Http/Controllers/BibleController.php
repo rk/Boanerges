@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\TranslationInstallStatus;
+use App\Enums\TranslationInstallStep;
 use App\Http\Resources\Bible\BookResource;
 use App\Http\Resources\Bible\CatalogTranslationResource;
 use App\Http\Resources\Bible\ChapterResource;
@@ -61,8 +63,8 @@ class BibleController extends Controller
         return response()->json([
             'abbrev' => $model->abbrev,
             'install_status' => $model->installStatusValue(),
-            'step' => $model->install_step ?? 'pending',
-            'percent' => $this->percentForStatus($model->installStatusValue(), $model->install_step),
+            'step' => $model->installStepValue() ?? TranslationInstallStep::Pending->value,
+            'percent' => $this->percentForStatus($model->install_status, $model->install_step),
             'install_error' => $model->install_error,
         ]);
     }
@@ -140,25 +142,26 @@ class BibleController extends Controller
         ]);
     }
 
-    private function percentForStatus(string $status, ?string $step): int
+    private function percentForStatus(TranslationInstallStatus $status, ?TranslationInstallStep $step): int
     {
         return match ($status) {
-            'ready' => 100,
-            'indexing' => 85,
-            'verifying' => 75,
-            'importing' => 50,
-            'creating_schema' => 30,
-            'downloading' => 10,
-            'failed' => 0,
+            TranslationInstallStatus::Ready => 100,
+            TranslationInstallStatus::Indexing => 85,
+            TranslationInstallStatus::Verifying => 75,
+            TranslationInstallStatus::Importing => 50,
+            TranslationInstallStatus::CreatingSchema => 30,
+            TranslationInstallStatus::Downloading => 10,
+            TranslationInstallStatus::Failed => 0,
             default => match ($step) {
-                'ready' => 100,
-                'indexed' => 95,
-                'indexing' => 85,
-                'verifying' => 75,
-                'importing' => 50,
-                'creating_schema' => 30,
-                'downloaded', 'source_ready' => 20,
-                'downloading' => 10,
+                TranslationInstallStep::Ready => 100,
+                TranslationInstallStep::Indexed => 95,
+                TranslationInstallStep::Indexing => 85,
+                TranslationInstallStep::Verifying => 75,
+                TranslationInstallStep::Importing => 50,
+                TranslationInstallStep::CreatingSchema => 30,
+                TranslationInstallStep::Downloaded, TranslationInstallStep::SourceReady => 20,
+                TranslationInstallStep::Downloading => 10,
+                TranslationInstallStep::Failed => 0,
                 default => 0,
             },
         };

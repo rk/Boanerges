@@ -2,6 +2,9 @@
 
 namespace App\Data;
 
+use App\Enums\TranslationInstallStatus;
+use App\Enums\TranslationInstallStep;
+
 readonly class TranslationConfig
 {
     public function __construct(
@@ -11,8 +14,8 @@ readonly class TranslationConfig
         public string $abbrev,
         public bool $bundled = false,
         public ?string $about = null,
-        public ?string $installStatus = null,
-        public ?string $installStep = null,
+        public ?TranslationInstallStatus $installStatus = null,
+        public ?TranslationInstallStep $installStep = null,
         public ?string $installError = null,
     ) {}
 
@@ -28,8 +31,12 @@ readonly class TranslationConfig
             abbrev: $attributes['abbrev'],
             bundled: $attributes['bundled'] ?? false,
             about: $attributes['about'] ?? null,
-            installStatus: $attributes['installStatus'] ?? null,
-            installStep: $attributes['installStep'] ?? null,
+            installStatus: isset($attributes['installStatus'])
+                ? TranslationInstallStatus::tryFrom((string) $attributes['installStatus'])
+                : null,
+            installStep: isset($attributes['installStep'])
+                ? TranslationInstallStep::tryFrom((string) $attributes['installStep'])
+                : null,
             installError: $attributes['installError'] ?? null,
         );
     }
