@@ -38,6 +38,10 @@ class AppSettingsRepository
 
     private function usesNativeStorage(): bool
     {
+        if (app()->environment('testing')) {
+            return false;
+        }
+
         return (bool) config('nativephp-internal.running', false);
     }
 
