@@ -1,3 +1,5 @@
+import type { Testament } from '@/lib/types/bible';
+
 /** Canonical OSIS book IDs → English display names (matches OsisBookId::DISPLAY_NAMES). */
 export const CANON_BOOK_NAMES: Record<string, string> = {
     gen: 'Genesis',
@@ -68,6 +70,23 @@ export const CANON_BOOK_NAMES: Record<string, string> = {
     rev: 'Revelation',
 };
 
+const CANON_BOOK_IDS = Object.keys(CANON_BOOK_NAMES);
+const NT_START_INDEX = CANON_BOOK_IDS.indexOf('mat');
+
+export const CANON_OT_BOOK_IDS: readonly string[] = CANON_BOOK_IDS.slice(
+    0,
+    NT_START_INDEX,
+);
+export const CANON_NT_BOOK_IDS: readonly string[] =
+    CANON_BOOK_IDS.slice(NT_START_INDEX);
+
 export function canonBookName(bookId: string): string {
     return CANON_BOOK_NAMES[bookId.toLowerCase()] ?? bookId.toUpperCase();
+}
+
+export function canonBookTestament(bookId: string): Testament {
+    const id = bookId.toLowerCase();
+    const index = CANON_BOOK_IDS.indexOf(id);
+
+    return index >= NT_START_INDEX ? 'nt' : 'ot';
 }
