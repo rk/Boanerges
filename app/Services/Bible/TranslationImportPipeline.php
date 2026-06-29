@@ -2,6 +2,7 @@
 
 namespace App\Services\Bible;
 
+use App\Enums\CatalogImportFormat;
 use App\Enums\TranslationInstallStatus;
 use App\Events\FtsIndexProgress;
 use App\Models\Translation;
@@ -55,7 +56,7 @@ class TranslationImportPipeline
     {
         $importAs = $this->importAs($translation);
 
-        if ($importAs === 'sword' && $this->modules->isModuleInstalled($translation->abbrev)) {
+        if ($importAs === CatalogImportFormat::Sword && $this->modules->isModuleInstalled($translation->abbrev)) {
             $translation->updateProgress(TranslationInstallStatus::Downloading, 'source_ready', 10);
             $this->syncMetadata($translation);
 
@@ -78,7 +79,7 @@ class TranslationImportPipeline
             throw new \RuntimeException("Failed to download {$entry->short}.");
         }
 
-        if ($importAs === 'sword') {
+        if ($importAs === CatalogImportFormat::Sword) {
             $zip = new ZipArchive();
 
             if ($zip->open($zipPath) !== true) {
@@ -115,14 +116,14 @@ class TranslationImportPipeline
     public function importVerses(Translation $translation): void
     {
         switch ($this->importAs($translation)) {
-            case 'usfm':
+            case CatalogImportFormat::Usfm:
                 $translation->updateProgress(TranslationInstallStatus::Importing, 'importing', 70);
                 $this->usfmImporter->importFromZip(
                     $translation->abbrev,
                     $this->downloadedPath ?? throw new \RuntimeException('Missing USFM source.'),
                 );
                 break;
-            case 'accordance':
+            case CatalogImportFormat::Accordance:
                 $translation->updateProgress(TranslationInstallStatus::Importing, 'importing', 70);
                 $this->accordanceImporter->importFromFile(
                     $translation->abbrev,
@@ -148,7 +149,7 @@ class TranslationImportPipeline
 
     public function verify(Translation $translation): void
     {
-        if ($this->importAs($translation) === 'sword') {
+        if ($this->importAs($translation) === CatalogImportFormat::Sword) {
             $this->swordImporter->verify($translation->abbrev);
         } elseif (! $this->hasVerse($translation->abbrev, 'gen', 1, 1) && ! $this->hasVerse($translation->abbrev, 'mat', 1, 1)) {
             throw new \RuntimeException('Verification failed: no reference verses found.');
@@ -186,7 +187,7 @@ class TranslationImportPipeline
         ));
     }
 
-    private function importAs(Translation $translation): string
+    private function importAs(Translation $translation): CatalogImportFormat
     {
         return $this->catalog->find($translation->abbrev)->importAs;
     }

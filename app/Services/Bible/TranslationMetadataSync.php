@@ -3,6 +3,7 @@
 namespace App\Services\Bible;
 
 use App\Data\CatalogEntry;
+use App\Enums\CatalogImportFormat;
 use App\Models\Translation;
 use App\Services\Bible\Import\SwordConfReader;
 
@@ -14,7 +15,7 @@ class TranslationMetadataSync
 
     public function applyFromCatalog(Translation $translation, CatalogEntry $entry): Translation
     {
-        if ($entry->importAs === 'sword') {
+        if ($entry->importAs === CatalogImportFormat::Sword) {
             return $this->applyFromSwordConf($translation, $entry);
         }
 

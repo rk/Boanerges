@@ -1,6 +1,7 @@
 <?php
 
 use App\Data\CatalogEntry;
+use App\Enums\CatalogImportFormat;
 
 it('maps OEB catalog entry to USFM import and markup', function () {
     $entry = CatalogEntry::fromArray([
@@ -11,7 +12,7 @@ it('maps OEB catalog entry to USFM import and markup', function () {
         'markup_format' => 'usfm',
     ]);
 
-    expect($entry->importAs)->toBe('usfm')
+    expect($entry->importAs)->toBe(CatalogImportFormat::Usfm)
         ->and($entry->markupFormat)->toBe('usfm');
 });
 
@@ -22,6 +23,16 @@ it('defaults USFM verse markup when only import format is given', function () {
         'format' => 'usfm',
     ]);
 
-    expect($entry->importAs)->toBe('usfm')
+    expect($entry->importAs)->toBe(CatalogImportFormat::Usfm)
         ->and($entry->markupFormat)->toBe('usfm');
+});
+
+it('defaults unknown import formats to sword', function () {
+    $entry = CatalogEntry::fromArray([
+        'short' => 'KJV',
+        'name' => 'King James Version',
+        'import_as' => 'invalid',
+    ]);
+
+    expect($entry->importAs)->toBe(CatalogImportFormat::Sword);
 });
