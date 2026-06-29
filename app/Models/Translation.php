@@ -50,9 +50,7 @@ class Translation extends Model
 
     public function installStatusValue(): string
     {
-        $status = $this->install_status;
-
-        return $status instanceof TranslationInstallStatus ? $status->value : (string) $status;
+        return $this->install_status->value;
     }
 
     public function updateProgress(TranslationInstallStatus $status, string $step, int $percent): void

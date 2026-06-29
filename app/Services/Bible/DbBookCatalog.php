@@ -26,10 +26,11 @@ class DbBookCatalog
         $abbrev = $this->schema->validateAbbrev($abbrev);
         $table = $this->schema->booksTable($abbrev);
 
-        return DB::table($table)
+        /** @var list<array{id: string, name: string, abbrev: string, testament: string, chapters: int, firstChapter: int, lastChapter: int}> $books */
+        $books = DB::table($table)
             ->orderBy('id')
             ->get()
-            ->map(fn ($book): array => [
+            ->map(fn($book): array => [
                 'id' => (string) (OsisBookId::normalize($book->osis_id) ?? $book->osis_id),
                 'name' => (string) $book->name,
                 'abbrev' => strtoupper(substr((string) $book->osis_id, 0, 3)),
@@ -40,6 +41,8 @@ class DbBookCatalog
             ])
             ->values()
             ->all();
+
+        return $books;
     }
 
     /**
