@@ -1,7 +1,10 @@
 @import 'tailwindcss';
 
 @plugin 'daisyui' {
-    themes: light --default, dark --prefersdark, sepia;
+    themes:
+        light --default,
+        dark --prefersdark,
+        sepia;
 }
 
 @plugin 'daisyui/theme' {
@@ -44,7 +47,8 @@
         Instrument Sans, ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
-    --font-reader: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+    --font-reader:
+        'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
 }
 
 .reader-prose {
@@ -115,7 +119,11 @@
 .scribe-verse:empty {
     display: inline-block;
     min-width: 4ch;
-    background-color: color-mix(in oklch, var(--color-base-300) 55%, transparent);
+    background-color: color-mix(
+        in oklch,
+        var(--color-base-300) 55%,
+        transparent
+    );
     border-radius: var(--radius-field);
 }
 

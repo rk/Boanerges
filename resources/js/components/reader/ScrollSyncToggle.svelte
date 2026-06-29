@@ -24,5 +24,10 @@
         <Unlink size={16} aria-hidden="true" />
     {/if}
     <span class="label-text text-sm">Link scroll</span>
-    <input type="checkbox" class="toggle toggle-sm" checked={study.scrollSync} onchange={handleChange} />
+    <input
+        type="checkbox"
+        class="toggle toggle-sm"
+        checked={study.scrollSync}
+        onchange={handleChange}
+    />
 </label>

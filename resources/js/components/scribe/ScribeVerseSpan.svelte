@@ -25,15 +25,18 @@
     let wrapElement: HTMLSpanElement | undefined = $state();
 
     $effect(() => {
-        if (! wrapElement) {
+        if (!wrapElement) {
             return;
         }
 
         applyParagraphStart(wrapElement, paragraphStart);
     });
 
-    export function setText(text: string, options: { force?: boolean } = {}): void {
-        if (! verseElement) {
+    export function setText(
+        text: string,
+        options: { force?: boolean } = {},
+    ): void {
+        if (!verseElement) {
             return;
         }
 
@@ -56,12 +59,14 @@
 
         const selection = document.getSelection();
 
-        if (! selection || selection.rangeCount === 0) {
+        if (!selection || selection.rangeCount === 0) {
             return;
         }
 
         selection.deleteFromDocument();
-        selection.getRangeAt(0).insertNode(document.createTextNode(normalizePasteText(pasted)));
+        selection
+            .getRangeAt(0)
+            .insertNode(document.createTextNode(normalizePasteText(pasted)));
         selection.collapseToEnd();
 
         if (verseElement) {
@@ -70,7 +75,7 @@
     }
 
     function handleKeydown(event: KeyboardEvent): void {
-        if (event.key !== 'Tab' || ! verseElement) {
+        if (event.key !== 'Tab' || !verseElement) {
             return;
         }
 
@@ -79,7 +84,7 @@
 
         const root = verseElement.closest('.scribe-document');
 
-        if (! root) {
+        if (!root) {
             return;
         }
 
@@ -103,7 +108,7 @@
         <button
             type="button"
             class="btn btn-ghost btn-xs px-0"
-            class:opacity-30={! paragraphStart}
+            class:opacity-30={!paragraphStart}
             class:opacity-100={paragraphStart}
             disabled={verseNumber === 1}
             tabindex="-1"

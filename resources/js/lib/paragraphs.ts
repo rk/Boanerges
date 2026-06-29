@@ -37,7 +37,9 @@ export type ScribePreviewSegment = {
     showVerseNumber: boolean;
 };
 
-export function buildScribePreviewParagraphs(verses: Verse[]): ScribePreviewSegment[][] {
+export function buildScribePreviewParagraphs(
+    verses: Verse[],
+): ScribePreviewSegment[][] {
     const groups = groupVersesIntoParagraphs(verses);
     const result: ScribePreviewSegment[][] = [];
 
@@ -82,11 +84,12 @@ export function toPreviewVerses(
     for (const source of sourceVerses) {
         const text = getText(source.number);
         const hasText = text.trim().length > 0;
-        const startsParagraph = pendingBreak || getParagraphStart(source.number);
+        const startsParagraph =
+            pendingBreak || getParagraphStart(source.number);
 
         pendingBreak = false;
 
-        if (! hasText) {
+        if (!hasText) {
             if (startsParagraph && result.length > 0) {
                 pendingBreak = true;
             }

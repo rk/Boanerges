@@ -1,5 +1,5 @@
-import { search as searchRoute } from '@/actions/App/Http/Controllers/BibleController';
 import type { SearchResult } from '@/lib/types/bible';
+import { search as searchRoute } from '@/actions/App/Http/Controllers/BibleController';
 
 export const search = $state({
     loading: false,
@@ -55,7 +55,7 @@ export function cancelSearch(): void {
 }
 
 export function loadMoreSearchResults(translationId: string): void {
-    if (! search.hasMore || search.loading || search.query.length < 2) {
+    if (!search.hasMore || search.loading || search.query.length < 2) {
         return;
     }
 
@@ -81,22 +81,25 @@ async function executeSearch(
             },
         });
         const response = await fetch(url, {
-            headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            headers: {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
         });
 
         if (requestId !== activeRequest) {
             return;
         }
 
-        if (! response.ok) {
-            if (! append) {
+        if (!response.ok) {
+            if (!append) {
                 resetSearchState();
             }
 
             return;
         }
 
-        const data = await response.json() as {
+        const data = (await response.json()) as {
             results: SearchResult[];
             hasMore: boolean;
         };
@@ -105,7 +108,9 @@ async function executeSearch(
             return;
         }
 
-        search.results = append ? [...search.results, ...data.results] : data.results;
+        search.results = append
+            ? [...search.results, ...data.results]
+            : data.results;
         search.hasMore = data.hasMore;
         search.offset = offset + data.results.length;
     } finally {

@@ -1,18 +1,21 @@
 <script lang="ts">
-    import NotesColumn from '@/components/columns/NotesColumn.svelte';
-    import SearchColumn from '@/components/columns/SearchColumn.svelte';
     import BibleColumn from '@/components/columns/BibleColumn.svelte';
     import CrossReferencesColumn from '@/components/columns/CrossReferencesColumn.svelte';
+    import NotesColumn from '@/components/columns/NotesColumn.svelte';
     import ScribeColumn from '@/components/columns/ScribeColumn.svelte';
+    import SearchColumn from '@/components/columns/SearchColumn.svelte';
     import ChapterNavRail from '@/components/layout/ChapterNavRail.svelte';
     import { getReaderStyle } from '@/lib/readability.svelte.ts';
-    import { bibleColumnCount, secondaryTranslationForSlot } from '@/lib/studyLayout';
     import {
         setTranslation,
         setTranslationB,
         setTranslationC,
         study,
     } from '@/lib/study.svelte.ts';
+    import {
+        bibleColumnCount,
+        secondaryTranslationForSlot,
+    } from '@/lib/studyLayout';
     import type { ColumnContentType } from '@/lib/types/study';
     import { createVerseHighlightScroller } from '@/lib/verseHighlightScroll';
 
@@ -22,7 +25,10 @@
     };
 
     let primaryScroll = $state<HTMLElement | null>(null);
-    let secondaryScrolls = $state<[HTMLElement | null, HTMLElement | null]>([null, null]);
+    let secondaryScrolls = $state<[HTMLElement | null, HTMLElement | null]>([
+        null,
+        null,
+    ]);
     let syncing = $state(false);
     let suppressScrollSync = $state(false);
 
@@ -55,7 +61,7 @@
     });
 
     $effect(() => {
-        if (! study.verseHighlight) {
+        if (!study.verseHighlight) {
             highlightScroller.reset();
         }
     });
@@ -64,7 +70,7 @@
         const highlight = study.verseHighlight;
         const expectedRootCount = bibleColumnCount(study);
 
-        if (! highlight || expectedRootCount === 0) {
+        if (!highlight || expectedRootCount === 0) {
             return;
         }
 
@@ -97,7 +103,7 @@
     });
 
     function syncScroll(source: HTMLElement, target: HTMLElement | null): void {
-        if (! study.scrollSync || ! target || syncing || suppressScrollSync) {
+        if (!study.scrollSync || !target || syncing || suppressScrollSync) {
             return;
         }
 
@@ -114,9 +120,12 @@
 
     function makeScrollHandler(slotIndex: number | 'primary'): () => void {
         return () => {
-            const source = slotIndex === 'primary' ? primaryScroll : secondaryScrolls[slotIndex];
+            const source =
+                slotIndex === 'primary'
+                    ? primaryScroll
+                    : secondaryScrolls[slotIndex];
 
-            if (! source) {
+            if (!source) {
                 return;
             }
 
@@ -128,7 +137,9 @@
         };
     }
 
-    function secondaryTranslationChange(slotIndex: number): (id: string) => void {
+    function secondaryTranslationChange(
+        slotIndex: number,
+    ): (id: string) => void {
         return slotIndex === 0 ? setTranslationB : setTranslationC;
     }
 </script>
@@ -147,7 +158,7 @@
         <div class="min-w-0 flex-1">
             <BibleColumn
                 translationId={study.translationId}
-                showChapterNav={! showLeftNavRail}
+                showChapterNav={!showLeftNavRail}
                 onTranslationChange={setTranslation}
                 bind:scrollRef={primaryScroll}
                 onscroll={makeScrollHandler('primary')}
@@ -164,7 +175,9 @@
                             study.translationCId,
                         )}
                         slotIndex={slot.slotIndex}
-                        onTranslationChange={secondaryTranslationChange(slot.slotIndex)}
+                        onTranslationChange={secondaryTranslationChange(
+                            slot.slotIndex,
+                        )}
                         bind:scrollRef={secondaryScrolls[slot.slotIndex]}
                         onscroll={makeScrollHandler(slot.slotIndex)}
                     />

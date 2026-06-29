@@ -12,11 +12,11 @@
     {#each paragraphs as paragraph, paragraphIndex (`${paragraphIndex}-${paragraph[0]?.verseNumber ?? 0}`)}
         <p>
             {#each paragraph as segment, index (`${paragraphIndex}-${segment.verseNumber}-${index}`)}
-                {#if index > 0}
-                    {' '}
-                {/if}
+                {#if index > 0}{/if}
                 {#if segment.showVerseNumber}
-                    <sup class="text-primary mr-0.5 text-xs">{segment.verseNumber}</sup>
+                    <sup class="text-primary mr-0.5 text-xs"
+                        >{segment.verseNumber}</sup
+                    >
                 {/if}<FormattedVerseText text={segment.text} />
             {/each}
         </p>

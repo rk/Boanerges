@@ -1,6 +1,9 @@
 import { http } from '@inertiajs/svelte';
 
-export async function patchJson<T>(url: string, data: Record<string, unknown>): Promise<T> {
+export async function patchJson<T>(
+    url: string,
+    data: Record<string, unknown>,
+): Promise<T> {
     const response = await http.getClient().request({
         method: 'patch',
         url,

@@ -1,6 +1,6 @@
-import { crossReferences as crossReferencesRoute } from '@/actions/App/Http/Controllers/BibleController';
 import { parseScriptureReference } from '@/lib/scriptureReference';
 import type { Book, CrossReference } from '@/lib/types/bible';
+import { crossReferences as crossReferencesRoute } from '@/actions/App/Http/Controllers/BibleController';
 
 export const crossrefs = $state({
     loading: false,
@@ -15,7 +15,10 @@ export function setCrossReferenceInput(reference: string): void {
     crossrefs.activeReference = reference;
 }
 
-export function scheduleCrossReferenceLookup(input: string, books: Book[]): void {
+export function scheduleCrossReferenceLookup(
+    input: string,
+    books: Book[],
+): void {
     if (debounceTimeout) {
         clearTimeout(debounceTimeout);
     }
@@ -45,27 +48,38 @@ export function scheduleCrossReferenceLookup(input: string, books: Book[]): void
     }, 300);
 }
 
-export async function loadCrossReferences(bookId: string, chapter: number, verse: number): Promise<void> {
+export async function loadCrossReferences(
+    bookId: string,
+    chapter: number,
+    verse: number,
+): Promise<void> {
     const requestId = ++activeRequest;
     crossrefs.loading = true;
 
     try {
-        const url = crossReferencesRoute.url({ query: { book: bookId, chapter, verse } });
+        const url = crossReferencesRoute.url({
+            query: { book: bookId, chapter, verse },
+        });
         const response = await fetch(url, {
-            headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            headers: {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
         });
 
         if (requestId !== activeRequest) {
             return;
         }
 
-        if (! response.ok) {
+        if (!response.ok) {
             crossrefs.references = [];
 
             return;
         }
 
-        const data = await response.json() as { references: CrossReference[] };
+        const data = (await response.json()) as {
+            references: CrossReference[];
+        };
 
         if (requestId !== activeRequest) {
             return;

@@ -5,7 +5,13 @@
     import ReaderPane from '@/components/reader/ReaderPane.svelte';
     import VerseText from '@/components/reader/VerseText.svelte';
     import TranslationSelect from '@/components/sidebar/TranslationSelect.svelte';
-    import { bible, bookAbbrev, fetchChapter, getAdjacentChapter, peekChapter } from '@/lib/bible.svelte.ts';
+    import {
+        bible,
+        bookAbbrev,
+        fetchChapter,
+        getAdjacentChapter,
+        peekChapter,
+    } from '@/lib/bible.svelte.ts';
     import { getReaderStyle } from '@/lib/readability.svelte.ts';
     import {
         goToNextChapter,
@@ -40,24 +46,37 @@
     let lastTranslationId: string | null = null;
 
     const readerStyle = $derived(getReaderStyle());
-    const translation = $derived(bible.translations.find((item) => item.id === translationId));
+    const translation = $derived(
+        bible.translations.find((item) => item.id === translationId),
+    );
     const highlightedVerses = $derived(
         study.verseHighlight
-            ? verseNumbersInRange(study.verseHighlight.verse, study.verseHighlight.endVerse)
+            ? verseNumbersInRange(
+                  study.verseHighlight.verse,
+                  study.verseHighlight.endVerse,
+              )
             : new Set<number>(),
     );
     const isPrimary = $derived(slotIndex === undefined);
-    const contentType = $derived(isPrimary ? 'primary-bible' as const : 'bible-secondary' as const);
+    const contentType = $derived(
+        isPrimary ? ('primary-bible' as const) : ('bible-secondary' as const),
+    );
 
-    const previousChapter = $derived(getAdjacentChapter(study.bookId, study.chapter, 'prev'));
-    const nextChapter = $derived(getAdjacentChapter(study.bookId, study.chapter, 'next'));
+    const previousChapter = $derived(
+        getAdjacentChapter(study.bookId, study.chapter, 'prev'),
+    );
+    const nextChapter = $derived(
+        getAdjacentChapter(study.bookId, study.chapter, 'next'),
+    );
 
     $effect(() => {
         const bookId = study.bookId;
         const chapterNumber = study.chapter;
         const locationKey = `${bookId}:${chapterNumber}`;
-        const navigated = lastLocationKey !== null && locationKey !== lastLocationKey;
-        const translationChanged = lastTranslationId !== null && translationId !== lastTranslationId;
+        const navigated =
+            lastLocationKey !== null && locationKey !== lastLocationKey;
+        const translationChanged =
+            lastTranslationId !== null && translationId !== lastTranslationId;
         const isInitialLoad = lastLocationKey === null;
         let cancelled = false;
 
@@ -78,13 +97,13 @@
 
         void fetchChapter(translationId, bookId, chapterNumber)
             .then((chapter) => {
-                if (! cancelled) {
+                if (!cancelled) {
                     currentChapter = chapter;
                     loading = false;
                 }
             })
             .catch(() => {
-                if (! cancelled) {
+                if (!cancelled) {
                     loading = false;
                 }
             });
@@ -94,7 +113,10 @@
         };
     });
 
-    function chapterNavTarget(bookId: string, chapterNumber: number): ChapterNavTarget {
+    function chapterNavTarget(
+        bookId: string,
+        chapterNumber: number,
+    ): ChapterNavTarget {
         return {
             bookId,
             bookAbbrev: bookAbbrev(bookId),
@@ -118,13 +140,13 @@
         const target = event.target as HTMLElement;
         const verseEl = target.closest('[data-verse]');
 
-        if (! verseEl) {
+        if (!verseEl) {
             return;
         }
 
         const verse = Number(verseEl.getAttribute('data-verse'));
 
-        if (! Number.isFinite(verse)) {
+        if (!Number.isFinite(verse)) {
             return;
         }
 
@@ -134,12 +156,12 @@
 
 <div class="flex h-full min-h-0 min-w-0 flex-col" style={readerStyle}>
     {#if onTranslationChange}
-        <ColumnHeader
-            {contentType}
-            {slotIndex}
-            showViewSelector={! isPrimary}
-        >
-            <Book size={14} class="text-base-content/70 shrink-0" aria-hidden="true" />
+        <ColumnHeader {contentType} {slotIndex} showViewSelector={!isPrimary}>
+            <Book
+                size={14}
+                class="text-base-content/70 shrink-0"
+                aria-hidden="true"
+            />
             <TranslationSelect
                 value={translationId}
                 onchange={onTranslationChange}
@@ -147,13 +169,17 @@
         </ColumnHeader>
     {/if}
 
-    {#if loading || ! currentChapter}
+    {#if loading || !currentChapter}
         <div class="flex flex-1 items-center justify-center p-8">
-            <span class="loading loading-spinner loading-lg text-primary"></span>
+            <span class="loading loading-spinner loading-lg text-primary"
+            ></span>
         </div>
     {:else}
         <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div class="flex min-h-0 flex-1 flex-col" oncontextmenu={handleVerseContextMenu}>
+        <div
+            class="flex min-h-0 flex-1 flex-col"
+            oncontextmenu={handleVerseContextMenu}
+        >
             <ReaderPane
                 chapter={currentChapter}
                 translationAbbrev={translation?.abbrev}
@@ -165,9 +191,15 @@
                 {onscroll}
             >
                 {#if variant === 'verse'}
-                    <VerseText verses={currentChapter.verses} {highlightedVerses} />
+                    <VerseText
+                        verses={currentChapter.verses}
+                        {highlightedVerses}
+                    />
                 {:else}
-                    <ParagraphText verses={currentChapter.verses} {highlightedVerses} />
+                    <ParagraphText
+                        verses={currentChapter.verses}
+                        {highlightedVerses}
+                    />
                 {/if}
             </ReaderPane>
         </div>

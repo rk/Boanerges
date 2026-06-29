@@ -1,5 +1,8 @@
 type NativeBridge = {
-    on: (event: string, callback: (payload: unknown, event?: unknown) => void) => void;
+    on: (
+        event: string,
+        callback: (payload: unknown, event?: unknown) => void,
+    ) => void;
     contextMenu: (items: Array<{ label: string; click?: () => void }>) => void;
 };
 
@@ -12,8 +15,11 @@ declare global {
 const listeners = new Map<string, Set<(payload: unknown) => void>>();
 let initialized = false;
 
-function registerListener(eventClass: string, callback: (payload: unknown) => void): () => void {
-    if (! listeners.has(eventClass)) {
+function registerListener(
+    eventClass: string,
+    callback: (payload: unknown) => void,
+): () => void {
+    if (!listeners.has(eventClass)) {
         listeners.set(eventClass, new Set());
 
         if (typeof window !== 'undefined' && window.Native) {
@@ -69,7 +75,12 @@ export function onNativeEvent<T>(
 
 export function pollInstallStatus(
     url: string,
-    onUpdate: (status: { step: string; percent: number; install_status: string; install_error?: string | null }) => void,
+    onUpdate: (status: {
+        step: string;
+        percent: number;
+        install_status: string;
+        install_error?: string | null;
+    }) => void,
     intervalMs = 1500,
 ): () => void {
     let active = true;
@@ -78,7 +89,10 @@ export function pollInstallStatus(
         while (active) {
             try {
                 const response = await fetch(url, {
-                    headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    headers: {
+                        Accept: 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
                 });
 
                 if (response.ok) {
@@ -103,7 +117,13 @@ export function pollInstallStatus(
 export function watchInstallProgress(
     eventClass: string,
     pollUrl: string,
-    onUpdate: (payload: { step: string; percent: number; install_status?: string; install_error?: string | null; abbrev?: string }) => void,
+    onUpdate: (payload: {
+        step: string;
+        percent: number;
+        install_status?: string;
+        install_error?: string | null;
+        abbrev?: string;
+    }) => void,
 ): () => void {
     const stopPoll = pollInstallStatus(pollUrl, onUpdate);
     const stopNative = onNativeEvent(eventClass, onUpdate);

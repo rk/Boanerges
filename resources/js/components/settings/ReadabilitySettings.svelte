@@ -6,10 +6,13 @@
         setFontSize,
         setLineHeight,
         setTheme,
-        setJustifyText
+        setJustifyText,
     } from '@/lib/readability.svelte.ts';
 
-    import type {ReaderFontFamily, ReaderTheme} from '@/lib/readability.svelte.ts';
+    import type {
+        ReaderFontFamily,
+        ReaderTheme,
+    } from '@/lib/readability.svelte.ts';
 
     let { onclose }: { onclose: () => void } = $props();
 
@@ -43,7 +46,9 @@
         <div class="space-y-6">
             <label class="input w-full">
                 <b class="label">Font Size</b>
-                <span class="badge badge-soft badge-primary">{readability.fontSize}px</span>
+                <span class="badge badge-soft badge-primary"
+                    >{readability.fontSize}px</span
+                >
                 <input
                     type="range"
                     min="14"
@@ -51,13 +56,16 @@
                     step="1"
                     class="range range-sm"
                     value={readability.fontSize}
-                    oninput={(event) => setFontSize(Number(event.currentTarget.value))}
+                    oninput={(event) =>
+                        setFontSize(Number(event.currentTarget.value))}
                 />
             </label>
 
             <label class="input w-full">
                 <b class="label">Line Height</b>
-                <span class="badge badge-soft badge-primary">{readability.lineHeight.toFixed(1)}</span>
+                <span class="badge badge-soft badge-primary"
+                    >{readability.lineHeight.toFixed(1)}</span
+                >
                 <input
                     type="range"
                     min="1.4"
@@ -65,13 +73,20 @@
                     step="0.1"
                     class="range range-sm"
                     value={readability.lineHeight}
-                    oninput={(event) => setLineHeight(Number(event.currentTarget.value))}
+                    oninput={(event) =>
+                        setLineHeight(Number(event.currentTarget.value))}
                 />
             </label>
 
             <label class="label">
                 <b>Justify Text</b>
-                <input type="checkbox" bind:checked={readability.justifyText} class="toggle" onchange={(event) => setJustifyText(event.currentTarget.checked)} />
+                <input
+                    type="checkbox"
+                    bind:checked={readability.justifyText}
+                    class="toggle"
+                    onchange={(event) =>
+                        setJustifyText(event.currentTarget.checked)}
+                />
             </label>
 
             <fieldset class="fieldset">
@@ -81,7 +96,8 @@
                         <button
                             type="button"
                             class="btn join-item h-auto min-h-12 flex-col py-2"
-                            class:btn-primary={readability.fontFamily === option.id}
+                            class:btn-primary={readability.fontFamily ===
+                                option.id}
                             style:font-family={getReaderFontStack(option.id)}
                             onclick={() => setFontFamily(option.id)}
                         >
@@ -89,7 +105,9 @@
                         </button>
                     {/each}
                 </div>
-                <p class="label text-xs">Preview each option in its own typeface.</p>
+                <p class="label text-xs">
+                    Preview each option in its own typeface.
+                </p>
             </fieldset>
 
             <fieldset class="fieldset">
@@ -106,7 +124,9 @@
                         </button>
                     {/each}
                 </div>
-                <p class="label text-xs">Theme adjusts contrast and background for reading.</p>
+                <p class="label text-xs">
+                    Theme adjusts contrast and background for reading.
+                </p>
             </fieldset>
         </div>
 

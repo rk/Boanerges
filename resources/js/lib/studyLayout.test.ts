@@ -70,8 +70,12 @@ describe('availableColumnOptions', () => {
 
 describe('crossReferencesTargetSlot', () => {
     it('prefers the last slot already showing cross references', () => {
-        expect(crossReferencesTargetSlot(3, ['search', 'cross-references'])).toBe(1);
-        expect(crossReferencesTargetSlot(3, ['cross-references', 'notes'])).toBe(0);
+        expect(
+            crossReferencesTargetSlot(3, ['search', 'cross-references']),
+        ).toBe(1);
+        expect(
+            crossReferencesTargetSlot(3, ['cross-references', 'notes']),
+        ).toBe(0);
     });
 
     it('falls back to the last secondary slot', () => {

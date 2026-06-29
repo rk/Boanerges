@@ -2,6 +2,7 @@
     import Search from '@lucide/svelte/icons/search';
     import ColumnHeader from '@/components/layout/ColumnHeader.svelte';
     import { canonBookName } from '@/lib/canonBookNames';
+    import { parseHighlightSnippet } from '@/lib/parseHighlightSnippet';
     import {
         loadMoreSearchResults,
         scheduleSearch,
@@ -43,12 +44,17 @@
     <div class="min-h-0 flex-1 overflow-y-auto px-2 py-2">
         {#if search.loading && search.results.length === 0}
             <div class="flex justify-center py-8">
-                <span class="loading loading-spinner loading-md text-primary"></span>
+                <span class="loading loading-spinner loading-md text-primary"
+                ></span>
             </div>
         {:else if query.trim().length < 2}
-            <p class="text-base-content/60 px-2 py-4 text-sm">Type at least two characters.</p>
+            <p class="text-base-content/60 px-2 py-4 text-sm">
+                Type at least two characters.
+            </p>
         {:else if search.results.length === 0}
-            <p class="text-base-content/60 px-2 py-4 text-sm">No results found.</p>
+            <p class="text-base-content/60 px-2 py-4 text-sm">
+                No results found.
+            </p>
         {:else}
             <ul class="divide-base-300 divide-y">
                 {#each search.results as result (result.bookId + result.chapter + result.verse)}
@@ -59,9 +65,15 @@
                             onclick={() => openResult(result)}
                         >
                             <p class="text-sm font-medium">
-                                {canonBookName(result.bookId)} {result.chapter}:{result.verse}
+                                {canonBookName(result.bookId)}
+                                {result.chapter}:{result.verse}
                             </p>
-                            <p class="text-base-content/70 mt-1 text-sm">{@html result.snippet}</p>
+                            <p class="text-base-content/70 mt-1 text-sm">
+                                {#each parseHighlightSnippet(result.snippet) as part (part.text + part.highlight)}
+                                    {#if part.highlight}<mark>{part.text}</mark
+                                        >{:else}{part.text}{/if}
+                                {/each}
+                            </p>
                         </button>
                     </li>
                 {/each}
@@ -73,10 +85,12 @@
                         type="button"
                         class="btn btn-sm btn-ghost"
                         disabled={search.loading}
-                        onclick={() => loadMoreSearchResults(study.translationId)}
+                        onclick={() =>
+                            loadMoreSearchResults(study.translationId)}
                     >
                         {#if search.loading}
-                            <span class="loading loading-spinner loading-xs"></span>
+                            <span class="loading loading-spinner loading-xs"
+                            ></span>
                         {:else}
                             Load more
                         {/if}

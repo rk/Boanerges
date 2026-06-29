@@ -1,5 +1,5 @@
-import type { Book, CrossReference } from '@/lib/types/bible';
 import { canonBookName } from '@/lib/canonBookNames';
+import type { Book, CrossReference } from '@/lib/types/bible';
 
 export type ScriptureReference = {
     bookId: string;
@@ -7,7 +7,10 @@ export type ScriptureReference = {
     verse: number;
 };
 
-export function parseScriptureReference(input: string, books: Book[]): ScriptureReference | null {
+export function parseScriptureReference(
+    input: string,
+    books: Book[],
+): ScriptureReference | null {
     const trimmed = input.trim();
 
     if (trimmed === '') {
@@ -48,17 +51,24 @@ export function formatScriptureReference(
     return `${name} ${chapter}:${verse}`;
 }
 
-export function formatCrossReference(ref: CrossReference, books: Book[]): string {
+export function formatCrossReference(
+    ref: CrossReference,
+    books: Book[],
+): string {
     const name = ref.bookName ?? bookDisplayName(ref.bookId, books);
-    const range = ref.endVerse !== null && ref.endVerse !== ref.verse
-        ? `${ref.verse}–${ref.endVerse}`
-        : `${ref.verse}`;
+    const range =
+        ref.endVerse !== null && ref.endVerse !== ref.verse
+            ? `${ref.verse}–${ref.endVerse}`
+            : `${ref.verse}`;
 
     return `${name} ${ref.chapter}:${range}`;
 }
 
 function bookDisplayName(bookId: string, books: Book[]): string {
-    return books.find((entry) => entry.id === bookId)?.name ?? canonBookName(bookId);
+    return (
+        books.find((entry) => entry.id === bookId)?.name ??
+        canonBookName(bookId)
+    );
 }
 
 function normalizeReferenceToken(value: string): string {
@@ -69,7 +79,8 @@ function resolveBook(bookPart: string, books: Book[]): Book | null {
     const normalized = normalizeReferenceToken(bookPart);
 
     const candidates = [...books].sort(
-        (left, right) => bookMatchKeys(right).length - bookMatchKeys(left).length,
+        (left, right) =>
+            bookMatchKeys(right).length - bookMatchKeys(left).length,
     );
 
     for (const book of candidates) {

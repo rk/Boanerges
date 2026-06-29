@@ -16,4 +16,7 @@
     </button>
 </div>
 
-<PrintOptionsModal open={printUi.optionsOpen} onclose={() => (printUi.optionsOpen = false)} />
+<PrintOptionsModal
+    open={printUi.optionsOpen}
+    onclose={() => (printUi.optionsOpen = false)}
+/>

@@ -2,7 +2,7 @@
     import ArrowLeft from '@lucide/svelte/icons/arrow-left';
     import ChevronDown from '@lucide/svelte/icons/chevron-down';
 
-    import { bible, bookAbbrev } from '@/lib/bible.svelte.ts';
+    import { bible } from '@/lib/bible.svelte.ts';
     import { study, setBook, setChapter } from '@/lib/study.svelte.ts';
     import type { Testament } from '@/lib/types/bible';
 
@@ -16,7 +16,9 @@
     let selectedTestament = $state<Testament | null>(null);
     let pendingBookId = $state<string | null>(null);
 
-    const currentBook = $derived(bible.books.find((book) => book.id === study.bookId));
+    const currentBook = $derived(
+        bible.books.find((book) => book.id === study.bookId),
+    );
     const locationLabel = $derived(
         currentBook ? `${currentBook.name} ${study.chapter}` : 'Book & chapter',
     );
@@ -30,7 +32,10 @@
     );
 
     const chapterOptions = $derived(
-        Array.from({ length: pendingBook?.chapters ?? 1 }, (_, index) => index + 1),
+        Array.from(
+            { length: pendingBook?.chapters ?? 1 },
+            (_, index) => index + 1,
+        ),
     );
 
     function resetPicker(): void {
@@ -45,7 +50,7 @@
     }
 
     function updatePosition(): void {
-        if (! triggerEl) {
+        if (!triggerEl) {
             return;
         }
 
@@ -55,7 +60,7 @@
 
     function togglePicker(event: MouseEvent): void {
         event.stopPropagation();
-        open = ! open;
+        open = !open;
 
         if (open) {
             resetPicker();
@@ -107,7 +112,7 @@
     }
 
     $effect(() => {
-        if (! open) {
+        if (!open) {
             return;
         }
 
@@ -198,7 +203,9 @@
             {#if bible.booksLoading}
                 <p class="text-base-content/60 px-1 py-2 text-sm">Loading…</p>
             {:else}
-                <ul class="menu menu-sm rounded-box bg-base-200 max-h-64 overflow-y-auto p-1">
+                <ul
+                    class="menu menu-sm rounded-box bg-base-200 max-h-64 overflow-y-auto p-1"
+                >
                     {#each booksInTestament as book (book.id)}
                         <li>
                             <button
@@ -219,7 +226,8 @@
                     <button
                         type="button"
                         class="btn btn-xs"
-                        class:btn-primary={pendingBookId === study.bookId && study.chapter === chapterNumber}
+                        class:btn-primary={pendingBookId === study.bookId &&
+                            study.chapter === chapterNumber}
                         onclick={() => selectChapter(chapterNumber)}
                     >
                         {chapterNumber}

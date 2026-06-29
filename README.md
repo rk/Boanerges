@@ -37,3 +37,35 @@ Verify the bundled ASV module:
 ```bash
 php artisan bible:verify-asv
 ```
+
+## Quality checks
+
+Run the full CI gate locally before pushing:
+
+```bash
+composer ci:check
+```
+
+That runs ESLint, Prettier, svelte-check, Pint, PHPStan, and Pest.
+
+For a lighter frontend-only pass:
+
+```bash
+npm run lint:check && npm run format:check && npm run types:check
+composer lint:check
+```
+
+To auto-fix what you can:
+
+```bash
+npm run lint && npm run format
+composer lint
+```
+
+### Optional git hook
+
+Enable the repo pre-commit hook (runs Pint, ESLint, and Prettier checks):
+
+```bash
+git config core.hooksPath .githooks
+```

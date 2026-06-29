@@ -1,6 +1,10 @@
-import { updateReadability as updateReadabilitySettings } from '@/actions/App/Http/Controllers/SettingsController';
 import { patchJson } from '@/lib/patchJson';
-import type { ReadabilitySettings, ReaderFontFamily, ReaderTheme } from '@/lib/types/readability';
+import type {
+    ReadabilitySettings,
+    ReaderFontFamily,
+    ReaderTheme,
+} from '@/lib/types/readability';
+import { updateReadability as updateReadabilitySettings } from '@/actions/App/Http/Controllers/SettingsController';
 
 const fontStacks: Record<ReaderFontFamily, string> = {
     'sans-serif':
@@ -44,7 +48,9 @@ export function hydrateReadability(settings: ReadabilitySettings): void {
     hydrated = true;
 }
 
-export function getReaderFontStack(family: ReaderFontFamily = readability.fontFamily): string {
+export function getReaderFontStack(
+    family: ReaderFontFamily = readability.fontFamily,
+): string {
     return fontStacks[family];
 }
 
@@ -58,7 +64,7 @@ export function getReaderStyle(): string {
 }
 
 function schedulePersist(): void {
-    if (! hydrated) {
+    if (!hydrated) {
         return;
     }
 

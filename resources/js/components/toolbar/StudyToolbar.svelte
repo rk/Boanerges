@@ -5,12 +5,8 @@
     import TranslationManagerModal from '@/components/sidebar/TranslationManagerModal.svelte';
     import BookChapterPicker from '@/components/toolbar/BookChapterPicker.svelte';
     import { openTranslationManager } from '@/lib/bible.svelte.ts';
+    import { openSettings, setColumnCount, study } from '@/lib/study.svelte.ts';
     import { bibleColumnCount } from '@/lib/studyLayout';
-    import {
-        openSettings,
-        setColumnCount,
-        study,
-    } from '@/lib/study.svelte.ts';
 
     const showScrollSync = $derived(bibleColumnCount(study) >= 2);
 </script>
