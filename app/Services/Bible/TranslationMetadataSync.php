@@ -43,8 +43,7 @@ class TranslationMetadataSync
 
         $updates = array_filter([
             'name' => $metadata['name'],
-            'format' => VerseMarkupFormat::tryFrom((string) ($metadata['format'] ?? ''))?->value
-                ?? $metadata['format'],
+            'format' => $this->resolveStoredMarkupFormat($metadata['format']),
             'versification' => $metadata['versification'],
             'about' => $metadata['about'],
             'version_string' => $metadata['version_string'],
@@ -57,5 +56,17 @@ class TranslationMetadataSync
         $translation->update($updates);
 
         return $translation->fresh();
+    }
+
+    private function resolveStoredMarkupFormat(?string $raw): ?string
+    {
+        if ($raw === null || $raw === '') {
+            return null;
+        }
+
+        $normalized = strtolower($raw);
+        $format = VerseMarkupFormat::tryFrom($normalized);
+
+        return $format !== null ? $format->value : $normalized;
     }
 }
