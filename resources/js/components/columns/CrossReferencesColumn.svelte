@@ -21,7 +21,9 @@
 
     let referenceInput = $state('');
 
-    const parsedReference = $derived(parseScriptureReference(referenceInput, bible.books));
+    const parsedReference = $derived(
+        parseScriptureReference(referenceInput, bible.books),
+    );
     const referenceError = $derived(
         referenceInput.trim() !== '' && parsedReference === null
             ? 'Enter a reference like Mark 1:1'
@@ -63,12 +65,17 @@
             <p class="text-error px-2 py-4 text-sm">{referenceError}</p>
         {:else if crossrefs.loading}
             <div class="flex justify-center py-8">
-                <span class="loading loading-spinner loading-md text-primary"></span>
+                <span class="loading loading-spinner loading-md text-primary"
+                ></span>
             </div>
         {:else if referenceInput.trim() === ''}
-            <p class="text-base-content/60 px-2 py-4 text-sm">Enter a verse reference to look up cross references.</p>
+            <p class="text-base-content/60 px-2 py-4 text-sm">
+                Enter a verse reference to look up cross references.
+            </p>
         {:else if crossrefs.references.length === 0}
-            <p class="text-base-content/60 px-2 py-4 text-sm">No cross references found.</p>
+            <p class="text-base-content/60 px-2 py-4 text-sm">
+                No cross references found.
+            </p>
         {:else}
             <ul class="divide-base-300 divide-y">
                 {#each crossrefs.references as ref (ref.bookId + ref.chapter + ref.verse + ref.rank)}
@@ -81,7 +88,9 @@
                             <span class="font-medium">
                                 {formatCrossReference(ref, bible.books)}
                             </span>
-                            <span class="badge badge-ghost badge-sm">{ref.rank}</span>
+                            <span class="badge badge-ghost badge-sm"
+                                >{ref.rank}</span
+                            >
                         </button>
                     </li>
                 {/each}

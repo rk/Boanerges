@@ -3,7 +3,10 @@ export type VerseHighlight = {
     endVerse: number | null;
 };
 
-export function verseNumbersInRange(verse: number, endVerse: number | null): Set<number> {
+export function verseNumbersInRange(
+    verse: number,
+    endVerse: number | null,
+): Set<number> {
     const last = endVerse ?? verse;
     const start = Math.min(verse, last);
     const end = Math.max(verse, last);

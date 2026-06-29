@@ -1,7 +1,6 @@
 <?php
 
 use App\Services\Study\StudyPrintHtmlBuilder;
-use App\Services\Study\StudyPrintService;
 use Illuminate\Support\Facades\Storage;
 use Native\Desktop\DataObjects\Printer;
 use Native\Desktop\Facades\System;
@@ -136,7 +135,7 @@ test('prints landscape layout with scribe lined area and no user draft text', fu
         ->once()
         ->withArgs(function (string $html, $printer, array $settings): bool {
             expect($html)->toContain('Scribe')
-                ->and($html)->toContain('class="line"')
+                ->and($html)->toContain('class="lined-block"')
                 ->and($html)->not->toContain('My private scribe draft')
                 ->and($settings['landscape'])->toBeTrue()
                 ->and($settings['usePrinterDefaultPageSize'])->toBeTrue();

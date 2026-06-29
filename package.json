@@ -8,8 +8,8 @@
         "dev": "vite",
         "format": "prettier --write resources/",
         "format:check": "prettier --check resources/",
-        "lint": "eslint . --fix",
-        "lint:check": "eslint .",
+        "lint": "eslint resources/js --fix --cache --cache-location node_modules/.cache/eslint",
+        "lint:check": "eslint resources/js --cache --cache-location node_modules/.cache/eslint",
         "test:unit": "vitest run",
         "types:check": "svelte-check --tsconfig ./tsconfig.json"
     },

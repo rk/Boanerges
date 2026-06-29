@@ -17,6 +17,7 @@ test('readability settings can be updated', function () {
         'lineHeight' => 1.8,
         'theme' => 'dark',
         'fontFamily' => 'sans-serif',
+        'justifyText' => true,
     ]);
 
     $response->assertSuccessful();
@@ -52,6 +53,7 @@ test('readability settings can be updated with sepia theme', function () {
         'lineHeight' => 1.7,
         'theme' => 'sepia',
         'fontFamily' => 'serif',
+        'justifyText' => false,
     ]);
 
     $response->assertSuccessful();
@@ -65,6 +67,7 @@ test('readability settings validation rejects invalid values', function () {
         'lineHeight' => 1.8,
         'theme' => 'dark',
         'fontFamily' => 'sans-serif',
+        'justifyText' => true,
     ]);
 
     $response->assertUnprocessable();

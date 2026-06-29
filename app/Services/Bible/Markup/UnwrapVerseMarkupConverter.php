@@ -19,8 +19,8 @@ final class UnwrapVerseMarkupConverter implements VerseMarkupConverter
         foreach ($this->tagNames as $tagName) {
             $quotedTag = preg_quote($tagName, '/');
 
-            $text = (string) preg_replace('/<'.$quotedTag.'\b[^>]*>/i', '', $text);
-            $text = (string) preg_replace('/<\/'.$quotedTag.'>/i', '', $text);
+            $text = (string) preg_replace('/<' . $quotedTag . '\b[^>]*>/i', '', $text);
+            $text = (string) preg_replace('/<\/' . $quotedTag . '>/i', '', $text);
         }
 
         return $text;

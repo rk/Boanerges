@@ -26,8 +26,12 @@ describe('createVerseHighlightScroller', () => {
             2,
         );
 
-        expect(first.querySelector('[data-verse="5"]')?.scrollIntoView).toHaveBeenCalled();
-        expect(second.querySelector('[data-verse="5"]')?.scrollIntoView).toHaveBeenCalled();
+        expect(
+            first.querySelector('[data-verse="5"]')?.scrollIntoView,
+        ).toHaveBeenCalled();
+        expect(
+            second.querySelector('[data-verse="5"]')?.scrollIntoView,
+        ).toHaveBeenCalled();
     });
 
     it('retries until verse elements exist in every root', async () => {
@@ -56,7 +60,9 @@ describe('createVerseHighlightScroller', () => {
     it('skips duplicate scroll requests for the same highlight key', async () => {
         const scroller = createVerseHighlightScroller();
         const root = scrollRootWithVerse(3);
-        const verseEl = root.querySelector('[data-verse="3"]') as HTMLElement & {
+        const verseEl = root.querySelector(
+            '[data-verse="3"]',
+        ) as HTMLElement & {
             scrollIntoView: ReturnType<typeof vi.fn>;
         };
 

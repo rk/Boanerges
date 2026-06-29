@@ -1,10 +1,19 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseScriptureReference, formatScriptureReference } from '@/lib/scriptureReference';
+import {
+    parseScriptureReference,
+    formatScriptureReference,
+} from '@/lib/scriptureReference';
 import type { Book } from '@/lib/types/bible';
 
 const books: Book[] = [
-    { id: 'gen', name: 'Genesis', abbrev: 'GEN', testament: 'ot', chapters: 50 },
+    {
+        id: 'gen',
+        name: 'Genesis',
+        abbrev: 'GEN',
+        testament: 'ot',
+        chapters: 50,
+    },
     { id: 'mrk', name: 'Mark', abbrev: 'MRK', testament: 'nt', chapters: 16 },
     { id: '1jn', name: '1 John', abbrev: '1JN', testament: 'nt', chapters: 5 },
     { id: 'rut', name: 'Ruth', abbrev: 'RUT', testament: 'ot', chapters: 4 },

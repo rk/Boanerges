@@ -2,7 +2,12 @@
     import FileText from '@lucide/svelte/icons/file-text';
     import NotebookPen from '@lucide/svelte/icons/notebook-pen';
 
-    import { fetchStudyPrinters, printStudy, PRINT_TO_PDF, type PrintMode, type StudyPrinter } from '@/lib/printStudy.ts';
+    import {
+        fetchStudyPrinters,
+        printStudy,
+        PRINT_TO_PDF,
+    } from '@/lib/printStudy.ts';
+    import type { PrintMode, StudyPrinter } from '@/lib/printStudy.ts';
 
     let {
         open = false,
@@ -39,7 +44,10 @@
             printers = await fetchStudyPrinters();
         } catch (caught) {
             printers = [];
-            error = caught instanceof Error ? caught.message : 'Could not load printers.';
+            error =
+                caught instanceof Error
+                    ? caught.message
+                    : 'Could not load printers.';
         } finally {
             loadingPrinters = false;
         }
@@ -63,6 +71,7 @@
 
             if (path) {
                 success = `PDF saved to ${path}`;
+
                 return;
             }
 
@@ -79,13 +88,15 @@
     <div class="modal-box max-w-md">
         <h2 class="text-lg font-semibold">Print chapter</h2>
         <p class="text-base-content/70 mt-2 text-sm">
-            Bible columns print the chapter text. Scribe always prints as lined space for handwriting.
+            Bible columns print the chapter text. Scribe always prints as lined
+            space for handwriting.
         </p>
 
         <fieldset class="fieldset mt-4">
             <legend class="fieldset-legend">Printer</legend>
             {#if loadingPrinters}
-                <span class="loading loading-spinner loading-sm text-primary"></span>
+                <span class="loading loading-spinner loading-sm text-primary"
+                ></span>
             {:else}
                 <select
                     class="select select-bordered w-full"
@@ -96,7 +107,9 @@
                     <option value="">System default</option>
                     <option value={PRINT_TO_PDF}>Print to PDF</option>
                     {#each printers as printer (printer.name)}
-                        <option value={printer.name}>{printer.displayName}</option>
+                        <option value={printer.name}
+                            >{printer.displayName}</option
+                        >
                     {/each}
                 </select>
             {/if}
@@ -124,7 +137,9 @@
                 <NotebookPen size={18} aria-hidden="true" />
                 <span class="text-left">
                     <span class="block font-medium">Include my notes</span>
-                    <span class="text-base-content/70 block text-xs">Notes content included; scribe stays blank</span>
+                    <span class="text-base-content/70 block text-xs"
+                        >Notes content included; scribe stays blank</span
+                    >
                 </span>
             </button>
 
@@ -137,19 +152,27 @@
                 <FileText size={18} aria-hidden="true" />
                 <span class="text-left">
                     <span class="block font-medium">Blank for writing</span>
-                    <span class="text-base-content/70 block text-xs">Lined notes and scribe areas only</span>
+                    <span class="text-base-content/70 block text-xs"
+                        >Lined notes and scribe areas only</span
+                    >
                 </span>
             </button>
         </div>
 
         <div class="modal-action">
             <form method="dialog">
-                <button type="submit" class="btn" disabled={printing}>Cancel</button>
+                <button type="submit" class="btn" disabled={printing}
+                    >Cancel</button
+                >
             </form>
         </div>
     </div>
 
     <form method="dialog" class="modal-backdrop">
-        <button type="submit" aria-label="Close print options" disabled={printing}>Close</button>
+        <button
+            type="submit"
+            aria-label="Close print options"
+            disabled={printing}>Close</button
+        >
     </form>
 </dialog>

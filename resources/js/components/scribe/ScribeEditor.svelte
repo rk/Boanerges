@@ -9,10 +9,9 @@
         entriesFromScribeVerses,
         fetchScribeDraft,
         scheduleScribeSave,
-        serializeScribeDraft
-
+        serializeScribeDraft,
     } from '@/lib/scribe.svelte.ts';
-import type {ScribeDraftEntry} from '@/lib/scribe.svelte.ts';
+    import type { ScribeDraftEntry } from '@/lib/scribe.svelte.ts';
     import { study } from '@/lib/study.svelte.ts';
     import type { Verse } from '@/lib/types/bible';
 
@@ -29,13 +28,21 @@ import type {ScribeDraftEntry} from '@/lib/scribe.svelte.ts';
     let entries = $state<Record<number, ScribeDraftEntry>>({});
     let loading = $state(true);
     let previewOpen = $state(false);
-    let spanComponents = $state<Record<number, { setText: (text: string, options?: { force?: boolean }) => void } | undefined>>({});
+    let spanComponents = $state<
+        Record<
+            number,
+            | { setText: (text: string, options?: { force?: boolean }) => void }
+            | undefined
+        >
+    >({});
 
     const readerStyle = $derived(getReaderStyle());
     const verseNumbers = $derived(verses.map((verse) => verse.number));
     const documentKey = $derived(`${study.bookId}-${study.chapter}`);
     const hasParagraphOverrides = $derived(
-        Object.values(entries).some((entry) => entry.paragraphStartOverride !== undefined),
+        Object.values(entries).some(
+            (entry) => entry.paragraphStartOverride !== undefined,
+        ),
     );
 
     $effect(() => {
@@ -49,7 +56,7 @@ import type {ScribeDraftEntry} from '@/lib/scribe.svelte.ts';
 
         void fetchScribeDraft(bookId, chapterNumber)
             .then(async (draft) => {
-                if (! cancelled) {
+                if (!cancelled) {
                     entries = entriesFromScribeVerses(draft);
                     loading = false;
                     await tick();
@@ -57,7 +64,7 @@ import type {ScribeDraftEntry} from '@/lib/scribe.svelte.ts';
                 }
             })
             .catch(async () => {
-                if (! cancelled) {
+                if (!cancelled) {
                     loading = false;
                     await tick();
                     hydrateSpans(true);
@@ -71,7 +78,10 @@ import type {ScribeDraftEntry} from '@/lib/scribe.svelte.ts';
 
     function hydrateSpans(force = false): void {
         for (const verseNumber of verseNumbers) {
-            spanComponents[verseNumber]?.setText(entries[verseNumber]?.text ?? '', { force });
+            spanComponents[verseNumber]?.setText(
+                entries[verseNumber]?.text ?? '',
+                { force },
+            );
         }
     }
 
@@ -105,7 +115,7 @@ import type {ScribeDraftEntry} from '@/lib/scribe.svelte.ts';
             source?.paragraphStart,
             entries[verseNumber]?.paragraphStartOverride,
         );
-        const next = ! current;
+        const next = !current;
         const sourceDefault = source?.paragraphStart ?? false;
         const entry = entries[verseNumber] ?? { text: '' };
         const updated: ScribeDraftEntry = { ...entry };
@@ -135,13 +145,25 @@ import type {ScribeDraftEntry} from '@/lib/scribe.svelte.ts';
     }
 </script>
 
-<div class="flex h-full min-h-0 flex-col overflow-y-auto px-4 py-4 border-base-300 border-x" style={readerStyle}>
+<div
+    class="flex h-full min-h-0 flex-col overflow-y-auto px-4 py-4 border-base-300 border-x"
+    style={readerStyle}
+>
     <div class="mb-4 flex flex-wrap justify-end gap-2">
-        <button type="button" class="btn btn-ghost btn-sm" disabled={loading} onclick={() => (previewOpen = true)}>
+        <button
+            type="button"
+            class="btn btn-ghost btn-sm"
+            disabled={loading}
+            onclick={() => (previewOpen = true)}
+        >
             Preview
         </button>
         {#if hasParagraphOverrides}
-            <button type="button" class="btn btn-ghost btn-sm" onclick={resetParagraphBreaks}>
+            <button
+                type="button"
+                class="btn btn-ghost btn-sm"
+                onclick={resetParagraphBreaks}
+            >
                 Reset paragraph breaks
             </button>
         {/if}
@@ -149,11 +171,16 @@ import type {ScribeDraftEntry} from '@/lib/scribe.svelte.ts';
 
     {#if loading}
         <div class="flex flex-1 items-center justify-center">
-            <span class="loading loading-spinner loading-md text-primary"></span>
+            <span class="loading loading-spinner loading-md text-primary"
+            ></span>
         </div>
     {:else}
         {#key documentKey}
-            <div class="scribe-document reader-prose" role="region" aria-label="Scribe draft">
+            <div
+                class="scribe-document reader-prose"
+                role="region"
+                aria-label="Scribe draft"
+            >
                 {#each verses as verse (verse.number)}
                     <ScribeVerseSpan
                         bind:this={spanComponents[verse.number]}
@@ -164,7 +191,8 @@ import type {ScribeDraftEntry} from '@/lib/scribe.svelte.ts';
                             entries[verse.number]?.paragraphStartOverride,
                         )}
                         oninput={(value) => updateVerse(verse.number, value)}
-                        onToggleParagraph={() => toggleParagraphStart(verse.number)}
+                        onToggleParagraph={() =>
+                            toggleParagraphStart(verse.number)}
                     />
                 {/each}
             </div>

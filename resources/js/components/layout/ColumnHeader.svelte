@@ -2,11 +2,11 @@
     import Menu from '@lucide/svelte/icons/menu';
     import type { Snippet } from 'svelte';
 
+    import { setColumnContent, study } from '@/lib/study.svelte.ts';
     import {
         availableColumnOptions,
         COLUMN_CONTENT_LABELS,
     } from '@/lib/studyLayout';
-    import { setColumnContent, study } from '@/lib/study.svelte.ts';
     import type { ColumnContentType } from '@/lib/types/study';
 
     let {
@@ -29,11 +29,11 @@
         slotIndex === undefined
             ? []
             : availableColumnOptions(
-                slotIndex,
-                study.columns,
-                study.translationBId,
-                study.translationCId,
-            ),
+                  slotIndex,
+                  study.columns,
+                  study.translationBId,
+                  study.translationCId,
+              ),
     );
 
     function closeMenu(): void {
@@ -51,11 +51,11 @@
 
     function toggleMenu(event: MouseEvent): void {
         event.stopPropagation();
-        menuOpen = ! menuOpen;
+        menuOpen = !menuOpen;
     }
 
     $effect(() => {
-        if (! menuOpen) {
+        if (!menuOpen) {
             return;
         }
 
@@ -77,7 +77,9 @@
     });
 </script>
 
-<div class="border-base-300 flex shrink-0 items-center gap-2 border-b px-3 py-2">
+<div
+    class="border-base-300 flex shrink-0 items-center gap-2 border-b px-3 py-2"
+>
     {#if showViewSelector && slotIndex !== undefined}
         <div
             class="dropdown"

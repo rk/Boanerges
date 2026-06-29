@@ -35,14 +35,17 @@ export function hydrateVerseSpan(
     text: string,
     options: { force?: boolean } = {},
 ): void {
-    if (! shouldHydrateVerseSpan(element, text, options.force)) {
+    if (!shouldHydrateVerseSpan(element, text, options.force)) {
         return;
     }
 
     element.textContent = text;
 }
 
-export function applyParagraphStart(element: HTMLElement, starts: boolean): void {
+export function applyParagraphStart(
+    element: HTMLElement,
+    starts: boolean,
+): void {
     element.dataset.paragraphStart = paragraphStartAttribute(starts);
 }
 
@@ -63,7 +66,9 @@ export function serializeFromDocument(
 ): Record<number, ScribeDraftEntry> {
     const entries: Record<number, ScribeDraftEntry> = {};
 
-    for (const element of root.querySelectorAll<HTMLElement>(SCRIBE_VERSE_SELECTOR)) {
+    for (const element of root.querySelectorAll<HTMLElement>(
+        SCRIBE_VERSE_SELECTOR,
+    )) {
         const verseNumber = verseNumberFromElement(element);
 
         if (verseNumber === null) {
@@ -84,7 +89,9 @@ export function hydrateDocument(
     paragraphStarts: Record<number, boolean>,
     options: { force?: boolean } = {},
 ): void {
-    for (const element of root.querySelectorAll<HTMLElement>(SCRIBE_VERSE_SELECTOR)) {
+    for (const element of root.querySelectorAll<HTMLElement>(
+        SCRIBE_VERSE_SELECTOR,
+    )) {
         const verseNumber = verseNumberFromElement(element);
 
         if (verseNumber === null) {
@@ -101,8 +108,12 @@ export function focusAdjacentVerse(
     currentVerse: number,
     direction: 1 | -1,
 ): boolean {
-    const spans = [...root.querySelectorAll<HTMLElement>(SCRIBE_VERSE_SELECTOR)];
-    const index = spans.findIndex((element) => verseNumberFromElement(element) === currentVerse);
+    const spans = [
+        ...root.querySelectorAll<HTMLElement>(SCRIBE_VERSE_SELECTOR),
+    ];
+    const index = spans.findIndex(
+        (element) => verseNumberFromElement(element) === currentVerse,
+    );
 
     if (index === -1) {
         return false;
@@ -110,7 +121,7 @@ export function focusAdjacentVerse(
 
     const next = spans[index + direction];
 
-    if (! next) {
+    if (!next) {
         return false;
     }
 

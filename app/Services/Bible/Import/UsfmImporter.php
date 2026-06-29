@@ -76,56 +76,19 @@ class UsfmImporter
             throw new \RuntimeException('Failed to read USFM file.');
         }
 
-        $this->importContent($abbrev, $content, $booksTable, $versesTable);
+        $this->importContent($content, $booksTable, $versesTable);
     }
 
-    private function importContent(string $abbrev, string $content, string $booksTable, string $versesTable): void
+    private function importContent(string $content, string $booksTable, string $versesTable): void
     {
-        $bookDbId = null;
-        $pendingOsisId = null;
-        $chapter = 0;
-        $verse = 0;
-        $verseText = '';
-        $maxChapter = 0;
+        $state = new UsfmImportState();
+        $lines = preg_split('/\r\n|\r|\n/', $content);
 
-        $flushVerse = function () use (&$bookDbId, &$chapter, &$verse, &$verseText, $versesTable): void {
-            if ($bookDbId === null || $chapter <= 0 || $verse <= 0 || trim($verseText) === '') {
-                return;
-            }
+        if ($lines === false) {
+            return;
+        }
 
-            DB::table($versesTable)->insert([
-                'book_id' => $bookDbId,
-                'chapter' => $chapter,
-                'verse' => $verse,
-                'text' => trim($verseText),
-                'plain_text' => $this->plainTextFromUsfm(trim($verseText)),
-            ]);
-        };
-
-        $flushBook = function () use (&$bookDbId, &$pendingOsisId, &$chapter, &$verse, &$verseText, &$maxChapter, $booksTable, $flushVerse): void {
-            $flushVerse();
-
-            if ($bookDbId !== null) {
-                DB::table($booksTable)->where('id', $bookDbId)->update(['chapters' => $maxChapter]);
-            }
-
-            $bookDbId = null;
-            $pendingOsisId = null;
-            $chapter = 0;
-            $verse = 0;
-            $verseText = '';
-            $maxChapter = 0;
-        };
-
-        $ensureBook = function () use (&$bookDbId, &$pendingOsisId, $booksTable): void {
-            if ($bookDbId !== null || $pendingOsisId === null) {
-                return;
-            }
-
-            $bookDbId = $this->insertBook($booksTable, $pendingOsisId, strtoupper($pendingOsisId));
-        };
-
-        foreach (preg_split('/\r\n|\r|\n/', $content) as $line) {
+        foreach ($lines as $line) {
             $line = rtrim($line);
 
             if ($line === '') {
@@ -133,7 +96,7 @@ class UsfmImporter
             }
 
             if (preg_match($this->markerPattern(self::ID_MARKER) . '\s+(\S+)/u', $line, $matches)) {
-                $flushBook();
+                $this->flushUsfmBook($state, $booksTable, $versesTable);
 
                 $osisId = OsisBookId::normalize($matches[1]);
 
@@ -141,60 +104,100 @@ class UsfmImporter
                     continue;
                 }
 
-                $pendingOsisId = $osisId;
+                $state->pendingOsisId = $osisId;
 
                 continue;
             }
 
-            if ($pendingOsisId === null) {
+            if ($state->pendingOsisId === null) {
                 continue;
             }
 
-            if ($bookDbId === null && preg_match($this->markerPattern(self::HEADING_MARKER) . '\s+(.+)$/u', $line, $matches)) {
-                $bookDbId = $this->insertBook($booksTable, $pendingOsisId, trim($matches[1]));
+            if ($state->bookDbId === null && preg_match($this->markerPattern(self::HEADING_MARKER) . '\s+(.+)$/u', $line, $matches)) {
+                $state->bookDbId = $this->insertBook($booksTable, $state->pendingOsisId, trim($matches[1]));
 
                 continue;
             }
 
             if (preg_match($this->markerPattern(self::CHAPTER_MARKER) . '\s+(\d+)/u', $line, $matches)) {
-                $ensureBook();
-                $flushVerse();
-                $chapter = (int) $matches[1];
-                $verse = 0;
-                $verseText = '';
-                $maxChapter = max($maxChapter, $chapter);
+                $this->ensureUsfmBook($state, $booksTable);
+                $this->flushUsfmVerse($state, $versesTable);
+                $state->chapter = (int) $matches[1];
+                $state->verse = 0;
+                $state->verseText = '';
+                $state->maxChapter = max($state->maxChapter, $state->chapter);
 
                 continue;
             }
 
-            if ($bookDbId === null) {
+            if ($state->bookDbId === null) {
                 continue;
             }
 
             if (preg_match($this->markerPattern(self::VERSE_MARKER) . '\s+(\d+)(?:-\d+)?\s*(.*)$/u', $line, $matches)) {
-                $flushVerse();
-                $verse = (int) $matches[1];
-                $verseText = $matches[2];
+                $this->flushUsfmVerse($state, $versesTable);
+                $state->verse = (int) $matches[1];
+                $state->verseText = $matches[2];
 
                 continue;
             }
 
-            if ($verse <= 0 || $chapter <= 0) {
+            if ($state->verse < 1 || $state->chapter < 1) {
                 continue;
             }
 
             if (str_starts_with($line, '\\')) {
                 if (preg_match('/^\\\\[a-z0-9*]+\s*(.*)$/iu', $line, $matches) && trim($matches[1]) !== '') {
-                    $verseText = trim($verseText . ' ' . $matches[1]);
+                    $state->verseText = trim($state->verseText . ' ' . $matches[1]);
                 }
 
                 continue;
             }
 
-            $verseText = trim($verseText . ' ' . $line);
+            $state->verseText = trim($state->verseText . ' ' . $line);
         }
 
-        $flushBook();
+        $this->flushUsfmBook($state, $booksTable, $versesTable);
+    }
+
+    private function flushUsfmVerse(UsfmImportState $state, string $versesTable): void
+    {
+        if ($state->bookDbId === null || $state->chapter < 1 || $state->verse < 1 || trim($state->verseText) === '') {
+            return;
+        }
+
+        DB::table($versesTable)->insert([
+            'book_id' => $state->bookDbId,
+            'chapter' => $state->chapter,
+            'verse' => $state->verse,
+            'text' => trim($state->verseText),
+            'plain_text' => $this->verseTextFormatter->toPlainText(trim($state->verseText)),
+        ]);
+    }
+
+    private function flushUsfmBook(UsfmImportState $state, string $booksTable, string $versesTable): void
+    {
+        $this->flushUsfmVerse($state, $versesTable);
+
+        if ($state->bookDbId !== null) {
+            DB::table($booksTable)->where('id', $state->bookDbId)->update(['chapters' => $state->maxChapter]);
+        }
+
+        $state->bookDbId = null;
+        $state->pendingOsisId = null;
+        $state->chapter = 0;
+        $state->verse = 0;
+        $state->verseText = '';
+        $state->maxChapter = 0;
+    }
+
+    private function ensureUsfmBook(UsfmImportState $state, string $booksTable): void
+    {
+        if ($state->bookDbId !== null || $state->pendingOsisId === null) {
+            return;
+        }
+
+        $state->bookDbId = $this->insertBook($booksTable, $state->pendingOsisId, strtoupper($state->pendingOsisId));
     }
 
     private function insertBook(string $booksTable, string $osisId, string $name): int
@@ -210,15 +213,6 @@ class UsfmImporter
     private function markerPattern(string $marker): string
     {
         return '/^' . preg_quote($marker, '/');
-    }
-
-    private function plainTextFromUsfm(string $text): string
-    {
-        $text = preg_replace('/\\\\f\s.*?\\\\f\*/su', '', $text) ?? $text;
-        $text = preg_replace('/\\\\x\s.*?\\\\x\*/su', '', $text) ?? $text;
-        $text = preg_replace('/\\\\[+]?[a-z0-9]+\*?\s?/iu', '', $text) ?? $text;
-
-        return trim(preg_replace('/\s+/u', ' ', $text) ?? '');
     }
 
     private function guessTestament(string $osisId): string
@@ -261,7 +255,13 @@ class UsfmImporter
             return;
         }
 
-        foreach (scandir($directory) ?: [] as $item) {
+        $items = scandir($directory);
+
+        if ($items === false) {
+            return;
+        }
+
+        foreach ($items as $item) {
             if ($item === '.' || $item === '..') {
                 continue;
             }

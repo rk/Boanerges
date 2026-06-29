@@ -1,5 +1,5 @@
-import { show, update } from '@/actions/App/Http/Controllers/ScribeController';
 import type { ScribeVerse } from '@/lib/types/bible';
+import { show, update } from '@/actions/App/Http/Controllers/ScribeController';
 
 const LEGACY_STORAGE_PREFIX = 'boanerges.scribe';
 
@@ -22,8 +22,10 @@ async function jsonFetch<T>(url: string, init?: RequestInit): Promise<T> {
         },
     });
 
-    if (! response.ok) {
-        const body = (await response.json().catch(() => null)) as { message?: string } | null;
+    if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as {
+            message?: string;
+        } | null;
 
         throw new Error(body?.message ?? `Request failed: ${response.status}`);
     }
@@ -43,7 +45,7 @@ function loadLegacyDraft(bookId: string, chapter: number): ScribeVerse[] {
     try {
         const stored = localStorage.getItem(legacyStorageKey(bookId, chapter));
 
-        if (! stored) {
+        if (!stored) {
             return [];
         }
 
@@ -66,8 +68,13 @@ function clearLegacyDraft(bookId: string, chapter: number): void {
     localStorage.removeItem(legacyStorageKey(bookId, chapter));
 }
 
-export async function fetchScribeDraft(bookId: string, chapter: number): Promise<ScribeVerse[]> {
-    const data = await jsonFetch<{ verses: ScribeVerse[] }>(show.url({ book: bookId, chapter }));
+export async function fetchScribeDraft(
+    bookId: string,
+    chapter: number,
+): Promise<ScribeVerse[]> {
+    const data = await jsonFetch<{ verses: ScribeVerse[] }>(
+        show.url({ book: bookId, chapter }),
+    );
 
     if (data.verses.length > 0) {
         return data.verses;
@@ -76,10 +83,13 @@ export async function fetchScribeDraft(bookId: string, chapter: number): Promise
     const legacy = loadLegacyDraft(bookId, chapter);
 
     if (legacy.length > 0) {
-        await jsonFetch<{ verses: ScribeVerse[] }>(update.url({ book: bookId, chapter }), {
-            method: 'PUT',
-            body: JSON.stringify({ verses: legacy }),
-        });
+        await jsonFetch<{ verses: ScribeVerse[] }>(
+            update.url({ book: bookId, chapter }),
+            {
+                method: 'PUT',
+                body: JSON.stringify({ verses: legacy }),
+            },
+        );
         clearLegacyDraft(bookId, chapter);
 
         return legacy;
@@ -88,7 +98,11 @@ export async function fetchScribeDraft(bookId: string, chapter: number): Promise
     return [];
 }
 
-export function scheduleScribeSave(bookId: string, chapter: number, verses: ScribeVerse[]): void {
+export function scheduleScribeSave(
+    bookId: string,
+    chapter: number,
+    verses: ScribeVerse[],
+): void {
     scribe.saveStatus = 'saving';
 
     if (saveTimeout) {
@@ -102,10 +116,13 @@ export function scheduleScribeSave(bookId: string, chapter: number, verses: Scri
     const generation = ++saveGeneration;
 
     saveTimeout = setTimeout(() => {
-        void jsonFetch<{ verses: ScribeVerse[] }>(update.url({ book: bookId, chapter }), {
-            method: 'PUT',
-            body: JSON.stringify({ verses }),
-        })
+        void jsonFetch<{ verses: ScribeVerse[] }>(
+            update.url({ book: bookId, chapter }),
+            {
+                method: 'PUT',
+                body: JSON.stringify({ verses }),
+            },
+        )
             .then(() => {
                 if (generation !== saveGeneration) {
                     return;
@@ -148,7 +165,9 @@ export type ScribeDraftEntry = {
     paragraphStartOverride?: boolean;
 };
 
-export function entriesFromScribeVerses(verses: ScribeVerse[]): Record<number, ScribeDraftEntry> {
+export function entriesFromScribeVerses(
+    verses: ScribeVerse[],
+): Record<number, ScribeDraftEntry> {
     const entries: Record<number, ScribeDraftEntry> = {};
 
     for (const verse of verses) {

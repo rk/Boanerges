@@ -1,12 +1,16 @@
 import { SvelteSet } from 'svelte/reactivity';
-import { updateStudy as updateStudySettings } from '@/actions/App/Http/Controllers/SettingsController';
 import { getAdjacentChapter, bible } from '@/lib/bible.svelte.ts';
 import { setCrossReferenceInput } from '@/lib/crossrefs.svelte.ts';
 import { patchJson } from '@/lib/patchJson';
-import { crossReferencesTargetSlot, normalizeColumns, sanitizeStudySettings } from '@/lib/studyLayout';
 import { formatScriptureReference } from '@/lib/scriptureReference';
+import {
+    crossReferencesTargetSlot,
+    normalizeColumns,
+    sanitizeStudySettings,
+} from '@/lib/studyLayout';
 import type { ColumnContentType, StudySettings } from '@/lib/types/study';
 import type { VerseHighlight } from '@/lib/verseHighlight';
+import { updateStudy as updateStudySettings } from '@/actions/App/Http/Controllers/SettingsController';
 
 export const study = $state({
     columnCount: 1 as 1 | 2 | 3,
@@ -50,7 +54,7 @@ function studyPayload(): StudySettings {
 }
 
 function schedulePersist(): void {
-    if (! hydrated) {
+    if (!hydrated) {
         return;
     }
 
@@ -77,7 +81,10 @@ export function setColumnCount(count: 1 | 2 | 3): void {
     schedulePersist();
 }
 
-export function setColumnContent(slotIndex: number, type: ColumnContentType): void {
+export function setColumnContent(
+    slotIndex: number,
+    type: ColumnContentType,
+): void {
     const columns = normalizeColumns(study.columnCount, [...study.columns]);
     columns[slotIndex] = type;
     study.columns = columns;
@@ -159,17 +166,19 @@ export function setScrollSync(enabled: boolean): void {
 }
 
 export function syncStudyTranslationSelection(): void {
-    const installedIds = new SvelteSet(bible.translations.map((translation) => translation.id));
+    const installedIds = new SvelteSet(
+        bible.translations.map((translation) => translation.id),
+    );
 
-    if (! installedIds.has(study.translationId)) {
+    if (!installedIds.has(study.translationId)) {
         study.translationId = 'asv';
     }
 
-    if (! installedIds.has(study.translationBId)) {
+    if (!installedIds.has(study.translationBId)) {
         study.translationBId = study.translationId;
     }
 
-    if (! installedIds.has(study.translationCId)) {
+    if (!installedIds.has(study.translationCId)) {
         study.translationCId = study.translationBId;
     }
 
@@ -197,7 +206,9 @@ export function ensureSearchColumn(): void {
         setColumnCount(2);
     }
 
-    const slotIndex = study.columns.findIndex((column) => column !== 'bible-secondary');
+    const slotIndex = study.columns.findIndex(
+        (column) => column !== 'bible-secondary',
+    );
 
     if (slotIndex >= 0) {
         setColumnContent(slotIndex, 'search');
@@ -213,18 +224,23 @@ export function ensureCrossReferencesColumn(reference?: string): void {
         setColumnCount(2);
     }
 
-    const slotIndex = crossReferencesTargetSlot(study.columnCount, study.columns);
+    const slotIndex = crossReferencesTargetSlot(
+        study.columnCount,
+        study.columns,
+    );
 
     if (study.columns[slotIndex] !== 'cross-references') {
         setColumnContent(slotIndex, 'cross-references');
     }
 
-    const resolvedReference = reference ?? formatScriptureReference(
-        study.bookId,
-        study.chapter,
-        study.verseHighlight?.verse ?? 1,
-        bible.books,
-    );
+    const resolvedReference =
+        reference ??
+        formatScriptureReference(
+            study.bookId,
+            study.chapter,
+            study.verseHighlight?.verse ?? 1,
+            bible.books,
+        );
 
     setCrossReferenceInput(resolvedReference);
 }

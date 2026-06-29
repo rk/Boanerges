@@ -12,7 +12,9 @@ class StudyPrintService
 {
     public const PDF_DESTINATION = '__pdf__';
 
-    public function __construct(private StudyPrintHtmlBuilder $htmlBuilder) {}
+    public function __construct(
+        private StudyPrintHtmlBuilder $htmlBuilder,
+    ) {}
 
     /**
      * @return list<array{name: string, displayName: string, description: string}>
@@ -23,7 +25,7 @@ class StudyPrintService
             abort(503, 'Printing is only available in the desktop app.');
         }
 
-        return array_map(
+        $printers = array_map(
             fn(Printer $printer): array => [
                 'name' => $printer->name,
                 'displayName' => $printer->displayName,
@@ -31,6 +33,9 @@ class StudyPrintService
             ],
             System::printers(),
         );
+
+        /** @var list<array{name: string, displayName: string, description: string}> $printers */
+        return $printers;
     }
 
     /**

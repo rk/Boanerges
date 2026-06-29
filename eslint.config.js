@@ -48,7 +48,7 @@ export default ts.config(
             'import/resolver': {
                 typescript: {
                     alwaysTryTypes: true,
-                    project: './tsconfig.json',
+                    // ponytail: no `project` — unrs-resolver reads root tsconfig paths; this package has no projectService.
                 },
                 node: true,
             },

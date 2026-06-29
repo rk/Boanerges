@@ -25,6 +25,17 @@ class StudyPrintHtmlBuilder
         private ReadabilitySettingsStore $readability,
     ) {}
 
+    /**
+     * @param  array{
+     *     columnCount: int,
+     *     columns: list<string>,
+     *     bookId: string,
+     *     chapter: int,
+     *     translationId: string,
+     *     translationBId: string,
+     *     translationCId: string
+     * }  $study
+     */
     public function build(array $study, bool $includeUserWork): string
     {
         $bookId = $study['bookId'];
@@ -38,7 +49,7 @@ class StudyPrintHtmlBuilder
             'fontFamily' => $this->printFontFamily((string) $readability['fontFamily']),
             'fontSize' => (int) $readability['fontSize'],
             'lineHeight' => (float) $readability['lineHeight'],
-            'justifyText' => (bool) ($readability['justifyText'] ?? false),
+            'justifyText' => (bool) $readability['justifyText'],
             'columns' => $columns,
         ])->render();
     }
@@ -110,6 +121,15 @@ class StudyPrintHtmlBuilder
     }
 
     /**
+     * @param  array{
+     *     columnCount: int,
+     *     columns: list<string>,
+     *     bookId: string,
+     *     chapter: int,
+     *     translationId: string,
+     *     translationBId: string,
+     *     translationCId: string
+     * }  $study
      * @return array{
      *     label: string,
      *     kind: string,

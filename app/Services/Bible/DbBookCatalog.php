@@ -26,19 +26,23 @@ class DbBookCatalog
         $abbrev = $this->schema->validateAbbrev($abbrev);
         $table = $this->schema->booksTable($abbrev);
 
-        return DB::table($table)
+        /** @var list<array{id: string, name: string, abbrev: string, testament: string, chapters: int, firstChapter: int, lastChapter: int}> $books */
+        $books = DB::table($table)
             ->orderBy('id')
             ->get()
-            ->map(fn($book) => [
-                'id' => OsisBookId::normalize($book->osis_id) ?? $book->osis_id,
-                'name' => $book->name,
-                'abbrev' => strtoupper(substr($book->osis_id, 0, 3)),
-                'testament' => $book->testament,
+            ->map(fn($book): array => [
+                'id' => (string) (OsisBookId::normalize($book->osis_id) ?? $book->osis_id),
+                'name' => (string) $book->name,
+                'abbrev' => strtoupper(substr((string) $book->osis_id, 0, 3)),
+                'testament' => (string) $book->testament,
                 'chapters' => (int) $book->chapters,
                 'firstChapter' => 1,
                 'lastChapter' => (int) $book->chapters,
             ])
+            ->values()
             ->all();
+
+        return $books;
     }
 
     /**
@@ -61,6 +65,7 @@ class DbBookCatalog
             abort(404, "Book \"{$bookId}\" not found in {$abbrev}.");
         }
 
+        /** @var object{id: int, name: string, osis_id: string, testament: string, chapters: int} $book */
         return $book;
     }
 }

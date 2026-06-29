@@ -9,7 +9,11 @@
     <div class="toast toast-end toast-bottom z-50">
         <div class="alert alert-success alert-soft">
             {#if scribe.saveStatus === 'saving'}
-                <LoaderCircle size={18} class="animate-spin" aria-hidden="true" />
+                <LoaderCircle
+                    size={18}
+                    class="animate-spin"
+                    aria-hidden="true"
+                />
                 Saving…
             {:else}
                 <CircleCheck size={18} aria-hidden="true" />

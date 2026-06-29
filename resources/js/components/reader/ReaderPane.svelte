@@ -21,7 +21,7 @@
         translationAbbrev?: string;
         prevNav?: ChapterNavTarget;
         nextNav?: ChapterNavTarget;
-        navLayout?: 'horizontal' | 'divider';
+        navLayout?: 'compact' | 'divider';
         onprev?: () => void;
         onnext?: () => void;
         onscroll?: () => void;
@@ -43,7 +43,7 @@
     <div
         bind:this={scrollRef}
         class="min-h-0 flex-1 overflow-y-auto px-6 py-4"
-        onscroll={onscroll}
+        {onscroll}
     >
         <ChapterHeading
             title="{chapter.book} {chapter.chapter}"

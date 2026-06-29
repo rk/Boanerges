@@ -5,7 +5,7 @@
         direction,
         label,
         layout = 'compact',
-        onclick
+        onclick,
     }: {
         direction: 'prev' | 'next';
         label: string;

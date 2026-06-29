@@ -60,9 +60,9 @@ class BibleController extends Controller
 
         return response()->json([
             'abbrev' => $model->abbrev,
-            'install_status' => $model->install_status->value,
+            'install_status' => $model->installStatusValue(),
             'step' => $model->install_step ?? 'pending',
-            'percent' => $this->percentForStatus($model->install_status->value, $model->install_step),
+            'percent' => $this->percentForStatus($model->installStatusValue(), $model->install_step),
             'install_error' => $model->install_error,
         ]);
     }

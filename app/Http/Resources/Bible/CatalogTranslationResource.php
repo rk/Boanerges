@@ -43,7 +43,7 @@ class CatalogTranslationResource extends JsonResource
             'installed' => $model?->isReady() ?? false,
             'bundled' => $this->registry->isBundled($entry->short),
             'about' => $entry->about,
-            'install_status' => $model?->install_status->value,
+            'install_status' => $model?->installStatusValue(),
         ];
     }
 }

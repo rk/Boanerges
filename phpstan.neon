@@ -11,3 +11,7 @@ parameters:
         - routes/
 
     level: 7
+
+    ignoreErrors:
+        - '#Static method Native\\Desktop\\Facades\\System::print\(\) invoked with 3 parameters#'
+        - '#Static method Native\\Desktop\\Facades\\System::printToPDF\(\) invoked with 2 parameters#'

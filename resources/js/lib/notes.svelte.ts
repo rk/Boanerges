@@ -19,8 +19,10 @@ async function jsonFetch<T>(url: string, init?: RequestInit): Promise<T> {
         },
     });
 
-    if (! response.ok) {
-        const body = (await response.json().catch(() => null)) as { message?: string } | null;
+    if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as {
+            message?: string;
+        } | null;
 
         throw new Error(body?.message ?? `Request failed: ${response.status}`);
     }
@@ -28,13 +30,22 @@ async function jsonFetch<T>(url: string, init?: RequestInit): Promise<T> {
     return response.json() as Promise<T>;
 }
 
-export async function fetchNotesDraft(bookId: string, chapter: number): Promise<string> {
-    const data = await jsonFetch<{ content: string }>(show.url({ book: bookId, chapter }));
+export async function fetchNotesDraft(
+    bookId: string,
+    chapter: number,
+): Promise<string> {
+    const data = await jsonFetch<{ content: string }>(
+        show.url({ book: bookId, chapter }),
+    );
 
     return data.content;
 }
 
-export function scheduleNotesSave(bookId: string, chapter: number, content: string): void {
+export function scheduleNotesSave(
+    bookId: string,
+    chapter: number,
+    content: string,
+): void {
     if (saveTimeout) {
         clearTimeout(saveTimeout);
     }
@@ -46,15 +57,22 @@ export function scheduleNotesSave(bookId: string, chapter: number, content: stri
     }, 500);
 }
 
-async function persistNotesDraft(bookId: string, chapter: number, content: string): Promise<void> {
+async function persistNotesDraft(
+    bookId: string,
+    chapter: number,
+    content: string,
+): Promise<void> {
     const generation = ++saveGeneration;
     notes.saveStatus = 'saving';
 
     try {
-        await jsonFetch<{ content: string }>(update.url({ book: bookId, chapter }), {
-            method: 'PUT',
-            body: JSON.stringify({ content }),
-        });
+        await jsonFetch<{ content: string }>(
+            update.url({ book: bookId, chapter }),
+            {
+                method: 'PUT',
+                body: JSON.stringify({ content }),
+            },
+        );
 
         if (generation !== saveGeneration) {
             return;

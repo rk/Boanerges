@@ -28,7 +28,6 @@ class StudySettingsStore
     {
         /** @var array<string, mixed> $raw */
         $raw = $this->settings->get(self::KEY, []);
-        $raw = is_array($raw) ? $raw : [];
 
         $settings = array_merge($this->defaults(), $this->migrateFromLegacy($raw));
         $settings['bookId'] = OsisBookId::normalize($settings['bookId']) ?? $settings['bookId'];
@@ -65,7 +64,7 @@ class StudySettingsStore
             $columnCount = in_array($columnCount, [1, 2, 3], true) ? $columnCount : 1;
 
             $columns = is_array($stored['columns'] ?? null)
-                ? $this->sanitizeColumns($columnCount, $stored['columns'])
+                ? $this->sanitizeColumns($columnCount, array_values($stored['columns']))
                 : $this->normalizeColumnSlots($columnCount, []);
 
             return [

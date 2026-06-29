@@ -29,7 +29,7 @@
             return;
         }
 
-        if (! bible.translationsLoaded) {
+        if (!bible.translationsLoaded) {
             return;
         }
 

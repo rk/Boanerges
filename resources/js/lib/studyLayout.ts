@@ -26,12 +26,14 @@ export function sanitizeColumnType(value: unknown): ColumnContentType | null {
     }
 
     return COLUMN_CONTENT_TYPES.includes(value as ColumnContentType)
-        ? value as ColumnContentType
+        ? (value as ColumnContentType)
         : null;
 }
 
 export function sanitizeStudySettings(settings: StudySettings): StudySettings {
-    const columnCount = isColumnCount(settings.columnCount) ? settings.columnCount : 1;
+    const columnCount = isColumnCount(settings.columnCount)
+        ? settings.columnCount
+        : 1;
     const columns = (settings.columns ?? [])
         .map((column) => sanitizeColumnType(column))
         .filter((column): column is ColumnContentType => column !== null);
@@ -43,7 +45,10 @@ export function sanitizeStudySettings(settings: StudySettings): StudySettings {
     };
 }
 
-export function normalizeColumns(columnCount: 1 | 2 | 3, columns: ColumnContentType[]): ColumnContentType[] {
+export function normalizeColumns(
+    columnCount: 1 | 2 | 3,
+    columns: ColumnContentType[],
+): ColumnContentType[] {
     const needed = Math.max(0, columnCount - 1);
     const normalized = columns.slice(0, needed);
 
@@ -54,9 +59,11 @@ export function normalizeColumns(columnCount: 1 | 2 | 3, columns: ColumnContentT
     return normalized;
 }
 
-function defaultColumnForSlot(existing: ColumnContentType[]): ColumnContentType {
+function defaultColumnForSlot(
+    existing: ColumnContentType[],
+): ColumnContentType {
     for (const type of COLUMN_CONTENT_TYPES) {
-        if (type === 'bible-secondary' || ! existing.includes(type)) {
+        if (type === 'bible-secondary' || !existing.includes(type)) {
             return type;
         }
     }
@@ -83,22 +90,32 @@ export function availableColumnOptions(
 
         const otherBibleSlots = columns
             .map((column, index) => ({ column, index }))
-            .filter(({ column, index }) => column === 'bible-secondary' && index !== slotIndex);
+            .filter(
+                ({ column, index }) =>
+                    column === 'bible-secondary' && index !== slotIndex,
+            );
 
         if (otherBibleSlots.length === 0) {
             return true;
         }
 
         const otherIndex = otherBibleSlots[0].index;
-        const otherTranslation = otherIndex === 0 ? translationBId : translationCId;
-        const thisTranslation = slotIndex === 0 ? translationBId : translationCId;
+        const otherTranslation =
+            otherIndex === 0 ? translationBId : translationCId;
+        const thisTranslation =
+            slotIndex === 0 ? translationBId : translationCId;
 
         return otherTranslation !== thisTranslation;
     });
 }
 
-export function bibleColumnCount(settings: Pick<StudySettings, 'columnCount' | 'columns'>): number {
-    return 1 + settings.columns.filter((column) => column === 'bible-secondary').length;
+export function bibleColumnCount(
+    settings: Pick<StudySettings, 'columnCount' | 'columns'>,
+): number {
+    return (
+        1 +
+        settings.columns.filter((column) => column === 'bible-secondary').length
+    );
 }
 
 export function secondaryTranslationForSlot(
@@ -117,7 +134,10 @@ export function setColumnContentType(
     const columns = [...settings.columns];
     columns[slotIndex] = type;
 
-    return { ...settings, columns: normalizeColumns(settings.columnCount, columns) };
+    return {
+        ...settings,
+        columns: normalizeColumns(settings.columnCount, columns),
+    };
 }
 
 export function crossReferencesTargetSlot(

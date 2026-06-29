@@ -16,7 +16,11 @@ function verseSelector(verse: number): string {
 export function createVerseHighlightScroller(): {
     reset: () => void;
     scrollTo: (
-        scrollRoot: HTMLElement | null | undefined | Array<HTMLElement | null | undefined>,
+        scrollRoot:
+            | HTMLElement
+            | null
+            | undefined
+            | Array<HTMLElement | null | undefined>,
         highlight: VerseHighlight,
         locationKey: string,
         expectedRootCount?: number,
@@ -30,7 +34,11 @@ export function createVerseHighlightScroller(): {
             lastKey = null;
         },
         async scrollTo(
-            scrollRoot: HTMLElement | null | undefined | Array<HTMLElement | null | undefined>,
+            scrollRoot:
+                | HTMLElement
+                | null
+                | undefined
+                | Array<HTMLElement | null | undefined>,
             highlight: VerseHighlight,
             locationKey: string,
             expectedRootCount = 1,
@@ -53,8 +61,11 @@ export function createVerseHighlightScroller(): {
                 await tick();
                 await new Promise((resolve) => requestAnimationFrame(resolve));
 
-                const roots = (Array.isArray(scrollRoot) ? scrollRoot : [scrollRoot])
-                    .filter((root): root is HTMLElement => root instanceof HTMLElement);
+                const roots = (
+                    Array.isArray(scrollRoot) ? scrollRoot : [scrollRoot]
+                ).filter(
+                    (root): root is HTMLElement => root instanceof HTMLElement,
+                );
 
                 if (roots.length < expectedRootCount) {
                     await sleep(RETRY_MS);
@@ -86,7 +97,12 @@ export function createVerseHighlightScroller(): {
 
 export function highlightedVersesFromHighlight(
     highlight: VerseHighlight | null,
-    verseNumbersInRange: (verse: number, endVerse: number | null) => Set<number>,
+    verseNumbersInRange: (
+        verse: number,
+        endVerse: number | null,
+    ) => Set<number>,
 ): Set<number> {
-    return highlight ? verseNumbersInRange(highlight.verse, highlight.endVerse) : new Set<number>();
+    return highlight
+        ? verseNumbersInRange(highlight.verse, highlight.endVerse)
+        : new Set<number>();
 }

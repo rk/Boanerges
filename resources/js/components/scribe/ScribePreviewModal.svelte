@@ -28,7 +28,9 @@
             sourceVerses,
             (verseNumber) => entries[verseNumber]?.text ?? '',
             (verseNumber) => {
-                const source = sourceVerses.find((verse) => verse.number === verseNumber);
+                const source = sourceVerses.find(
+                    (verse) => verse.number === verseNumber,
+                );
 
                 return effectiveParagraphStart(
                     verseNumber,
@@ -64,7 +66,9 @@
             {#if hasContent}
                 <ScribeParagraphText verses={previewVerses} />
             {:else}
-                <p class="text-base-content/70 py-8 text-center text-sm">Nothing to preview yet.</p>
+                <p class="text-base-content/70 py-8 text-center text-sm">
+                    Nothing to preview yet.
+                </p>
             {/if}
         </div>
 

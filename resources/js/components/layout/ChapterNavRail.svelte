@@ -15,20 +15,20 @@
     const prevNav = $derived(
         previousChapter
             ? {
-                bookId: previousChapter.bookId,
-                bookAbbrev: bookAbbrev(previousChapter.bookId),
-                chapter: previousChapter.chapter,
-            }
+                  bookId: previousChapter.bookId,
+                  bookAbbrev: bookAbbrev(previousChapter.bookId),
+                  chapter: previousChapter.chapter,
+              }
             : undefined,
     );
 
     const nextNav = $derived(
         nextChapter
             ? {
-                bookId: nextChapter.bookId,
-                bookAbbrev: bookAbbrev(nextChapter.bookId),
-                chapter: nextChapter.chapter,
-            }
+                  bookId: nextChapter.bookId,
+                  bookAbbrev: bookAbbrev(nextChapter.bookId),
+                  chapter: nextChapter.chapter,
+              }
             : undefined,
     );
 </script>

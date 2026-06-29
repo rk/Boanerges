@@ -27,7 +27,8 @@
         const chapterNumber = study.chapter;
         const translationId = study.translationId;
         const locationKey = `${bookId}:${chapterNumber}`;
-        const navigated = lastLocationKey !== null && locationKey !== lastLocationKey;
+        const navigated =
+            lastLocationKey !== null && locationKey !== lastLocationKey;
         const isInitialLoad = lastLocationKey === null;
         let cancelled = false;
 
@@ -47,13 +48,13 @@
 
         void fetchChapter(translationId, bookId, chapterNumber)
             .then((chapter) => {
-                if (! cancelled) {
+                if (!cancelled) {
                     currentChapter = chapter;
                     loading = false;
                 }
             })
             .catch(() => {
-                if (! cancelled) {
+                if (!cancelled) {
                     loading = false;
                 }
             });
@@ -67,18 +68,30 @@
 <div class="flex h-full min-h-0 min-w-0 flex-col" style={readerStyle}>
     <ColumnHeader contentType="scribe" {slotIndex} showViewSelector>
         {#if currentChapter}
-            <ChapterHeading title="{currentChapter.book} {currentChapter.chapter}" compact={true} />
+            <ChapterHeading
+                title="{currentChapter.book} {currentChapter.chapter}"
+                compact={true}
+            />
         {/if}
         {#if scribe.saveStatus === 'saving'}
-            <LoaderCircle size={14} class="text-base-content/60 shrink-0 animate-spin" aria-label="Saving" />
+            <LoaderCircle
+                size={14}
+                class="text-base-content/60 shrink-0 animate-spin"
+                aria-label="Saving"
+            />
         {:else if scribe.saveStatus === 'saved'}
-            <CircleCheck size={14} class="text-success shrink-0" aria-label="Saved" />
+            <CircleCheck
+                size={14}
+                class="text-success shrink-0"
+                aria-label="Saved"
+            />
         {/if}
     </ColumnHeader>
 
-    {#if loading || ! currentChapter}
+    {#if loading || !currentChapter}
         <div class="flex flex-1 items-center justify-center p-8">
-            <span class="loading loading-spinner loading-lg text-primary"></span>
+            <span class="loading loading-spinner loading-lg text-primary"
+            ></span>
         </div>
     {:else}
         <ScribeEditor

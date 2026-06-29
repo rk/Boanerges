@@ -1,4 +1,11 @@
 import { SvelteMap } from 'svelte/reactivity';
+import { watchInstallProgress } from '@/lib/nativeBroadcast.ts';
+import type {
+    Book,
+    CatalogTranslation,
+    Chapter,
+    Translation,
+} from '@/lib/types/bible';
 import {
     books as booksRoute,
     catalog as catalogRoute,
@@ -8,8 +15,6 @@ import {
     translations as translationsRoute,
     uninstall as uninstallRoute,
 } from '@/actions/App/Http/Controllers/BibleController';
-import { watchInstallProgress } from '@/lib/nativeBroadcast.ts';
-import type { Book, CatalogTranslation, Chapter, Translation } from '@/lib/types/bible';
 
 export const bible = $state({
     translations: [] as Translation[],
@@ -41,8 +46,10 @@ async function jsonFetch<T>(url: string, init?: RequestInit): Promise<T> {
         },
     });
 
-    if (! response.ok) {
-        const body = (await response.json().catch(() => null)) as { message?: string } | null;
+    if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as {
+            message?: string;
+        } | null;
 
         throw new Error(body?.message ?? `Request failed: ${response.status}`);
     }
@@ -91,14 +98,16 @@ export function patchCatalogEntry(
 }
 
 export async function loadTranslations(force = false): Promise<void> {
-    if (bible.translationsLoaded && ! force) {
+    if (bible.translationsLoaded && !force) {
         return;
     }
 
     bible.translationsLoading = true;
 
     try {
-        const data = await jsonFetch<{ translations: Translation[] }>(translationsRoute.url());
+        const data = await jsonFetch<{ translations: Translation[] }>(
+            translationsRoute.url(),
+        );
         bible.translations = data.translations;
         bible.translationsLoaded = true;
     } finally {
@@ -107,14 +116,16 @@ export async function loadTranslations(force = false): Promise<void> {
 }
 
 export async function loadCatalog(force = false): Promise<void> {
-    if (bible.catalogLoaded && ! force) {
+    if (bible.catalogLoaded && !force) {
         return;
     }
 
     bible.catalogLoading = true;
 
     try {
-        const data = await jsonFetch<{ translations: CatalogTranslation[] }>(catalogRoute.url());
+        const data = await jsonFetch<{ translations: CatalogTranslation[] }>(
+            catalogRoute.url(),
+        );
         bible.catalog = data.translations;
         bible.catalogLoaded = true;
     } finally {
@@ -136,7 +147,10 @@ export async function installTranslation(module: string): Promise<void> {
             install_error?: string | null;
         }>(installStatusRoute.url(module));
 
-        patchCatalogEntry(module, { install_status: status.install_status, installed: false });
+        patchCatalogEntry(module, {
+            install_status: status.install_status,
+            installed: false,
+        });
 
         if (status.install_status === 'ready') {
             invalidateInstalledTranslations();
@@ -166,19 +180,35 @@ export async function installTranslation(module: string): Promise<void> {
                 'App\\Events\\TranslationInstallProgress',
                 installStatusRoute.url(module),
                 (payload) => {
-                    const installStatus = payload.install_status ?? payload.step;
+                    const installStatus =
+                        payload.install_status ?? payload.step;
 
                     patchCatalogEntry(module, {
                         install_status: installStatus,
-                        installed: installStatus === 'ready' || payload.step === 'ready',
+                        installed:
+                            installStatus === 'ready' ||
+                            payload.step === 'ready',
                     });
 
-                    if (payload.install_status === 'ready' || payload.step === 'ready') {
+                    if (
+                        payload.install_status === 'ready' ||
+                        payload.step === 'ready'
+                    ) {
                         finish(resolve);
                     }
 
-                    if (payload.install_status === 'failed' || payload.step === 'failed') {
-                        finish(() => reject(new Error(payload.install_error ?? 'Installation failed.')));
+                    if (
+                        payload.install_status === 'failed' ||
+                        payload.step === 'failed'
+                    ) {
+                        finish(() =>
+                            reject(
+                                new Error(
+                                    payload.install_error ??
+                                        'Installation failed.',
+                                ),
+                            ),
+                        );
                     }
                 },
             );
@@ -187,8 +217,12 @@ export async function installTranslation(module: string): Promise<void> {
         invalidateInstalledTranslations();
         await Promise.all([loadTranslations(true), loadCatalog(true)]);
     } catch (error) {
-        patchCatalogEntry(module, { installed: false, install_status: 'failed' });
-        bible.managerError = error instanceof Error ? error.message : 'Installation failed.';
+        patchCatalogEntry(module, {
+            installed: false,
+            install_status: 'failed',
+        });
+        bible.managerError =
+            error instanceof Error ? error.message : 'Installation failed.';
 
         throw error;
     } finally {
@@ -206,7 +240,8 @@ export async function uninstallTranslation(module: string): Promise<void> {
         invalidateInstalledTranslations();
         await Promise.all([loadTranslations(true), loadCatalog(true)]);
     } catch (error) {
-        bible.managerError = error instanceof Error ? error.message : 'Removal failed.';
+        bible.managerError =
+            error instanceof Error ? error.message : 'Removal failed.';
 
         throw error;
     } finally {
@@ -222,7 +257,9 @@ export async function loadBooks(translationId: string): Promise<void> {
     bible.booksLoading = true;
 
     try {
-        const data = await jsonFetch<{ books: Book[] }>(booksRoute.url(translationId));
+        const data = await jsonFetch<{ books: Book[] }>(
+            booksRoute.url(translationId),
+        );
         bible.books = data.books;
         bible.booksTranslationId = translationId;
     } finally {
@@ -230,7 +267,11 @@ export async function loadBooks(translationId: string): Promise<void> {
     }
 }
 
-function chapterKey(translationId: string, bookId: string, chapter: number): string {
+function chapterKey(
+    translationId: string,
+    bookId: string,
+    chapter: number,
+): string {
     return `${translationId}:${bookId}:${chapter}`;
 }
 
@@ -291,7 +332,7 @@ export function getAdjacentChapter(
 ): { bookId: string; chapter: number } | null {
     const book = bible.books.find((item) => item.id === bookId);
 
-    if (! book) {
+    if (!book) {
         return null;
     }
 
@@ -327,5 +368,8 @@ export function getAdjacentChapter(
 }
 
 export function bookAbbrev(bookId: string): string {
-    return bible.books.find((item) => item.id === bookId)?.abbrev ?? bookId.toUpperCase();
+    return (
+        bible.books.find((item) => item.id === bookId)?.abbrev ??
+        bookId.toUpperCase()
+    );
 }

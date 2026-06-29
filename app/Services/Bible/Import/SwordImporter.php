@@ -30,7 +30,9 @@ class SwordImporter
         DB::table($versesTable)->delete();
 
         $processor = new BatchedInsertQueue(
-            static fn (array $rows) => DB::table($versesTable)->insert($rows),
+            static function (array $rows) use ($versesTable): void {
+                DB::table($versesTable)->insert($rows);
+            },
         );
 
         $structure = $bible->getStructure()->getBooks();
