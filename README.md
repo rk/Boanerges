@@ -48,6 +48,8 @@ composer ci:check
 
 That runs ESLint, Prettier, svelte-check, Pint, PHPStan, and Pest.
 
+GitHub Actions runs the same checks on PHP 8.4 only (`composer.json` requires `^8.4`). The tests workflow skips Node and asset builds; feature tests use Laravel’s `withoutVite()` helper instead of a Vite manifest.
+
 For a lighter frontend-only pass:
 
 ```bash
