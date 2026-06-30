@@ -1,34 +1,102 @@
 <script lang="ts">
     import ArrowLeft from '@lucide/svelte/icons/arrow-left';
     import ChevronDown from '@lucide/svelte/icons/chevron-down';
+    import { SvelteMap } from 'svelte/reactivity';
 
-    import { bible } from '@/lib/bible.svelte.ts';
+    import {
+        bible,
+        fetchBooksForTranslations,
+        getBooksForTranslation,
+    } from '@/lib/bible.svelte.ts';
+    import {
+        CANON_NT_BOOK_IDS,
+        CANON_OT_BOOK_IDS,
+        canonBookName,
+    } from '@/lib/canonBookNames';
     import { study, setBook, setChapter } from '@/lib/study.svelte.ts';
-    import type { Testament } from '@/lib/types/bible';
+    import {
+        activeBibleTranslationIds,
+        isBookAvailableInTranslations,
+    } from '@/lib/studyLayout';
+    import type { Book } from '@/lib/types/bible';
 
-    type Step = 'testament' | 'book' | 'chapter';
+    type Step = 'book' | 'chapter';
+
+    type BookRow = {
+        id: string;
+        name: string;
+        chapters: number;
+        available: boolean;
+    };
 
     let triggerEl = $state<HTMLButtonElement | null>(null);
     let panelEl = $state<HTMLDivElement | null>(null);
     let open = $state(false);
     let panelStyle = $state('');
-    let step = $state<Step>('testament');
-    let selectedTestament = $state<Testament | null>(null);
+    let step = $state<Step>('book');
     let pendingBookId = $state<string | null>(null);
 
+    const primaryBooks = $derived(
+        getBooksForTranslation(study.translationId) ?? bible.books,
+    );
+
     const currentBook = $derived(
-        bible.books.find((book) => book.id === study.bookId),
+        primaryBooks.find((book) => book.id === study.bookId),
     );
     const locationLabel = $derived(
         currentBook ? `${currentBook.name} ${study.chapter}` : 'Book & chapter',
     );
 
-    const booksInTestament = $derived(
-        bible.books.filter((book) => book.testament === selectedTestament),
+    const activeTranslationIds = $derived(activeBibleTranslationIds(study));
+
+    const booksByTranslationMap = $derived.by(() => {
+        const map = new SvelteMap<string, readonly Book[]>();
+
+        for (const translationId of activeTranslationIds) {
+            const books = getBooksForTranslation(translationId);
+
+            if (books) {
+                map.set(translationId, books);
+            }
+        }
+
+        return map;
+    });
+
+    const booksReady = $derived(
+        activeTranslationIds.every(
+            (translationId) =>
+                getBooksForTranslation(translationId) !== undefined,
+        ),
     );
 
+    function buildBookRows(ids: readonly string[]): BookRow[] {
+        return ids.map((id) => {
+            const primaryBook = primaryBooks.find((book) => book.id === id);
+
+            return {
+                id,
+                name: primaryBook?.name ?? canonBookName(id),
+                chapters: primaryBook?.chapters ?? 1,
+                available:
+                    booksReady &&
+                    isBookAvailableInTranslations(
+                        id,
+                        activeTranslationIds,
+                        booksByTranslationMap,
+                    ),
+            };
+        });
+    }
+
+    const otBooks = $derived(buildBookRows(CANON_OT_BOOK_IDS));
+    const ntBooks = $derived(buildBookRows(CANON_NT_BOOK_IDS));
+
     const pendingBook = $derived(
-        bible.books.find((book) => book.id === pendingBookId) ?? currentBook,
+        primaryBooks.find((book) => book.id === pendingBookId) ??
+            otBooks.find((book) => book.id === pendingBookId) ??
+            ntBooks.find((book) => book.id === pendingBookId) ??
+            currentBook,
     );
 
     const chapterOptions = $derived(
@@ -39,8 +107,7 @@
     );
 
     function resetPicker(): void {
-        step = 'testament';
-        selectedTestament = null;
+        step = 'book';
         pendingBookId = null;
     }
 
@@ -68,11 +135,6 @@
         }
     }
 
-    function selectTestament(testament: Testament): void {
-        selectedTestament = testament;
-        step = 'book';
-    }
-
     function selectBook(bookId: string): void {
         pendingBookId = bookId;
         step = 'chapter';
@@ -88,17 +150,8 @@
     }
 
     function goBack(): void {
-        if (step === 'chapter') {
-            step = 'book';
-            pendingBookId = null;
-
-            return;
-        }
-
-        if (step === 'book') {
-            step = 'testament';
-            selectedTestament = null;
-        }
+        step = 'book';
+        pendingBookId = null;
     }
 
     function portal(node: HTMLElement): { destroy: () => void } {
@@ -110,6 +163,14 @@
             },
         };
     }
+
+    $effect(() => {
+        if (!open) {
+            return;
+        }
+
+        void fetchBooksForTranslations(activeTranslationIds);
+    });
 
     $effect(() => {
         if (!open) {
@@ -160,12 +221,12 @@
     <div
         use:portal
         bind:this={panelEl}
-        class="bg-base-100 rounded-box fixed z-[1000] w-72 border border-base-300 p-3 shadow-lg"
+        class="bg-base-100 rounded-box fixed z-[1000] w-[min(36rem,calc(100vw-1.5rem))] border border-base-300 p-3 shadow-lg"
         style={panelStyle}
         role="dialog"
         aria-label="Book and chapter picker"
     >
-        {#if step !== 'testament'}
+        {#if step === 'chapter'}
             <button
                 type="button"
                 class="btn btn-ghost btn-xs mb-2 gap-1 px-1"
@@ -176,48 +237,58 @@
             </button>
         {/if}
 
-        {#if step === 'testament'}
-            <p class="menu-title px-0">Testament</p>
-            <div class="join grid w-full grid-cols-2">
-                <button
-                    type="button"
-                    class="btn btn-sm join-item"
-                    class:btn-primary={currentBook?.testament === 'ot'}
-                    onclick={() => selectTestament('ot')}
-                >
-                    Old Testament
-                </button>
-                <button
-                    type="button"
-                    class="btn btn-sm join-item"
-                    class:btn-primary={currentBook?.testament === 'nt'}
-                    onclick={() => selectTestament('nt')}
-                >
-                    New Testament
-                </button>
-            </div>
-        {:else if step === 'book'}
-            <p class="menu-title px-0">
-                {selectedTestament === 'ot' ? 'Old Testament' : 'New Testament'}
-            </p>
-            {#if bible.booksLoading}
-                <p class="text-base-content/60 px-1 py-2 text-sm">Loading…</p>
+        {#if step === 'book'}
+            {#if !booksReady || bible.booksLoading}
+                <div class="flex items-center justify-center py-8">
+                    <span
+                        class="loading loading-spinner loading-md text-primary"
+                    ></span>
+                </div>
             {:else}
-                <ul
-                    class="menu menu-sm rounded-box bg-base-200 max-h-64 overflow-y-auto p-1"
-                >
-                    {#each booksInTestament as book (book.id)}
-                        <li>
-                            <button
-                                type="button"
-                                class:menu-active={study.bookId === book.id}
-                                onclick={() => selectBook(book.id)}
-                            >
-                                {book.name}
-                            </button>
-                        </li>
-                    {/each}
-                </ul>
+                <div class="grid grid-cols-2 gap-3">
+                    <section class="min-w-0">
+                        <p class="menu-title px-0">Old Testament</p>
+                        <ul
+                            class="menu menu-sm rounded-box bg-base-200 max-h-64 overflow-y-auto p-1"
+                        >
+                            {#each otBooks as book (book.id)}
+                                <li>
+                                    <button
+                                        type="button"
+                                        disabled={!book.available}
+                                        class:menu-active={study.bookId ===
+                                            book.id}
+                                        class:opacity-40={!book.available}
+                                        onclick={() => selectBook(book.id)}
+                                    >
+                                        {book.name}
+                                    </button>
+                                </li>
+                            {/each}
+                        </ul>
+                    </section>
+                    <section class="min-w-0">
+                        <p class="menu-title px-0">New Testament</p>
+                        <ul
+                            class="menu menu-sm rounded-box bg-base-200 max-h-64 overflow-y-auto p-1"
+                        >
+                            {#each ntBooks as book (book.id)}
+                                <li>
+                                    <button
+                                        type="button"
+                                        disabled={!book.available}
+                                        class:menu-active={study.bookId ===
+                                            book.id}
+                                        class:opacity-40={!book.available}
+                                        onclick={() => selectBook(book.id)}
+                                    >
+                                        {book.name}
+                                    </button>
+                                </li>
+                            {/each}
+                        </ul>
+                    </section>
+                </div>
             {/if}
         {:else}
             <p class="menu-title px-0">{pendingBook?.name ?? 'Chapter'}</p>

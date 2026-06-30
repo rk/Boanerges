@@ -34,6 +34,14 @@ export const bible = $state({
 
 const chapterCache = new SvelteMap<string, Chapter>();
 const chapterInflight = new SvelteMap<string, Promise<Chapter>>();
+const booksByTranslation = new SvelteMap<string, Book[]>();
+const booksInflight = new SvelteMap<string, Promise<Book[]>>();
+
+export function getBooksForTranslation(
+    translationId: string,
+): Book[] | undefined {
+    return booksByTranslation.get(translationId);
+}
 
 async function jsonFetch<T>(url: string, init?: RequestInit): Promise<T> {
     const response = await fetch(url, {
@@ -74,6 +82,8 @@ export function invalidateInstalledTranslations(): void {
     bible.translations = [];
     bible.books = [];
     bible.booksTranslationId = null;
+    booksByTranslation.clear();
+    booksInflight.clear();
 }
 
 export function invalidateTranslations(): void {
@@ -249,6 +259,49 @@ export async function uninstallTranslation(module: string): Promise<void> {
     }
 }
 
+async function fetchBooksFromApi(translationId: string): Promise<Book[]> {
+    const inflight = booksInflight.get(translationId);
+
+    if (inflight) {
+        return inflight;
+    }
+
+    const promise = jsonFetch<{ books: Book[] }>(booksRoute.url(translationId))
+        .then((data) => {
+            booksByTranslation.set(translationId, data.books);
+            booksInflight.delete(translationId);
+
+            return data.books;
+        })
+        .catch((error) => {
+            booksInflight.delete(translationId);
+
+            throw error;
+        });
+
+    booksInflight.set(translationId, promise);
+
+    return promise;
+}
+
+export async function fetchBooksForTranslations(
+    translationIds: string[],
+): Promise<void> {
+    const missing = translationIds.filter((id) => !booksByTranslation.has(id));
+
+    if (missing.length === 0) {
+        return;
+    }
+
+    bible.booksLoading = true;
+
+    try {
+        await Promise.all(missing.map((id) => fetchBooksFromApi(id)));
+    } finally {
+        bible.booksLoading = false;
+    }
+}
+
 export async function loadBooks(translationId: string): Promise<void> {
     if (bible.booksTranslationId === translationId && bible.books.length > 0) {
         return;
@@ -257,10 +310,10 @@ export async function loadBooks(translationId: string): Promise<void> {
     bible.booksLoading = true;
 
     try {
-        const data = await jsonFetch<{ books: Book[] }>(
-            booksRoute.url(translationId),
-        );
-        bible.books = data.books;
+        const books =
+            booksByTranslation.get(translationId) ??
+            (await fetchBooksFromApi(translationId));
+        bible.books = books;
         bible.booksTranslationId = translationId;
     } finally {
         bible.booksLoading = false;

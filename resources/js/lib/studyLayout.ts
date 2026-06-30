@@ -1,3 +1,4 @@
+import type { Book } from '@/lib/types/bible';
 import type { ColumnContentType, StudySettings } from '@/lib/types/study';
 
 export const COLUMN_CONTENT_TYPES: ColumnContentType[] = [
@@ -124,6 +125,41 @@ export function secondaryTranslationForSlot(
     translationCId: string,
 ): string {
     return slotIndex === 0 ? translationBId : translationCId;
+}
+
+export function activeBibleTranslationIds(
+    settings: Pick<
+        StudySettings,
+        'translationId' | 'translationBId' | 'translationCId' | 'columns'
+    >,
+): string[] {
+    const ids = [settings.translationId];
+
+    for (const [slotIndex, column] of settings.columns.entries()) {
+        if (column === 'bible-secondary') {
+            ids.push(
+                secondaryTranslationForSlot(
+                    slotIndex,
+                    settings.translationBId,
+                    settings.translationCId,
+                ),
+            );
+        }
+    }
+
+    return [...new Set(ids)];
+}
+
+export function isBookAvailableInTranslations(
+    bookId: string,
+    translationIds: string[],
+    booksByTranslation: ReadonlyMap<string, readonly Book[]>,
+): boolean {
+    return translationIds.every((translationId) =>
+        booksByTranslation
+            .get(translationId)
+            ?.some((book) => book.id === bookId),
+    );
 }
 
 export function setColumnContentType(

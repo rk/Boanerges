@@ -226,3 +226,21 @@ Use **canonical OSIS book IDs** everywhere: routes, API JSON (`bookId`), study s
 - **DB lookup:** `OsisBookId::lookupValues($canonical)` — matches legacy rows until `php artisan bible:normalize-book-ids` rewrites them.
 - **Display:** use the translation’s book `name` (e.g. “Matthew”), never the raw ID in UI.
 - **User reference parsing:** `resources/js/lib/scriptureReference.ts` resolves against the loaded book catalog, which already exposes canonical IDs.
+
+=== pre-commit / CI checks (cloud agents) ===
+
+# Quality checks before commit
+
+The repo’s `.githooks/pre-commit` runs `composer lint:check`, `npm run lint:check`, and `npm run format:check`, but it is **optional** (`git config core.hooksPath .githooks`) and is often **not active** in cloud agent environments. Cursor’s injected pre-commit hook only scans for secrets—it does not run lint or format.
+
+**Before every commit**, run the same checks as [`.github/workflows/lint.yml`](.github/workflows/lint.yml):
+
+```bash
+composer lint:check
+npm run format:check
+npm run lint:check
+php artisan wayfinder:generate --with-form
+npm run types:check
+```
+
+Fix failures with `vendor/bin/pint --dirty`, `npm run format`, and `npm run lint` as needed. Do not use `git commit --no-verify` to skip hooks unless the user explicitly asks.
