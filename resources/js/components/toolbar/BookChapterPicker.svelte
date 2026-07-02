@@ -251,9 +251,7 @@
                     <div class="grid grid-cols-2 gap-3">
                         <section class="min-w-0">
                             <p class="menu-title px-0">Old Testament</p>
-                            <div
-                                class="columns-2 w-full space-y-1"
-                            >
+                            <div class="columns-2 w-full space-y-1">
                                 {#each otBooks as book (book.id)}
                                     <button
                                         type="button"
@@ -271,9 +269,7 @@
                         </section>
                         <section class="min-w-0">
                             <p class="menu-title px-0">New Testament</p>
-                            <div
-                                class="columns-2 w-full space-y-1"
-                            >
+                            <div class="columns-2 w-full space-y-1">
                                 {#each ntBooks as book (book.id)}
                                     <button
                                         type="button"
