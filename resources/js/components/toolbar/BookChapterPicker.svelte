@@ -246,52 +246,48 @@
                 </div>
             {:else}
                 <div
-                    class="max-h-64 overflow-x-hidden overflow-y-auto overscroll-y-contain"
+                    class="overflow-x-hidden overflow-y-auto overscroll-y-contain"
                 >
                     <div class="grid grid-cols-2 gap-3">
                         <section class="min-w-0">
                             <p class="menu-title px-0">Old Testament</p>
-                            <ul
-                                class="menu menu-sm rounded-box bg-base-200 p-1"
+                            <div
+                                class="columns-2 w-full space-y-1"
                             >
                                 {#each otBooks as book (book.id)}
-                                    <li class="min-w-0">
-                                        <button
-                                            type="button"
-                                            disabled={!book.available}
-                                            class="block w-full min-w-0 truncate"
-                                            class:menu-active={study.bookId ===
-                                                book.id}
-                                            class:opacity-40={!book.available}
-                                            onclick={() => selectBook(book.id)}
-                                        >
-                                            {book.name}
-                                        </button>
-                                    </li>
+                                    <button
+                                        type="button"
+                                        disabled={!book.available}
+                                        class="btn btn-info btn-xs block w-full min-w-0 truncate"
+                                        class:btn-active={study.bookId ===
+                                            book.id}
+                                        class:opacity-40={!book.available}
+                                        onclick={() => selectBook(book.id)}
+                                    >
+                                        {book.name}
+                                    </button>
                                 {/each}
-                            </ul>
+                            </div>
                         </section>
                         <section class="min-w-0">
                             <p class="menu-title px-0">New Testament</p>
-                            <ul
-                                class="menu menu-sm rounded-box bg-base-200 p-1"
+                            <div
+                                class="columns-2 w-full space-y-1"
                             >
                                 {#each ntBooks as book (book.id)}
-                                    <li class="min-w-0">
-                                        <button
-                                            type="button"
-                                            disabled={!book.available}
-                                            class="block w-full min-w-0 truncate"
-                                            class:menu-active={study.bookId ===
-                                                book.id}
-                                            class:opacity-40={!book.available}
-                                            onclick={() => selectBook(book.id)}
-                                        >
-                                            {book.name}
-                                        </button>
-                                    </li>
+                                    <button
+                                        type="button"
+                                        disabled={!book.available}
+                                        class="btn btn-primary btn-xs block w-full min-w-0 truncate"
+                                        class:btn-active={study.bookId ===
+                                            book.id}
+                                        class:opacity-40={!book.available}
+                                        onclick={() => selectBook(book.id)}
+                                    >
+                                        {book.name}
+                                    </button>
                                 {/each}
-                            </ul>
+                            </div>
                         </section>
                     </div>
                 </div>
