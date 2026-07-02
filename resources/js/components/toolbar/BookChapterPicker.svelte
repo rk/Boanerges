@@ -221,7 +221,7 @@
     <div
         use:portal
         bind:this={panelEl}
-        class="bg-base-100 rounded-box fixed z-[1000] w-[min(36rem,calc(100vw-1.5rem))] border border-base-300 p-3 shadow-lg"
+        class="bg-base-100 rounded-box fixed z-[1000] w-[min(36rem,calc(100vw-1.5rem))] overflow-x-hidden border border-base-300 p-3 shadow-lg"
         style={panelStyle}
         role="dialog"
         aria-label="Book and chapter picker"
@@ -245,49 +245,55 @@
                     ></span>
                 </div>
             {:else}
-                <div class="grid grid-cols-2 gap-3">
-                    <section class="min-w-0">
-                        <p class="menu-title px-0">Old Testament</p>
-                        <ul
-                            class="menu menu-sm rounded-box bg-base-200 max-h-64 overflow-y-auto p-1"
-                        >
-                            {#each otBooks as book (book.id)}
-                                <li>
-                                    <button
-                                        type="button"
-                                        disabled={!book.available}
-                                        class:menu-active={study.bookId ===
-                                            book.id}
-                                        class:opacity-40={!book.available}
-                                        onclick={() => selectBook(book.id)}
-                                    >
-                                        {book.name}
-                                    </button>
-                                </li>
-                            {/each}
-                        </ul>
-                    </section>
-                    <section class="min-w-0">
-                        <p class="menu-title px-0">New Testament</p>
-                        <ul
-                            class="menu menu-sm rounded-box bg-base-200 max-h-64 overflow-y-auto p-1"
-                        >
-                            {#each ntBooks as book (book.id)}
-                                <li>
-                                    <button
-                                        type="button"
-                                        disabled={!book.available}
-                                        class:menu-active={study.bookId ===
-                                            book.id}
-                                        class:opacity-40={!book.available}
-                                        onclick={() => selectBook(book.id)}
-                                    >
-                                        {book.name}
-                                    </button>
-                                </li>
-                            {/each}
-                        </ul>
-                    </section>
+                <div
+                    class="max-h-64 overflow-x-hidden overflow-y-auto overscroll-y-contain"
+                >
+                    <div class="grid grid-cols-2 gap-3">
+                        <section class="min-w-0">
+                            <p class="menu-title px-0">Old Testament</p>
+                            <ul
+                                class="menu menu-sm rounded-box bg-base-200 p-1"
+                            >
+                                {#each otBooks as book (book.id)}
+                                    <li class="min-w-0">
+                                        <button
+                                            type="button"
+                                            disabled={!book.available}
+                                            class="block w-full min-w-0 truncate"
+                                            class:menu-active={study.bookId ===
+                                                book.id}
+                                            class:opacity-40={!book.available}
+                                            onclick={() => selectBook(book.id)}
+                                        >
+                                            {book.name}
+                                        </button>
+                                    </li>
+                                {/each}
+                            </ul>
+                        </section>
+                        <section class="min-w-0">
+                            <p class="menu-title px-0">New Testament</p>
+                            <ul
+                                class="menu menu-sm rounded-box bg-base-200 p-1"
+                            >
+                                {#each ntBooks as book (book.id)}
+                                    <li class="min-w-0">
+                                        <button
+                                            type="button"
+                                            disabled={!book.available}
+                                            class="block w-full min-w-0 truncate"
+                                            class:menu-active={study.bookId ===
+                                                book.id}
+                                            class:opacity-40={!book.available}
+                                            onclick={() => selectBook(book.id)}
+                                        >
+                                            {book.name}
+                                        </button>
+                                    </li>
+                                {/each}
+                            </ul>
+                        </section>
+                    </div>
                 </div>
             {/if}
         {:else}
