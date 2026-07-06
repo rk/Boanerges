@@ -1,4 +1,5 @@
 import { SvelteSet } from 'svelte/reactivity';
+import { updateStudy as updateStudySettings } from '@/actions/App/Http/Controllers/SettingsController';
 import { getAdjacentChapter, bible } from '@/lib/bible.svelte.ts';
 import { setCrossReferenceInput } from '@/lib/crossrefs.svelte.ts';
 import { setDictionaryWord } from '@/lib/dictionary.svelte.ts';
@@ -12,7 +13,6 @@ import {
 } from '@/lib/studyLayout';
 import type { ColumnContentType, StudySettings } from '@/lib/types/study';
 import type { VerseHighlight } from '@/lib/verseHighlight';
-import { updateStudy as updateStudySettings } from '@/actions/App/Http/Controllers/SettingsController';
 
 export const study = $state({
     columnCount: 1 as 1 | 2 | 3,
