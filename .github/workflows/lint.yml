@@ -49,6 +49,9 @@ jobs:
           composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
           npm ci
 
+      - name: Generate Wayfinder Types
+        run: php artisan wayfinder:generate --with-form
+
       - name: Check PHP Style
         run: composer lint:check
 
@@ -57,9 +60,6 @@ jobs:
 
       - name: Check Frontend Lint
         run: npm run lint:check
-
-      - name: Generate Wayfinder Types
-        run: php artisan wayfinder:generate --with-form
 
       - name: Check Svelte Types
         run: npm run types:check
