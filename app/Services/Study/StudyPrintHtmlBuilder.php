@@ -16,6 +16,7 @@ class StudyPrintHtmlBuilder
         'scribe' => 'Scribe',
         'search' => 'Search',
         'cross-references' => 'Cross References',
+        'dictionary' => 'Dictionary',
     ];
 
     public function __construct(
@@ -108,7 +109,7 @@ class StudyPrintHtmlBuilder
                 ),
                 'notes' => $this->notesColumn($bookId, $chapterNumber, $primaryChapter['book'], $includeUserWork),
                 'scribe' => $this->scribeColumn($primaryChapter),
-                'search', 'cross-references' => [
+                'search', 'cross-references', 'dictionary' => [
                     'label' => self::COLUMN_LABELS[$type],
                     'kind' => 'message',
                     'message' => 'Interactive view — not included in print.',

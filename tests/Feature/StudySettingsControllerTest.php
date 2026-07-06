@@ -107,6 +107,21 @@ test('study settings accept cross-references column type', function () {
     $response->assertJsonPath('study.columns', ['cross-references']);
 });
 
+test('study settings accept dictionary column type', function () {
+    $response = $this->patchJson(route('settings.study.update'), [
+        'columnCount' => 2,
+        'columns' => ['dictionary'],
+        'bookId' => 'gen',
+        'chapter' => 1,
+        'translationId' => 'asv',
+        'translationBId' => 'asv',
+        'translationCId' => 'asv',
+    ]);
+
+    $response->assertSuccessful();
+    $response->assertJsonPath('study.columns', ['dictionary']);
+});
+
 test('study settings validation rejects invalid values', function () {
     $this->patchJson(route('settings.study.update'), [
         'columnCount' => 2,

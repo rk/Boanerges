@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
     availableColumnOptions,
     crossReferencesTargetSlot,
+    dictionaryTargetSlot,
     normalizeColumns,
     sanitizeStudySettings,
 } from '@/lib/studyLayout';
@@ -58,6 +59,7 @@ describe('availableColumnOptions', () => {
         expect(options).not.toContain('notes');
         expect(options).toContain('search');
         expect(options).toContain('cross-references');
+        expect(options).toContain('dictionary');
     });
 
     it('allows two bible columns when translations differ', () => {
@@ -81,5 +83,17 @@ describe('crossReferencesTargetSlot', () => {
     it('falls back to the last secondary slot', () => {
         expect(crossReferencesTargetSlot(2, ['notes'])).toBe(0);
         expect(crossReferencesTargetSlot(3, ['notes', 'search'])).toBe(1);
+    });
+});
+
+describe('dictionaryTargetSlot', () => {
+    it('prefers the last slot already showing dictionary', () => {
+        expect(dictionaryTargetSlot(3, ['search', 'dictionary'])).toBe(1);
+        expect(dictionaryTargetSlot(3, ['dictionary', 'notes'])).toBe(0);
+    });
+
+    it('falls back to the last secondary slot', () => {
+        expect(dictionaryTargetSlot(2, ['notes'])).toBe(0);
+        expect(dictionaryTargetSlot(3, ['notes', 'search'])).toBe(1);
     });
 });

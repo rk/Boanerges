@@ -7,6 +7,7 @@ export const COLUMN_CONTENT_TYPES: ColumnContentType[] = [
     'scribe',
     'search',
     'cross-references',
+    'dictionary',
 ];
 
 export const COLUMN_CONTENT_LABELS: Record<ColumnContentType, string> = {
@@ -15,6 +16,7 @@ export const COLUMN_CONTENT_LABELS: Record<ColumnContentType, string> = {
     scribe: 'Scribe',
     search: 'Search',
     'cross-references': 'Cross References',
+    dictionary: 'Dictionary',
 };
 
 export function isColumnCount(value: number): value is 1 | 2 | 3 {
@@ -182,6 +184,19 @@ export function crossReferencesTargetSlot(
 ): number {
     for (let index = columns.length - 1; index >= 0; index--) {
         if (columns[index] === 'cross-references') {
+            return index;
+        }
+    }
+
+    return Math.max(0, columnCount - 2);
+}
+
+export function dictionaryTargetSlot(
+    columnCount: 1 | 2 | 3,
+    columns: ColumnContentType[],
+): number {
+    for (let index = columns.length - 1; index >= 0; index--) {
+        if (columns[index] === 'dictionary') {
             return index;
         }
     }

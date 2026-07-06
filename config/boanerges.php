@@ -6,6 +6,7 @@ return [
     'bundled_sword_path' => 'sword',
     'local_sword_path' => 'modules/bible',
     'catalog_path' => 'translations.json',
+    'dictionary_path' => 'websters1828/dictionary.json',
 
     'bundled_modules' => [
         'ASV',

@@ -24,7 +24,7 @@ class PrintStudyRequest extends FormRequest
             'printerName' => ['nullable', 'string', 'max:255'],
             'columnCount' => ['required', 'integer', Rule::in([1, 2, 3])],
             'columns' => ['present', 'array'],
-            'columns.*' => ['string', Rule::in(['bible-secondary', 'notes', 'scribe', 'search', 'cross-references'])],
+            'columns.*' => ['string', Rule::in(['bible-secondary', 'notes', 'scribe', 'search', 'cross-references', 'dictionary'])],
             'bookId' => ['required', 'string', 'max:10'],
             'chapter' => ['required', 'integer', 'min:1', 'max:150'],
             'translationId' => ['required', 'string', 'max:10'],

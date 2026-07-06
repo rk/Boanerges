@@ -1,10 +1,12 @@
 import { SvelteSet } from 'svelte/reactivity';
 import { getAdjacentChapter, bible } from '@/lib/bible.svelte.ts';
 import { setCrossReferenceInput } from '@/lib/crossrefs.svelte.ts';
+import { setDictionaryWord } from '@/lib/dictionary.svelte.ts';
 import { patchJson } from '@/lib/patchJson';
 import { formatScriptureReference } from '@/lib/scriptureReference';
 import {
     crossReferencesTargetSlot,
+    dictionaryTargetSlot,
     normalizeColumns,
     sanitizeStudySettings,
 } from '@/lib/studyLayout';
@@ -243,4 +245,20 @@ export function ensureCrossReferencesColumn(reference?: string): void {
         );
 
     setCrossReferenceInput(resolvedReference);
+}
+
+export function ensureDictionaryColumn(word?: string): void {
+    if (study.columnCount === 1) {
+        setColumnCount(2);
+    }
+
+    const slotIndex = dictionaryTargetSlot(study.columnCount, study.columns);
+
+    if (study.columns[slotIndex] !== 'dictionary') {
+        setColumnContent(slotIndex, 'dictionary');
+    }
+
+    if (word !== undefined && word.trim() !== '') {
+        setDictionaryWord(word);
+    }
 }

@@ -1,6 +1,7 @@
 <script lang="ts">
     import BibleColumn from '@/components/columns/BibleColumn.svelte';
     import CrossReferencesColumn from '@/components/columns/CrossReferencesColumn.svelte';
+    import DictionaryColumn from '@/components/columns/DictionaryColumn.svelte';
     import NotesColumn from '@/components/columns/NotesColumn.svelte';
     import ScribeColumn from '@/components/columns/ScribeColumn.svelte';
     import SearchColumn from '@/components/columns/SearchColumn.svelte';
@@ -187,7 +188,9 @@
                     <NotesColumn slotIndex={slot.slotIndex} />
                 {:else if slot.type === 'cross-references'}
                     <CrossReferencesColumn slotIndex={slot.slotIndex} />
-                {:else}
+                {:else if slot.type === 'dictionary'}
+                    <DictionaryColumn slotIndex={slot.slotIndex} />
+                {:else if slot.type === 'search'}
                     <SearchColumn slotIndex={slot.slotIndex} />
                 {/if}
             </div>
