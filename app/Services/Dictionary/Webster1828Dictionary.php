@@ -63,15 +63,15 @@ class Webster1828Dictionary
         return [
             'found' => true,
             'word' => (string) $rows->first()->word,
-            'variants' => $rows->map(function ($row): array {
+            'variants' => array_values($rows->map(function ($row): array {
                 $partOfSpeech = $row->part_of_speech !== null ? (string) $row->part_of_speech : null;
 
                 return [
                     'partOfSpeech' => $partOfSpeech,
                     'partOfSpeechExpanded' => $this->expandPartOfSpeech($partOfSpeech),
-                    'definitions' => json_decode((string) $row->definitions, true) ?? [],
+                    'definitions' => $this->decodeDefinitions((string) $row->definitions),
                 ];
-            })->all(),
+            })->all()),
         ];
     }
 
@@ -140,5 +140,22 @@ class Webster1828Dictionary
         }
 
         return self::PART_OF_SPEECH_LABELS[$partOfSpeech] ?? $partOfSpeech;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function decodeDefinitions(string $json): array
+    {
+        $decoded = json_decode($json, true);
+
+        if (! is_array($decoded)) {
+            return [];
+        }
+
+        return array_values(array_map(
+            static fn($definition): string => (string) $definition,
+            $decoded,
+        ));
     }
 }
