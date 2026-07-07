@@ -6,33 +6,12 @@ import {
     ensureDictionaryColumn,
     study,
 } from '@/lib/study.svelte.ts';
+import { wordAtPoint } from '@/lib/wordAtPoint';
 
 type ContextMenuItem = {
     label: string;
     click?: () => void;
 };
-
-function wordAtPoint(event: MouseEvent): string {
-    const range = document.caretRangeFromPoint(event.clientX, event.clientY);
-
-    if (!range || !range.startContainer.textContent) {
-        return '';
-    }
-
-    const text = range.startContainer.textContent;
-    const offset = range.startOffset;
-    const before = text.slice(0, offset);
-    const after = text.slice(offset);
-    const start = before.search(/[\p{L}\p{N}'-]+$/u);
-    const endMatch = after.match(/^[\p{L}\p{N}'-]+/u);
-    const end = endMatch ? offset + endMatch[0].length : offset;
-
-    if (start === -1) {
-        return '';
-    }
-
-    return text.slice(start, end);
-}
 
 export function showVerseContextMenu(
     verse: number,
