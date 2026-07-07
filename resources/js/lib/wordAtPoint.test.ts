@@ -13,25 +13,15 @@ describe('extractWordFromTextOffset', () => {
 });
 
 describe('wordAtPoint', () => {
+    const originalCaretPositionFromPoint =
+        document.caretPositionFromPoint?.bind(document);
+
     afterEach(() => {
         document.body.innerHTML = '';
-        delete (
-            document as Document & {
-                caretRangeFromPoint?: (x: number, y: number) => Range | null;
-                caretPositionFromPoint?: (
-                    x: number,
-                    y: number,
-                ) => { offsetNode: Node; offset: number } | null;
-            }
-        ).caretRangeFromPoint;
-        delete (
-            document as Document & {
-                caretPositionFromPoint?: (
-                    x: number,
-                    y: number,
-                ) => { offsetNode: Node; offset: number } | null;
-            }
-        ).caretPositionFromPoint;
+
+        if (originalCaretPositionFromPoint) {
+            document.caretPositionFromPoint = originalCaretPositionFromPoint;
+        }
     });
 
     it('reads words from data-dict-word spans', () => {
@@ -54,16 +44,10 @@ describe('wordAtPoint', () => {
             '<p data-verse="1"><span>the grace of God</span></p>';
         const textNode = document.querySelector('span')!.firstChild as Text;
 
-        (
-            document as Document & {
-                caretPositionFromPoint: (
-                    x: number,
-                    y: number,
-                ) => { offsetNode: Node; offset: number } | null;
-            }
-        ).caretPositionFromPoint = () => ({
+        document.caretPositionFromPoint = () => ({
             offsetNode: textNode,
             offset: 8,
+            getClientRect: () => new DOMRect(),
         });
 
         const target = document.querySelector('span')!;

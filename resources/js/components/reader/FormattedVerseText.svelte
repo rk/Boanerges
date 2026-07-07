@@ -1,6 +1,7 @@
 <script lang="ts">
     import { parseVerseHtml } from '@/lib/parseVerseHtml';
     import type { VerseHtmlNode } from '@/lib/parseVerseHtml';
+    import { splitVerseTextForDictionary } from '@/lib/splitVerseTextForDictionary';
 
     let { text }: { text: string } = $props();
 
@@ -13,7 +14,13 @@
 
 {#snippet renderNode(node: VerseHtmlNode)}
     {#if node.type === 'text'}
-        {node.value}
+        {#each splitVerseTextForDictionary(node.value) as part, index (`${index}-${part.value}`)}
+            {#if part.kind === 'word'}
+                <span data-dict-word={part.value}>{part.value}</span>
+            {:else}
+                {part.value}
+            {/if}
+        {/each}
     {:else if node.name === 'em'}
         <em
             >{#each node.children as child (child)}{@render renderNode(

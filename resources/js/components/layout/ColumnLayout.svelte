@@ -166,7 +166,7 @@
             />
         </div>
 
-        {#each slots as slot (slot.slotIndex)}
+        {#each slots as slot (`${slot.slotIndex}-${slot.type}`)}
             <div class="min-w-0 flex-1">
                 {#if slot.type === 'bible-secondary'}
                     <BibleColumn

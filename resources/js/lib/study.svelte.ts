@@ -31,6 +31,10 @@ let hydrated = false;
 let persistTimeout: ReturnType<typeof setTimeout> | null = null;
 
 export function hydrateStudy(settings: StudySettings): void {
+    if (hydrated) {
+        return;
+    }
+
     const sanitized = sanitizeStudySettings(settings);
 
     study.columnCount = sanitized.columnCount;
@@ -248,6 +252,18 @@ export function ensureCrossReferencesColumn(reference?: string): void {
 }
 
 export function ensureDictionaryColumn(word?: string): void {
+    const existingSlot = study.columns.findIndex(
+        (column) => column === 'dictionary',
+    );
+
+    if (existingSlot >= 0) {
+        if (word !== undefined && word.trim() !== '') {
+            setDictionaryWord(word);
+        }
+
+        return;
+    }
+
     if (study.columnCount === 1) {
         setColumnCount(2);
     }
