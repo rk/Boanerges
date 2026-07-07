@@ -1,8 +1,16 @@
-// ponytail: caretRangeFromPoint missing in NativePHP Electron; try caretPositionFromPoint,
-// then elementFromPoint + Range binary search. data-dict-word spans are the last resort.
+// ponytail: debug order tries caretRangeFromPoint first; check console for
+// `[wordAtPoint] { method, word }` then delete unused fallbacks.
 const WORD_CHAR_PATTERN = /[\p{L}\p{N}'-]+/u;
 const WORD_END_PATTERN = /^[\p{L}\p{N}'-]+/u;
 const WORD_START_PATTERN = /[\p{L}\p{N}'-]+$/u;
+
+export type WordLookupMethod =
+    | 'text-selection'
+    | 'caretRangeFromPoint'
+    | 'caretPositionFromPoint'
+    | 'elementFromPoint'
+    | 'data-dict-word'
+    | 'none';
 
 type DocumentWithCaret = Document & {
     caretRangeFromPoint?: (x: number, y: number) => Range | null;
@@ -11,6 +19,17 @@ type DocumentWithCaret = Document & {
         y: number,
     ) => { offsetNode: Node; offset: number } | null;
 };
+
+let lastWordLookupMethod: WordLookupMethod = 'none';
+
+export function getLastWordLookupMethod(): WordLookupMethod {
+    return lastWordLookupMethod;
+}
+
+export function logWordLookup(method: WordLookupMethod, word: string): void {
+    lastWordLookupMethod = method;
+    console.debug('[wordAtPoint]', { method, word });
+}
 
 export function extractWordFromTextOffset(
     text: string,
@@ -29,6 +48,10 @@ export function extractWordFromTextOffset(
     return text.slice(start, end);
 }
 
+function rangeFromCaretRangeFromPoint(x: number, y: number): Range | null {
+    return (document as DocumentWithCaret).caretRangeFromPoint?.(x, y) ?? null;
+}
+
 function rangeFromCaretPositionFromPoint(x: number, y: number): Range | null {
     const position = (document as DocumentWithCaret).caretPositionFromPoint?.(
         x,
@@ -44,10 +67,6 @@ function rangeFromCaretPositionFromPoint(x: number, y: number): Range | null {
     range.collapse(true);
 
     return range;
-}
-
-function rangeFromCaretRangeFromPoint(x: number, y: number): Range | null {
-    return (document as DocumentWithCaret).caretRangeFromPoint?.(x, y) ?? null;
 }
 
 function pointInRect(x: number, y: number, rect: DOMRect): boolean {
@@ -149,26 +168,8 @@ function wordFromDictWordElement(target: EventTarget | null): string {
     return wordElement.dataset.dictWord ?? wordElement.textContent ?? '';
 }
 
-export function wordAtPoint(event: MouseEvent): string {
-    const dictWord = wordFromDictWordElement(event.target);
-
-    if (dictWord !== '') {
-        return dictWord.match(WORD_CHAR_PATTERN)?.[0] ?? '';
-    }
-
-    const root =
-        event.target instanceof Element
-            ? event.target.closest('[data-verse]')
-            : null;
-    const x = event.clientX;
-    const y = event.clientY;
-
-    const range =
-        rangeFromCaretPositionFromPoint(x, y) ??
-        rangeFromCaretRangeFromPoint(x, y) ??
-        rangeFromElementFromPoint(x, y, root);
-
-    if (!range || !range.startContainer.textContent) {
+function wordFromRange(range: Range, method: WordLookupMethod): string {
+    if (!range.startContainer.textContent) {
         return '';
     }
 
@@ -176,4 +177,68 @@ export function wordAtPoint(event: MouseEvent): string {
         range.startContainer.textContent,
         range.startOffset,
     );
+}
+
+export function wordAtPoint(event: MouseEvent): string {
+    const root =
+        event.target instanceof Element
+            ? event.target.closest('[data-verse]')
+            : null;
+    const x = event.clientX;
+    const y = event.clientY;
+
+    const caretRange = rangeFromCaretRangeFromPoint(x, y);
+
+    if (caretRange) {
+        const word = wordFromRange(caretRange, 'caretRangeFromPoint');
+
+        if (word !== '') {
+            logWordLookup('caretRangeFromPoint', word);
+
+            return word;
+        }
+    }
+
+    const caretPositionRange = rangeFromCaretPositionFromPoint(x, y);
+
+    if (caretPositionRange) {
+        const word = wordFromRange(
+            caretPositionRange,
+            'caretPositionFromPoint',
+        );
+
+        if (word !== '') {
+            logWordLookup('caretPositionFromPoint', word);
+
+            return word;
+        }
+    }
+
+    const elementRange = rangeFromElementFromPoint(x, y, root);
+
+    if (elementRange) {
+        const word = wordFromRange(elementRange, 'elementFromPoint');
+
+        if (word !== '') {
+            logWordLookup('elementFromPoint', word);
+
+            return word;
+        }
+    }
+
+    const dictWord = wordFromDictWordElement(event.target);
+
+    if (dictWord !== '') {
+        const word = dictWord.match(WORD_CHAR_PATTERN)?.[0] ?? '';
+
+        if (word !== '') {
+            logWordLookup('data-dict-word', word);
+
+            return word;
+        }
+    }
+
+    logWordLookup('none', '');
+
+    return '';
 }

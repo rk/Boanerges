@@ -1,6 +1,10 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { extractWordFromTextOffset, wordAtPoint } from '@/lib/wordAtPoint';
+import {
+    extractWordFromTextOffset,
+    getLastWordLookupMethod,
+    wordAtPoint,
+} from '@/lib/wordAtPoint';
 
 describe('extractWordFromTextOffset', () => {
     it('extracts the word surrounding an offset', () => {
@@ -15,18 +19,77 @@ describe('extractWordFromTextOffset', () => {
 describe('wordAtPoint', () => {
     const originalCaretPositionFromPoint =
         document.caretPositionFromPoint?.bind(document);
+    const originalCaretRangeFromPoint = (
+        document as Document & {
+            caretRangeFromPoint?: (x: number, y: number) => Range | null;
+        }
+    ).caretRangeFromPoint?.bind(document);
 
     afterEach(() => {
         document.body.innerHTML = '';
+        vi.restoreAllMocks();
 
         if (originalCaretPositionFromPoint) {
             document.caretPositionFromPoint = originalCaretPositionFromPoint;
         }
+
+        if (originalCaretRangeFromPoint) {
+            (
+                document as Document & {
+                    caretRangeFromPoint?: (
+                        x: number,
+                        y: number,
+                    ) => Range | null;
+                }
+            ).caretRangeFromPoint = originalCaretRangeFromPoint;
+        }
     });
 
-    it('reads words from data-dict-word spans', () => {
+    it('prefers caretRangeFromPoint when available', () => {
         document.body.innerHTML =
             '<p data-verse="1"><span data-dict-word="grace">grace</span></p>';
+        const textNode = document.querySelector('[data-dict-word]')!
+            .firstChild as Text;
+        const target = document.querySelector('[data-dict-word]')!;
+        const range = document.createRange();
+        range.setStart(textNode, 3);
+        range.collapse(true);
+
+        (
+            document as Document & {
+                caretRangeFromPoint: (x: number, y: number) => Range | null;
+            }
+        ).caretRangeFromPoint = () => range;
+
+        const event = new MouseEvent('contextmenu', {
+            bubbles: true,
+            clientX: 10,
+            clientY: 10,
+        });
+        Object.defineProperty(event, 'target', { value: target });
+
+        const debugSpy = vi
+            .spyOn(console, 'debug')
+            .mockImplementation(() => {});
+
+        expect(wordAtPoint(event)).toBe('grace');
+        expect(getLastWordLookupMethod()).toBe('caretRangeFromPoint');
+        expect(debugSpy).toHaveBeenCalledWith('[wordAtPoint]', {
+            method: 'caretRangeFromPoint',
+            word: 'grace',
+        });
+    });
+
+    it('falls back to data-dict-word when caret APIs miss', () => {
+        document.body.innerHTML =
+            '<p data-verse="1"><span data-dict-word="grace">grace</span></p>';
+
+        (
+            document as Document & {
+                caretRangeFromPoint: () => Range | null;
+            }
+        ).caretRangeFromPoint = () => null;
+        document.caretPositionFromPoint = () => null;
 
         const target = document.querySelector('[data-dict-word]')!;
         const event = new MouseEvent('contextmenu', {
@@ -35,15 +98,28 @@ describe('wordAtPoint', () => {
             clientY: 10,
         });
         Object.defineProperty(event, 'target', { value: target });
+        const debugSpy = vi
+            .spyOn(console, 'debug')
+            .mockImplementation(() => {});
 
         expect(wordAtPoint(event)).toBe('grace');
+        expect(getLastWordLookupMethod()).toBe('data-dict-word');
+        expect(debugSpy).toHaveBeenCalledWith('[wordAtPoint]', {
+            method: 'data-dict-word',
+            word: 'grace',
+        });
     });
 
-    it('uses caretPositionFromPoint when available', () => {
+    it('uses caretPositionFromPoint when caretRangeFromPoint misses', () => {
         document.body.innerHTML =
             '<p data-verse="1"><span>the grace of God</span></p>';
         const textNode = document.querySelector('span')!.firstChild as Text;
 
+        (
+            document as Document & {
+                caretRangeFromPoint: () => Range | null;
+            }
+        ).caretRangeFromPoint = () => null;
         document.caretPositionFromPoint = () => ({
             offsetNode: textNode,
             offset: 8,
@@ -57,7 +133,15 @@ describe('wordAtPoint', () => {
             clientY: 10,
         });
         Object.defineProperty(event, 'target', { value: target });
+        const debugSpy = vi
+            .spyOn(console, 'debug')
+            .mockImplementation(() => {});
 
         expect(wordAtPoint(event)).toBe('grace');
+        expect(getLastWordLookupMethod()).toBe('caretPositionFromPoint');
+        expect(debugSpy).toHaveBeenCalledWith('[wordAtPoint]', {
+            method: 'caretPositionFromPoint',
+            word: 'grace',
+        });
     });
 });
