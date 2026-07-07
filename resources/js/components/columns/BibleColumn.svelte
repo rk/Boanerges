@@ -150,7 +150,9 @@
             return;
         }
 
-        showVerseContextMenu(verse, event);
+        const selectedWord = window.getSelection()?.toString().trim() ?? '';
+
+        showVerseContextMenu(verse, event, selectedWord);
     }
 </script>
 

@@ -3,6 +3,7 @@ import { onNativeEvent } from '@/lib/nativeBroadcast.ts';
 import { openPrintOptions } from '@/lib/printStudy.svelte.ts';
 import {
     ensureCrossReferencesColumn,
+    ensureDictionaryColumn,
     ensureSearchColumn,
     openSettings,
     setColumnCount,
@@ -27,6 +28,9 @@ export function registerApplicationMenuHandlers(): void {
                     break;
                 case 'study.cross-references':
                     ensureCrossReferencesColumn();
+                    break;
+                case 'study.dictionary':
+                    ensureDictionaryColumn();
                     break;
                 case 'study.print':
                     openPrintOptions();

@@ -3,7 +3,8 @@ export type ColumnContentType =
     | 'notes'
     | 'scribe'
     | 'search'
-    | 'cross-references';
+    | 'cross-references'
+    | 'dictionary';
 
 export type StudySettings = {
     columnCount: 1 | 2 | 3;

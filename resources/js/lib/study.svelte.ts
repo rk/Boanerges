@@ -1,16 +1,18 @@
 import { SvelteSet } from 'svelte/reactivity';
+import { updateStudy as updateStudySettings } from '@/actions/App/Http/Controllers/SettingsController';
 import { getAdjacentChapter, bible } from '@/lib/bible.svelte.ts';
 import { setCrossReferenceInput } from '@/lib/crossrefs.svelte.ts';
+import { setDictionaryWord } from '@/lib/dictionary.svelte.ts';
 import { patchJson } from '@/lib/patchJson';
 import { formatScriptureReference } from '@/lib/scriptureReference';
 import {
     crossReferencesTargetSlot,
+    dictionaryTargetSlot,
     normalizeColumns,
     sanitizeStudySettings,
 } from '@/lib/studyLayout';
 import type { ColumnContentType, StudySettings } from '@/lib/types/study';
 import type { VerseHighlight } from '@/lib/verseHighlight';
-import { updateStudy as updateStudySettings } from '@/actions/App/Http/Controllers/SettingsController';
 
 export const study = $state({
     columnCount: 1 as 1 | 2 | 3,
@@ -29,6 +31,10 @@ let hydrated = false;
 let persistTimeout: ReturnType<typeof setTimeout> | null = null;
 
 export function hydrateStudy(settings: StudySettings): void {
+    if (hydrated) {
+        return;
+    }
+
     const sanitized = sanitizeStudySettings(settings);
 
     study.columnCount = sanitized.columnCount;
@@ -243,4 +249,32 @@ export function ensureCrossReferencesColumn(reference?: string): void {
         );
 
     setCrossReferenceInput(resolvedReference);
+}
+
+export function ensureDictionaryColumn(word?: string): void {
+    const existingSlot = study.columns.findIndex(
+        (column) => column === 'dictionary',
+    );
+
+    if (existingSlot >= 0) {
+        if (word !== undefined && word.trim() !== '') {
+            setDictionaryWord(word);
+        }
+
+        return;
+    }
+
+    if (study.columnCount === 1) {
+        setColumnCount(2);
+    }
+
+    const slotIndex = dictionaryTargetSlot(study.columnCount, study.columns);
+
+    if (study.columns[slotIndex] !== 'dictionary') {
+        setColumnContent(slotIndex, 'dictionary');
+    }
+
+    if (word !== undefined && word.trim() !== '') {
+        setDictionaryWord(word);
+    }
 }

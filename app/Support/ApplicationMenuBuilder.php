@@ -31,6 +31,7 @@ class ApplicationMenuBuilder
             Menu::make(
                 Menu::label('Search')->id('study.search')->hotkey('CmdOrCtrl+F'),
                 Menu::label('Cross-References')->id('study.cross-references')->hotkey('CmdOrCtrl+Shift+R'),
+                Menu::label('Dictionary')->id('study.dictionary')->hotkey('CmdOrCtrl+Shift+D'),
                 Menu::separator(),
                 Menu::label('Print')->id('study.print')->hotkey('CmdOrCtrl+P'),
                 Menu::link('mailto:' . config('boanerges.feedback_email'), 'Feedback')

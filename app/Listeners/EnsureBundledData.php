@@ -8,6 +8,7 @@ use App\Jobs\Bible\InstallTranslationJob;
 use App\Models\Translation;
 use App\Services\Bible\CrossReferenceService;
 use App\Services\Bible\TranslationInstaller;
+use App\Services\Dictionary\DictionaryBootstrap;
 use Illuminate\Support\Facades\Bus;
 
 class EnsureBundledData
@@ -25,6 +26,7 @@ class EnsureBundledData
     public function __construct(
         private TranslationInstaller $installer,
         private CrossReferenceService $crossReferences,
+        private DictionaryBootstrap $dictionaryBootstrap,
     ) {}
 
     public function handle(): void
@@ -64,5 +66,7 @@ class EnsureBundledData
                 Bus::dispatch(new ImportCrossReferencesJob());
             }
         }
+
+        $this->dictionaryBootstrap->dispatchIfNeeded();
     }
 }

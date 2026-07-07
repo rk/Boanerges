@@ -9,4 +9,5 @@ enum StudyColumnType: string
     case Scribe = 'scribe';
     case Search = 'search';
     case CrossReferences = 'cross-references';
+    case Dictionary = 'dictionary';
 }
