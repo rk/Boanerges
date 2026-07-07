@@ -6,7 +6,7 @@ import {
     ensureDictionaryColumn,
     study,
 } from '@/lib/study.svelte.ts';
-import { logWordLookup, wordAtPoint } from '@/lib/wordAtPoint';
+import { wordAtPoint } from '@/lib/wordAtPoint';
 
 type ContextMenuItem = {
     label: string;
@@ -26,14 +26,8 @@ export function showVerseContextMenu(
         verse,
         bible.books,
     );
-    let resolvedWord: string;
-
-    if (selectedWord.trim() !== '') {
-        resolvedWord = selectedWord.trim();
-        logWordLookup('text-selection', resolvedWord);
-    } else {
-        resolvedWord = wordAtPoint(event);
-    }
+    const resolvedWord =
+        selectedWord.trim() !== '' ? selectedWord : wordAtPoint(event);
     const lookupWord = normalizeDictionaryWord(resolvedWord);
     const items: ContextMenuItem[] = [
         {
