@@ -5,6 +5,12 @@ use App\Services\Dictionary\DictionaryService;
 use App\Services\Dictionary\Webster1828Dictionary;
 use Illuminate\Support\Facades\Bus;
 
+test('dictionary import command imports bundled dictionary', function (): void {
+    $this->artisan('dictionary:import', ['--force' => true])->assertSuccessful();
+
+    expect(app(DictionaryService::class)->isImported())->toBeTrue();
+});
+
 test('dictionary import job loads fixture data', function (): void {
     Bus::dispatchSync(new ImportWebster1828DictionaryJob(force: true));
 

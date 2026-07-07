@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\ConfiguresSqliteDatabase;
 use App\Models\Translation;
 use App\Services\Bible\Import\SwordConfReader;
 use App\Services\Bible\TranslationCatalog;
@@ -12,6 +13,8 @@ use Illuminate\Support\Facades\DB;
 
 class SyncTranslationMetadataCommand extends Command
 {
+    use ConfiguresSqliteDatabase;
+
     protected $signature = 'bible:sync-metadata
                             {abbrev? : Translation abbrev, e.g. asv}
                             {--database= : SQLite file path (defaults to NativePHP dev DB when present)}';
@@ -23,7 +26,10 @@ class SyncTranslationMetadataCommand extends Command
         TranslationMetadataSync $sync,
         SwordConfReader $swordConf,
     ): int {
-        $this->configureDatabase($this->option('database'));
+        $this->configureSqliteDatabase(
+            $this->option('database'),
+            fn(): bool => $this->matchingTranslations(null, $swordConf)->isNotEmpty(),
+        );
 
         $abbrev = $this->argument('abbrev');
         $translations = $this->matchingTranslations($abbrev, $swordConf);
@@ -46,42 +52,6 @@ class SyncTranslationMetadataCommand extends Command
         DB::disconnect();
 
         return self::SUCCESS;
-    }
-
-    private function configureDatabase(?string $databaseOption): void
-    {
-        if ($databaseOption !== null) {
-            $this->useDatabase($databaseOption);
-
-            return;
-        }
-
-        if ($this->matchingTranslations(null, app(SwordConfReader::class))->isNotEmpty()) {
-            return;
-        }
-
-        $nativePath = database_path('nativephp.sqlite');
-
-        if (! is_file($nativePath)) {
-            return;
-        }
-
-        $this->useDatabase($nativePath);
-
-        if ($this->matchingTranslations(null, app(SwordConfReader::class))->isNotEmpty()) {
-            $this->comment("Using NativePHP database: {$nativePath}");
-        }
-    }
-
-    private function useDatabase(string $path): void
-    {
-        $resolved = str_starts_with($path, DIRECTORY_SEPARATOR)
-            ? $path
-            : base_path($path);
-
-        config(['database.connections.sqlite.database' => $resolved]);
-        DB::purge('sqlite');
-        DB::reconnect('sqlite');
     }
 
     /** @return Collection<int, Translation> */

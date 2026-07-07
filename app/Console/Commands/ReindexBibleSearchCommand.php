@@ -2,16 +2,18 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Concerns\ConfiguresSqliteDatabase;
 use App\Enums\TranslationInstallStatus;
 use App\Models\Translation;
 use App\Services\Bible\Markup\VerseTextFormatter;
 use App\Services\Bible\TranslationSchemaManager;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 
 class ReindexBibleSearchCommand extends Command
 {
+    use ConfiguresSqliteDatabase;
+
     protected $signature = 'bible:reindex-search
                             {abbrev? : Translation abbrev, e.g. asv}
                             {--database= : SQLite file path (defaults to NativePHP dev DB when present)}';
@@ -22,7 +24,10 @@ class ReindexBibleSearchCommand extends Command
         TranslationSchemaManager $schema,
         VerseTextFormatter $formatter,
     ): int {
-        $this->configureDatabase($this->option('database'));
+        $this->configureSqliteDatabase(
+            $this->option('database'),
+            fn(): bool => $this->readyTranslations(null)->isNotEmpty(),
+        );
 
         $abbrev = $this->argument('abbrev');
         $translations = $this->readyTranslations($abbrev);
@@ -41,42 +46,6 @@ class ReindexBibleSearchCommand extends Command
         $this->info('Done.');
 
         return self::SUCCESS;
-    }
-
-    private function configureDatabase(?string $databaseOption): void
-    {
-        if ($databaseOption !== null) {
-            $this->useDatabase($databaseOption);
-
-            return;
-        }
-
-        if ($this->readyTranslations(null)->isNotEmpty()) {
-            return;
-        }
-
-        $nativePath = database_path('nativephp.sqlite');
-
-        if (! is_file($nativePath)) {
-            return;
-        }
-
-        $this->useDatabase($nativePath);
-
-        if ($this->readyTranslations(null)->isNotEmpty()) {
-            $this->comment("Using NativePHP database: {$nativePath}");
-        }
-    }
-
-    private function useDatabase(string $path): void
-    {
-        $resolved = str_starts_with($path, DIRECTORY_SEPARATOR)
-            ? $path
-            : base_path($path);
-
-        config(['database.connections.sqlite.database' => $resolved]);
-        DB::purge('sqlite');
-        DB::reconnect('sqlite');
     }
 
     /** @return Collection<int, Translation> */
