@@ -6,6 +6,7 @@ use App\Services\Bible\DbChapterReader;
 use App\Services\Bible\InstalledTranslationRegistry;
 use App\Services\Notes\NotesChapterStore;
 use App\Services\ReadabilitySettingsStore;
+use App\Services\Scribe\ScribeChapterStore;
 use InvalidArgumentException;
 
 class StudyPrintHtmlBuilder
@@ -22,6 +23,7 @@ class StudyPrintHtmlBuilder
     public function __construct(
         private DbChapterReader $chapters,
         private NotesChapterStore $notes,
+        private ScribeChapterStore $scribe,
         private InstalledTranslationRegistry $translations,
         private ReadabilitySettingsStore $readability,
     ) {}
@@ -76,7 +78,6 @@ class StudyPrintHtmlBuilder
      *     kind: string,
      *     verses?: list<array{number: int, text: string, paragraphStart?: bool}>,
      *     content?: string,
-     *     linedVerses?: list<array{number: int, paragraphStart?: bool}>,
      *     message?: string
      * }>
      */
@@ -108,7 +109,7 @@ class StudyPrintHtmlBuilder
                     $slotIndex === 0 ? $study['translationBId'] : $study['translationCId'],
                 ),
                 'notes' => $this->notesColumn($bookId, $chapterNumber, $primaryChapter['book'], $includeUserWork),
-                'scribe' => $this->scribeColumn($primaryChapter),
+                'scribe' => $this->scribeColumn($primaryChapter, $bookId, $chapterNumber, $includeUserWork),
                 'search', 'cross-references', 'dictionary' => [
                     'label' => self::COLUMN_LABELS[$type],
                     'kind' => 'message',
@@ -155,7 +156,7 @@ class StudyPrintHtmlBuilder
     }
 
     /**
-     * @return array{label: string, kind: string, content?: string, linedVerses?: list<array{number: int, paragraphStart?: bool}>}
+     * @return array{label: string, kind: string, content?: string, verses?: list<array{number: int, text: string, paragraphStart?: bool}>}
      */
     private function notesColumn(
         string $bookId,
@@ -167,14 +168,14 @@ class StudyPrintHtmlBuilder
 
         if ($includeUserWork) {
             return [
-                'label' => $label,
+                'label' => $label . '(Notes)',
                 'kind' => 'notes',
                 'content' => $this->notes->get($bookId, $chapterNumber),
             ];
         }
 
         return [
-            'label' => $label,
+            'label' => $label . '(Notes)',
             'kind' => 'lined-notes',
         ];
     }
@@ -186,27 +187,87 @@ class StudyPrintHtmlBuilder
      *     chapter: int,
      *     verses: list<array{number: int, text: string, paragraphStart?: bool}>
      * }  $primaryChapter
-     * @return array{
-     *     label: string,
-     *     kind: string,
-     *     linedVerses: list<array{number: int, paragraphStart?: bool}>
-     * }
+     * @return array{label: string, kind: string, verses?: list<array{number: int, text: string, paragraphStart?: bool}>}
      */
-    private function scribeColumn(array $primaryChapter): array
-    {
-        $linedVerses = array_map(
-            fn(array $verse): array => [
-                'number' => $verse['number'],
-                'paragraphStart' => $verse['paragraphStart'] ?? false,
-            ],
-            $primaryChapter['verses'],
-        );
+    private function scribeColumn(
+        array $primaryChapter,
+        string $bookId,
+        int $chapterNumber,
+        bool $includeUserWork,
+    ): array {
+        $label = sprintf('%s %d', $primaryChapter['book'], $primaryChapter['chapter']);
+
+        if (! $includeUserWork) {
+            return [
+                'label' => $label . '(Scribe)',
+                'kind' => 'scribe',
+            ];
+        }
 
         return [
-            'label' => sprintf('%s %d', $primaryChapter['book'], $primaryChapter['chapter']),
-            'kind' => 'scribe',
-            'linedVerses' => $linedVerses,
+            'label' => $label . '(Scribe)',
+            'kind' => 'scribe-content',
+            'verses' => $this->scribeContentVerses($primaryChapter, $bookId, $chapterNumber),
         ];
+    }
+
+    /**
+     * @param  array{
+     *     verses: list<array{number: int, text: string, paragraphStart?: bool}>
+     * }  $primaryChapter
+     * @return list<array{number: int, text: string, paragraphStart?: bool}>
+     */
+    private function scribeContentVerses(array $primaryChapter, string $bookId, int $chapterNumber): array
+    {
+        $draft = collect($this->scribe->get($bookId, $chapterNumber))->keyBy('verse');
+
+        $verses = [];
+        $pendingBreak = false;
+
+        foreach ($primaryChapter['verses'] as $source) {
+            /** @var array{verse: int, text: string, paragraphStart?: bool}|null $entry */
+            $entry = $draft->get($source['number']);
+            $text = (string) ($entry['text'] ?? '');
+            $hasText = trim($text) !== '';
+            $startsParagraph = $pendingBreak || $this->effectiveScribeParagraphStart(
+                $source['number'],
+                $source['paragraphStart'] ?? false,
+                $entry['paragraphStart'] ?? null,
+            );
+            $pendingBreak = false;
+
+            if (! $hasText) {
+                if ($startsParagraph && $verses !== []) {
+                    $pendingBreak = true;
+                }
+
+                continue;
+            }
+
+            $verses[] = [
+                'number' => $source['number'],
+                'text' => $text,
+                'paragraphStart' => $verses === [] ? true : $startsParagraph,
+            ];
+        }
+
+        return $verses;
+    }
+
+    private function effectiveScribeParagraphStart(
+        int $verseNumber,
+        bool $sourceParagraphStart,
+        ?bool $override,
+    ): bool {
+        if ($override !== null) {
+            return $override;
+        }
+
+        if ($sourceParagraphStart) {
+            return true;
+        }
+
+        return $verseNumber === 1;
     }
 
     private function printFontFamily(string $fontFamily): string

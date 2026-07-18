@@ -12,6 +12,8 @@ class StudyPrintService
 {
     public const PDF_DESTINATION = '__pdf__';
 
+    public const HTML_DESTINATION = '__html__';
+
     public function __construct(
         private StudyPrintHtmlBuilder $htmlBuilder,
     ) {}
@@ -62,14 +64,45 @@ class StudyPrintService
             return $this->exportPdf($html, $study, $landscape);
         }
 
-        System::print($html, $this->resolvePrinter($printerName), [
-            'landscape' => $landscape,
-            'silent' => false,
-            'usePrinterDefaultPageSize' => true,
-            'printBackground' => true,
-        ]);
+        if ($printerName === self::HTML_DESTINATION) {
+            return $this->exportHtml($html, $study);
+        }
+
+        System::print($html, $this->resolvePrinter($printerName), $this->printSettings($landscape));
 
         return null;
+    }
+
+    /**
+     * @return array{
+     *     landscape: bool,
+     *     pageSize: string,
+     *     silent: bool,
+     *     usePrinterDefaultPageSize: bool,
+     *     printBackground: bool
+     * }
+     */
+    private function printSettings(bool $landscape): array
+    {
+        return [
+            'landscape' => $landscape,
+            'pageSize' => 'A4',
+            'silent' => false,
+            'usePrinterDefaultPageSize' => false,
+            'printBackground' => true,
+        ];
+    }
+
+    /**
+     * @return array{landscape: bool, pageSize: string, printBackground: bool}
+     */
+    private function pdfSettings(bool $landscape): array
+    {
+        return [
+            'landscape' => $landscape,
+            'pageSize' => 'A4',
+            'printBackground' => true,
+        ];
     }
 
     /**
@@ -77,10 +110,7 @@ class StudyPrintService
      */
     private function exportPdf(string $html, array $study, bool $landscape): ?string
     {
-        $pdf = System::printToPDF($html, [
-            'landscape' => $landscape,
-            'printBackground' => true,
-        ]);
+        $pdf = System::printToPDF($html, $this->pdfSettings($landscape));
 
         $filename = sprintf(
             '%s %d study.pdf',
@@ -91,7 +121,7 @@ class StudyPrintService
         $path = Dialog::new()
             ->title('Save study PDF')
             ->filter('PDF', ['pdf'])
-            ->defaultPath($this->defaultPdfPath($filename))
+            ->defaultPath($this->defaultExportPath($filename))
             ->save();
 
         if ($path === null || $path === '') {
@@ -103,7 +133,33 @@ class StudyPrintService
         return $path;
     }
 
-    private function defaultPdfPath(string $filename): string
+    /**
+     * @param  array{bookId: string, chapter: int}  $study
+     */
+    private function exportHtml(string $html, array $study): ?string
+    {
+        $filename = sprintf(
+            '%s %d study.html',
+            OsisBookId::displayName($study['bookId']),
+            $study['chapter'],
+        );
+
+        $path = Dialog::new()
+            ->title('Save study HTML')
+            ->filter('HTML', ['html', 'htm'])
+            ->defaultPath($this->defaultExportPath($filename))
+            ->save();
+
+        if ($path === null || $path === '') {
+            return null;
+        }
+
+        file_put_contents($path, $html);
+
+        return $path;
+    }
+
+    private function defaultExportPath(string $filename): string
     {
         if (config('nativephp-internal.running', false)) {
             return Storage::disk('downloads')->path($filename);

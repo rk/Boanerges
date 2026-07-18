@@ -3,6 +3,19 @@
 <head>
     <meta charset="utf-8">
     <title>Study Print</title>
+    @php
+        $lineStepPx = round($fontSize * $lineHeight, 2);
+        $lineStep = $lineStepPx.'px';
+        $ruleLineSvg = 'data:image/svg+xml,'.rawurlencode(
+            sprintf(
+                '<svg xmlns="http://www.w3.org/2000/svg" width="4" height="%1$s" viewBox="0 0 4 %1$s" preserveAspectRatio="none" shape-rendering="crispEdges">'
+                .'<rect x="0" y="%2$s" width="4" height="1" fill="#444"/>'
+                .'</svg>',
+                $lineStepPx,
+                max(0, $lineStepPx - 1),
+            )
+        );
+    @endphp
     <style>
         @page {
             size: A4 {{ $landscape ? 'landscape' : 'portrait' }};
@@ -21,20 +34,25 @@
             line-height: {{ $lineHeight }};
             text-align: {{ $justifyText ? 'justify' : 'left' }};
             color: #111;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
 
         .columns {
             display: flex;
             width: 100%;
             min-height: calc(100vh - 24mm);
+            align-items: stretch;
         }
 
         .column {
+            display: flex;
+            flex-direction: column;
             flex: 1 1 0;
             min-width: 0;
+            min-height: calc(100vh - 24mm);
             padding: 0 4mm;
             border-right: 1px solid #ccc;
-            align-items: stretch;
         }
 
         .column:last-child {
@@ -56,7 +74,8 @@
             margin-bottom: 0.75em;
         }
 
-        .reader p {
+        .column-bible .reader p,
+        .column-scribe-content .reader p {
             margin-bottom: 0.75em;
         }
 
@@ -70,43 +89,34 @@
             white-space: pre-wrap;
         }
 
+        .lined-area {
+            position: relative;
+            flex: 1 1 auto;
+            min-height: 0;
+        }
+
         .lined-block {
-            height: 100%;
-            background-image: repeating-linear-gradient(
-                to bottom,
-                transparent,
-                transparent calc({{ $lineHeight }}em - 1px),
-                #000 calc({{ $lineHeight }}em - 1px),
-                #000 {{ $lineHeight }}em
-            );
-            background-size: {{ $lineHeight }}em {{ $lineHeight }}em;
-            background-repeat: repeat;
-            background-position: top;
+            position: absolute;
+            inset: 0;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            image-rendering: crisp-edges;
+            background-image: url('{!! $ruleLineSvg !!}');
+            background-size: 100% {{ $lineStep }};
+            background-repeat: repeat-y;
+            background-position: top left;
         }
 
-        .scribe-verse {
-            display: flex;
-            align-items: baseline;
-            gap: 0.25em;
-            min-height: {{ $lineHeight }}em;
-            border-bottom: 1px solid #ccc;
-            margin-bottom: 0.15em;
+        .column-scribe .lined-area,
+        .column-lined-notes .lined-area {
+            margin: 0;
         }
 
-        .scribe-verse.paragraph-start {
-            margin-top: 0.85em;
-        }
-
-        .scribe-verse sup {
-            flex-shrink: 0;
-            font-size: 0.7em;
-            color: #555;
-            min-width: 1.25em;
-        }
-
-        .scribe-verse .line {
-            flex: 1;
-            min-height: {{ $lineHeight }}em;
+        .column-scribe p,
+        .column-lined-notes p,
+        .column-scribe .reader p,
+        .column-lined-notes .reader p {
+            margin: 0;
         }
 
         .message {
@@ -124,38 +134,27 @@
 
                 @if (($column['kind'] ?? '') === 'bible')
                     <div class="reader">
-                        @php
-                            $paragraph = [];
-                        @endphp
-                        @foreach ($column['verses'] as $verse)
-                            @if (($verse['paragraphStart'] ?? false) && $paragraph !== [])
-                                <p>
-                                    @foreach ($paragraph as $index => $part)
-                                        @if ($index > 0)&nbsp;@endif
-                                        <sup>{{ $part['number'] }}</sup>{!! $part['text'] !!}
-                                    @endforeach
-                                </p>
-                                @php $paragraph = []; @endphp
-                            @endif
-                            @php $paragraph[] = $verse; @endphp
-                        @endforeach
-                        @if ($paragraph !== [])
-                            <p>
-                                @foreach ($paragraph as $index => $part)
-                                    @if ($index > 0)&nbsp;@endif
-                                    <sup>{{ $part['number'] }}</sup>{!! $part['text'] !!}
-                                @endforeach
-                            </p>
-                        @endif
+                        @include('print.partials.chapter-paragraphs', ['verses' => $column['verses']])
                     </div>
                 @elseif (($column['kind'] ?? '') === 'notes')
                     <div class="notes-content">{{ $column['content'] }}</div>
                 @elseif (($column['kind'] ?? '') === 'lined-notes')
                     <div class="column-subtitle">Notes</div>
-                    <div class="lined-block" aria-hidden="true"></div>
+                    <div class="lined-area">
+                        <div class="lined-block" aria-hidden="true"></div>
+                    </div>
                 @elseif (($column['kind'] ?? '') === 'scribe')
                     <div class="column-subtitle">Scribe</div>
-                    <div class="lined-block"></div>
+                    <div class="lined-area">
+                        <div class="lined-block" aria-hidden="true"></div>
+                    </div>
+                @elseif (($column['kind'] ?? '') === 'scribe-content')
+                    <div class="reader">
+                        @include('print.partials.chapter-paragraphs', [
+                            'verses' => $column['verses'],
+                            'escapeText' => true,
+                        ])
+                    </div>
                 @elseif (($column['kind'] ?? '') === 'message')
                     <p class="message">{{ $column['message'] }}</p>
                 @endif

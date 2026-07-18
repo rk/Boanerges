@@ -9,6 +9,8 @@ export type PrintMode = 'include-user-work' | 'blank-writing';
 
 export const PRINT_TO_PDF = '__pdf__';
 
+export const PRINT_TO_HTML = '__html__';
+
 export type StudyPrinter = {
     name: string;
     displayName: string;

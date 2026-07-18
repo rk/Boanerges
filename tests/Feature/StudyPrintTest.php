@@ -1,6 +1,7 @@
 <?php
 
 use App\Services\Study\StudyPrintHtmlBuilder;
+use App\Services\Study\StudyPrintService;
 use Illuminate\Support\Facades\Storage;
 use Native\Desktop\DataObjects\Printer;
 use Native\Desktop\Facades\System;
@@ -74,8 +75,10 @@ test('prints portrait layout for a single column', function (): void {
                 ->and($printer)->toBeNull()
                 ->and($settings)->toMatchArray([
                     'landscape' => false,
+                    'pageSize' => 'A4',
                     'silent' => false,
-                    'usePrinterDefaultPageSize' => true,
+                    'usePrinterDefaultPageSize' => false,
+                    'printBackground' => true,
                 ]);
 
             return true;
@@ -85,7 +88,7 @@ test('prints portrait layout for a single column', function (): void {
         ->assertNoContent();
 });
 
-test('prints to a selected printer with dialog and default page size', function (): void {
+test('prints to a selected printer with explicit page size and orientation', function (): void {
     config(['nativephp-internal.running' => true]);
 
     $printer = new Printer('Brother_QL', 'Brother QL', 'Local printer', []);
@@ -100,8 +103,10 @@ test('prints to a selected printer with dialog and default page size', function 
             expect($selectedPrinter?->name)->toBe($printer->name)
                 ->and($settings)->toMatchArray([
                     'landscape' => false,
+                    'pageSize' => 'A4',
                     'silent' => false,
-                    'usePrinterDefaultPageSize' => true,
+                    'usePrinterDefaultPageSize' => false,
+                    'printBackground' => true,
                 ]);
 
             return true;
@@ -136,9 +141,15 @@ test('prints landscape layout with scribe lined area and no user draft text', fu
         ->withArgs(function (string $html, $printer, array $settings): bool {
             expect($html)->toContain('Scribe')
                 ->and($html)->toContain('class="lined-block"')
+                ->and($html)->toContain('data:image/svg+xml')
+                ->and($html)->toContain('background-size: 100% 30.6px')
+                ->and($html)->not->toContain('scribe-ghost')
+                ->and($html)->not->toMatch('/<div class="column column-scribe">[\s\S]*?<\/div>\s*<\/div>\s*<\/div>.*beginning/s')
                 ->and($html)->not->toContain('My private scribe draft')
                 ->and($settings['landscape'])->toBeTrue()
-                ->and($settings['usePrinterDefaultPageSize'])->toBeTrue();
+                ->and($settings['pageSize'])->toBe('A4')
+                ->and($settings['usePrinterDefaultPageSize'])->toBeFalse()
+                ->and($settings['printBackground'])->toBeTrue();
 
             return true;
         });
@@ -147,6 +158,28 @@ test('prints landscape layout with scribe lined area and no user draft text', fu
         'columnCount' => 2,
         'columns' => ['scribe'],
     ]))->assertNoContent();
+});
+
+test('exports html when html destination selected', function (): void {
+    config(['nativephp-internal.running' => true]);
+
+    $this->mock(StudyPrintService::class, function ($mock): void {
+        $mock->shouldReceive('print')
+            ->once()
+            ->withArgs(function (array $study, bool $includeUserWork, ?string $printerName): bool {
+                expect($printerName)->toBe(StudyPrintService::HTML_DESTINATION)
+                    ->and($includeUserWork)->toBeFalse();
+
+                return true;
+            })
+            ->andReturn('/tmp/Genesis 1 study.html');
+    });
+
+    $this->postJson(route('study.print'), studyPrintPayload([
+        'printerName' => StudyPrintService::HTML_DESTINATION,
+    ]))
+        ->assertSuccessful()
+        ->assertJsonPath('path', '/tmp/Genesis 1 study.html');
 });
 
 test('includes notes when requested and otherwise prints lined notes', function (): void {
@@ -177,6 +210,41 @@ test('includes notes when requested and otherwise prints lined notes', function 
     ], false);
 
     expect($withNotes)->toContain('Chapter notes here.')
-        ->and($blankNotes)->toContain('lined-block')
+        ->and($blankNotes)->toContain('class="lined-block"')
+        ->and($blankNotes)->toContain('data:image/svg+xml')
         ->and($blankNotes)->not->toContain('Chapter notes here.');
+});
+
+test('includes scribe content when requested and otherwise prints lined scribe', function (): void {
+    $builder = app(StudyPrintHtmlBuilder::class);
+
+    $this->putJson(route('scribe.chapters.update', ['book' => 'gen', 'chapter' => 1]), [
+        'verses' => [['verse' => 1, 'text' => 'My scribe reading draft']],
+    ])->assertSuccessful();
+
+    $withScribe = $builder->build([
+        'columnCount' => 2,
+        'columns' => ['scribe'],
+        'bookId' => 'gen',
+        'chapter' => 1,
+        'translationId' => 'asv',
+        'translationBId' => 'asv',
+        'translationCId' => 'asv',
+    ], true);
+
+    $blankScribe = $builder->build([
+        'columnCount' => 2,
+        'columns' => ['scribe'],
+        'bookId' => 'gen',
+        'chapter' => 1,
+        'translationId' => 'asv',
+        'translationBId' => 'asv',
+        'translationCId' => 'asv',
+    ], false);
+
+    expect($withScribe)->toContain('My scribe reading draft')
+        ->and($withScribe)->toContain('column-scribe-content')
+        ->and($withScribe)->not->toContain('class="lined-block"')
+        ->and($blankScribe)->toContain('class="lined-block"')
+        ->and($blankScribe)->not->toContain('My scribe reading draft');
 });

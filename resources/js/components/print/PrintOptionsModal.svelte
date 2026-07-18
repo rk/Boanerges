@@ -5,6 +5,7 @@
     import {
         fetchStudyPrinters,
         printStudy,
+        PRINT_TO_HTML,
         PRINT_TO_PDF,
     } from '@/lib/printStudy.ts';
     import type { PrintMode, StudyPrinter } from '@/lib/printStudy.ts';
@@ -70,7 +71,10 @@
             const path = await printStudy(mode, selectedPrinterName);
 
             if (path) {
-                success = `PDF saved to ${path}`;
+                success =
+                    selectedPrinterName === PRINT_TO_HTML
+                        ? `HTML saved to ${path}`
+                        : `PDF saved to ${path}`;
 
                 return;
             }
@@ -106,6 +110,7 @@
                 >
                     <option value="">System default</option>
                     <option value={PRINT_TO_PDF}>Print to PDF</option>
+                    <option value={PRINT_TO_HTML}>Save as HTML</option>
                     {#each printers as printer (printer.name)}
                         <option value={printer.name}
                             >{printer.displayName}</option
@@ -138,7 +143,7 @@
                 <span class="text-left">
                     <span class="block font-medium">Include my notes</span>
                     <span class="text-base-content/70 block text-xs"
-                        >Notes content included; scribe stays blank</span
+                        >Notes and scribe content included for reading</span
                     >
                 </span>
             </button>
