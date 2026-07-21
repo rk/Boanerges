@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\ReaderTheme;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -26,7 +27,7 @@ class UpdateReadabilitySettingsRequest extends FormRequest
         return [
             'fontSize' => ['required', 'integer', 'min:14', 'max:24'],
             'lineHeight' => ['required', 'numeric', 'min:1.4', 'max:2'],
-            'theme' => ['required', 'string', Rule::in(['light', 'dark', 'sepia'])],
+            'theme' => ['required', 'string', Rule::enum(ReaderTheme::class)],
             'fontFamily' => ['required', 'string', Rule::in(['sans-serif', 'serif'])],
             'justifyText' => ['required', 'boolean'],
         ];

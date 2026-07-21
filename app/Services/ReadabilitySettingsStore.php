@@ -24,8 +24,14 @@ class ReadabilitySettingsStore
      */
     public function get(): array
     {
-        /** @var array{fontSize: int, lineHeight: float, theme: string, fontFamily: string, justifyText: bool} */
-        return $this->settings->get(self::KEY, $this->defaults());
+        /** @var array{fontSize: int, lineHeight: float, theme: string, fontFamily: string, justifyText: bool} $settings */
+        $settings = $this->settings->get(self::KEY, $this->defaults());
+
+        if ($settings['theme'] === 'sepia') {
+            $settings['theme'] = 'caramellatte';
+        }
+
+        return $settings;
     }
 
     /**

@@ -9,10 +9,13 @@
         setJustifyText,
     } from '@/lib/readability.svelte.ts';
 
-    import type {
-        ReaderFontFamily,
-        ReaderTheme,
-    } from '@/lib/readability.svelte.ts';
+    import type { ReaderFontFamily } from '@/lib/readability.svelte.ts';
+    import type { ReaderTheme } from '@/lib/themes';
+    import {
+        basicThemeOptions,
+        darkThemeOptions,
+        lightThemeOptions,
+    } from '@/lib/themes';
 
     let { onclose }: { onclose: () => void } = $props();
 
@@ -23,12 +26,6 @@
         { id: 'serif', label: 'Serif' },
     ];
 
-    const themeOptions: { id: ReaderTheme; label: string }[] = [
-        { id: 'light', label: 'Light' },
-        { id: 'dark', label: 'Dark' },
-        { id: 'sepia', label: 'Sepia' },
-    ];
-
     $effect(() => {
         dialog?.showModal();
     });
@@ -36,6 +33,12 @@
     function handleClose(): void {
         dialog?.close();
         onclose();
+    }
+
+    function handleThemeChange(event: Event): void {
+        setTheme(
+            (event.currentTarget as HTMLSelectElement).value as ReaderTheme,
+        );
     }
 </script>
 
@@ -112,20 +115,29 @@
 
             <fieldset class="fieldset">
                 <legend class="fieldset-legend">Theme</legend>
-                <div class="join grid w-full grid-cols-3">
-                    {#each themeOptions as option (option.id)}
-                        <button
-                            type="button"
-                            class="btn join-item"
-                            class:btn-primary={readability.theme === option.id}
-                            onclick={() => setTheme(option.id)}
-                        >
-                            {option.label}
-                        </button>
-                    {/each}
-                </div>
+                <select
+                    class="select w-full"
+                    value={readability.theme}
+                    onchange={handleThemeChange}
+                >
+                    <optgroup label="The Basics">
+                        {#each basicThemeOptions as option (option.id)}
+                            <option value={option.id}>{option.label}</option>
+                        {/each}
+                    </optgroup>
+                    <optgroup label="Light">
+                        {#each lightThemeOptions as option (option.id)}
+                            <option value={option.id}>{option.label}</option>
+                        {/each}
+                    </optgroup>
+                    <optgroup label="Dark">
+                        {#each darkThemeOptions as option (option.id)}
+                            <option value={option.id}>{option.label}</option>
+                        {/each}
+                    </optgroup>
+                </select>
                 <p class="label text-xs">
-                    Theme adjusts contrast and background for reading.
+                    Auto follows your system light or dark appearance.
                 </p>
             </fieldset>
         </div>

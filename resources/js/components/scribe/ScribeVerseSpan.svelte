@@ -107,8 +107,8 @@
     <span contenteditable="false" class="scribe-verse-chrome">
         <button
             type="button"
-            class="btn btn-ghost btn-xs px-0"
-            class:opacity-30={!paragraphStart}
+            class="btn btn-ghost btn-xs p-0 leading-none"
+            class:opacity-50={!paragraphStart}
             class:opacity-100={paragraphStart}
             disabled={verseNumber === 1}
             tabindex="-1"
