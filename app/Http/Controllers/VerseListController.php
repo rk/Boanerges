@@ -27,7 +27,35 @@ class VerseListController extends Controller
         }
     }
 
+    public function store(
+        StoreVerseListRequest $request,
+        VerseListStore $store,
+    ): JsonResponse {
+        return $this->saveList($request, $store);
+    }
+
     public function update(
+        StoreVerseListRequest $request,
+        VerseListStore $store,
+        string $id,
+    ): JsonResponse {
+        return $this->saveList($request, $store, $id);
+    }
+
+    public function destroy(string $id, VerseListStore $store): JsonResponse
+    {
+        try {
+            $store->delete($id);
+        } catch (InvalidArgumentException) {
+            abort(404, 'Verse list not found.');
+        }
+
+        return response()->json([
+            'deleted' => true,
+        ]);
+    }
+
+    private function saveList(
         StoreVerseListRequest $request,
         VerseListStore $store,
         ?string $id = null,
@@ -44,19 +72,6 @@ class VerseListController extends Controller
 
         return response()->json([
             'list' => $list,
-        ]);
-    }
-
-    public function destroy(string $id, VerseListStore $store): JsonResponse
-    {
-        try {
-            $store->delete($id);
-        } catch (InvalidArgumentException) {
-            abort(404, 'Verse list not found.');
-        }
-
-        return response()->json([
-            'deleted' => true,
         ]);
     }
 }
