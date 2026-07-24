@@ -299,15 +299,24 @@ class StudyPrintHtmlBuilder
     private function verseListColumn(array $study): array
     {
         $verseList = $study['verseList'] ?? null;
-        $title = is_array($verseList) ? (string) ($verseList['title'] ?? 'Verse List') : 'Verse List';
-        $entries = is_array($verseList) ? ($verseList['entries'] ?? []) : [];
+
+        if (! is_array($verseList)) {
+            return [
+                'label' => 'Verse List',
+                'kind' => 'verse-list',
+                'entries' => [],
+            ];
+        }
+
+        $title = (string) $verseList['title'];
+        $entries = $verseList['entries'];
         $translationId = (string) $study['translationId'];
         $printedEntries = [];
 
         foreach ($entries as $entry) {
-            $bookId = (string) ($entry['bookId'] ?? '');
-            $chapter = (int) ($entry['chapter'] ?? 0);
-            $verse = (int) ($entry['verse'] ?? 0);
+            $bookId = (string) $entry['bookId'];
+            $chapter = (int) $entry['chapter'];
+            $verse = (int) $entry['verse'];
 
             if ($bookId === '' || $chapter < 1 || $verse < 1) {
                 continue;

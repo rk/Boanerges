@@ -53,7 +53,7 @@ class PrintStudyRequest extends FormRequest
                 $validator->errors()->add('columns', 'Column slots must match column count.');
             }
 
-            if (is_array($columns) && in_array('verse-list', $columns, true) && ! $this->filled('verseList')) {
+            if (in_array('verse-list', $columns, true) && ! $this->filled('verseList')) {
                 $validator->errors()->add('verseList', 'Verse list data is required when printing the verse list column.');
             }
         });

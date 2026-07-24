@@ -36,10 +36,6 @@ class StudySettingsStore
 
         $settings = array_merge($this->defaults(), $this->migrateFromLegacy($raw));
         $settings['bookId'] = OsisBookId::normalize($settings['bookId']) ?? $settings['bookId'];
-        $settings['verseListShowContent'] = (bool) ($settings['verseListShowContent'] ?? true);
-        $settings['verseListActiveId'] = isset($settings['verseListActiveId']) && is_string($settings['verseListActiveId'])
-            ? $settings['verseListActiveId']
-            : null;
 
         return $settings;
     }
