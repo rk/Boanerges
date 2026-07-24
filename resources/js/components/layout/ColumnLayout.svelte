@@ -1,12 +1,12 @@
 <script lang="ts">
-import BibleColumn from '@/components/columns/BibleColumn.svelte';
-import ComparisonColumn from '@/components/columns/ComparisonColumn.svelte';
-import CrossReferencesColumn from '@/components/columns/CrossReferencesColumn.svelte';
-import DictionaryColumn from '@/components/columns/DictionaryColumn.svelte';
-import NotesColumn from '@/components/columns/NotesColumn.svelte';
-import ScribeColumn from '@/components/columns/ScribeColumn.svelte';
-import SearchColumn from '@/components/columns/SearchColumn.svelte';
-import VerseListColumn from '@/components/columns/VerseListColumn.svelte';
+    import BibleColumn from '@/components/columns/BibleColumn.svelte';
+    import ComparisonColumn from '@/components/columns/ComparisonColumn.svelte';
+    import CrossReferencesColumn from '@/components/columns/CrossReferencesColumn.svelte';
+    import DictionaryColumn from '@/components/columns/DictionaryColumn.svelte';
+    import NotesColumn from '@/components/columns/NotesColumn.svelte';
+    import ScribeColumn from '@/components/columns/ScribeColumn.svelte';
+    import SearchColumn from '@/components/columns/SearchColumn.svelte';
+    import VerseListColumn from '@/components/columns/VerseListColumn.svelte';
     import ChapterNavRail from '@/components/layout/ChapterNavRail.svelte';
     import { getReaderStyle } from '@/lib/readability.svelte.ts';
     import {

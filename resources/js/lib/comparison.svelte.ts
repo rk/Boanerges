@@ -1,8 +1,6 @@
 import { bible, fetchChapter } from '@/lib/bible.svelte.ts';
-import {
-    parseScriptureReference,
-    type ScriptureReference,
-} from '@/lib/scriptureReference';
+import { parseScriptureReference } from '@/lib/scriptureReference';
+import type { ScriptureReference } from '@/lib/scriptureReference';
 import type { Book } from '@/lib/types/bible';
 
 export type ComparisonRow = {
@@ -25,10 +23,7 @@ export function setComparisonInput(reference: string): void {
     comparison.activeReference = reference;
 }
 
-export function scheduleComparisonLookup(
-    input: string,
-    books: Book[],
-): void {
+export function scheduleComparisonLookup(input: string, books: Book[]): void {
     if (debounceTimeout) {
         clearTimeout(debounceTimeout);
     }

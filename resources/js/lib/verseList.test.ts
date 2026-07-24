@@ -12,9 +12,7 @@ function dedupeEntries(
     entries: Array<{ bookId: string; chapter: number; verse: number }>,
     ref: { bookId: string; chapter: number; verse: number },
 ): Array<{ bookId: string; chapter: number; verse: number }> {
-    const exists = entries.some(
-        (entry) => entryKey(entry) === entryKey(ref),
-    );
+    const exists = entries.some((entry) => entryKey(entry) === entryKey(ref));
 
     if (exists) {
         return entries;

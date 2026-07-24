@@ -5,7 +5,12 @@
     import ColumnHeader from '@/components/layout/ColumnHeader.svelte';
     import { bible } from '@/lib/bible.svelte.ts';
     import { formatScriptureReference } from '@/lib/scriptureReference';
-    import { goToVerseReference, setVerseListActiveId, setVerseListShowContentSetting, study } from '@/lib/study.svelte.ts';
+    import {
+        goToVerseReference,
+        setVerseListActiveId,
+        setVerseListShowContentSetting,
+        study,
+    } from '@/lib/study.svelte.ts';
     import {
         loadSavedLists,
         loadSavedVerseList,

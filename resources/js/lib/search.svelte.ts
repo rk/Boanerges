@@ -1,5 +1,5 @@
-import { search as searchRoute } from '@/actions/App/Http/Controllers/BibleController';
 import type { SearchResult } from '@/lib/types/bible';
+import { search as searchRoute } from '@/actions/App/Http/Controllers/BibleController';
 
 export const search = $state({
     loading: false,

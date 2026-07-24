@@ -1,5 +1,5 @@
-import { show, update } from '@/actions/App/Http/Controllers/ScribeController';
 import type { ScribeVerse } from '@/lib/types/bible';
+import { show, update } from '@/actions/App/Http/Controllers/ScribeController';
 
 const LEGACY_STORAGE_PREFIX = 'boanerges.scribe';
 

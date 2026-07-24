@@ -1,3 +1,4 @@
+import { SvelteMap } from 'svelte/reactivity';
 import {
     destroy as destroyVerseListRoute,
     index as verseListsRoute,
@@ -6,10 +7,8 @@ import {
     update as updateVerseListRoute,
 } from '@/actions/App/Http/Controllers/VerseListController';
 import { fetchChapter, bible } from '@/lib/bible.svelte.ts';
-import {
-    formatScriptureReference,
-    type ScriptureReference,
-} from '@/lib/scriptureReference';
+import { formatScriptureReference } from '@/lib/scriptureReference';
+import type { ScriptureReference } from '@/lib/scriptureReference';
 import { study } from '@/lib/study.svelte.ts';
 import type { Book } from '@/lib/types/bible';
 
@@ -224,7 +223,10 @@ export async function loadVerseTexts(translationId: string): Promise<void> {
     verseList.loading = true;
 
     try {
-        const chapterCache = new Map<string, Awaited<ReturnType<typeof fetchChapter>>>();
+        const chapterCache = new SvelteMap<
+            string,
+            Awaited<ReturnType<typeof fetchChapter>>
+        >();
 
         const entries = await Promise.all(
             verseList.entries.map(async (entry) => {
