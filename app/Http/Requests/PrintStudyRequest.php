@@ -24,7 +24,13 @@ class PrintStudyRequest extends FormRequest
             'printerName' => ['nullable', 'string', 'max:255'],
             'columnCount' => ['required', 'integer', Rule::in([1, 2, 3])],
             'columns' => ['present', 'array'],
-            'columns.*' => ['string', Rule::in(['bible-secondary', 'notes', 'scribe', 'search', 'cross-references', 'dictionary'])],
+            'columns.*' => ['string', Rule::in(['bible-secondary', 'notes', 'scribe', 'search', 'cross-references', 'dictionary', 'comparison', 'verse-list'])],
+            'verseList' => ['sometimes', 'nullable', 'array'],
+            'verseList.title' => ['required_with:verseList', 'string', 'max:255'],
+            'verseList.entries' => ['required_with:verseList', 'array'],
+            'verseList.entries.*.bookId' => ['required', 'string', 'max:10'],
+            'verseList.entries.*.chapter' => ['required', 'integer', 'min:1', 'max:150'],
+            'verseList.entries.*.verse' => ['required', 'integer', 'min:1'],
             'bookId' => ['required', 'string', 'max:10'],
             'chapter' => ['required', 'integer', 'min:1', 'max:150'],
             'translationId' => ['required', 'string', 'max:10'],
@@ -46,6 +52,10 @@ class PrintStudyRequest extends FormRequest
             if (count($columns) !== max(0, $columnCount - 1)) {
                 $validator->errors()->add('columns', 'Column slots must match column count.');
             }
+
+            if (is_array($columns) && in_array('verse-list', $columns, true) && ! $this->filled('verseList')) {
+                $validator->errors()->add('verseList', 'Verse list data is required when printing the verse list column.');
+            }
         });
     }
 
@@ -57,12 +67,13 @@ class PrintStudyRequest extends FormRequest
      *     chapter: int,
      *     translationId: string,
      *     translationBId: string,
-     *     translationCId: string
+     *     translationCId: string,
+     *     verseList?: array{title: string, entries: list<array{bookId: string, chapter: int, verse: int}>}|null
      * }
      */
     public function studySettings(): array
     {
-        return [
+        $settings = [
             'columnCount' => (int) $this->validated('columnCount'),
             'columns' => array_values($this->validated('columns')),
             'bookId' => (string) $this->validated('bookId'),
@@ -71,5 +82,11 @@ class PrintStudyRequest extends FormRequest
             'translationBId' => (string) $this->validated('translationBId'),
             'translationCId' => (string) $this->validated('translationCId'),
         ];
+
+        if ($this->filled('verseList')) {
+            $settings['verseList'] = $this->validated('verseList');
+        }
+
+        return $settings;
     }
 }

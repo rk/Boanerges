@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
             require base_path('routes/scribe.php');
             require base_path('routes/notes.php');
             require base_path('routes/study.php');
+            require base_path('routes/verse-lists.php');
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {

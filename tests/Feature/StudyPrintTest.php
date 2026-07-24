@@ -248,3 +248,45 @@ test('includes scribe content when requested and otherwise prints lined scribe',
         ->and($blankScribe)->toContain('class="lined-block"')
         ->and($blankScribe)->not->toContain('My scribe reading draft');
 });
+
+test('prints verse list entries with verse text', function (): void {
+    $builder = app(StudyPrintHtmlBuilder::class);
+
+    $html = $builder->build([
+        'columnCount' => 2,
+        'columns' => ['verse-list'],
+        'bookId' => 'gen',
+        'chapter' => 1,
+        'translationId' => 'asv',
+        'translationBId' => 'asv',
+        'translationCId' => 'asv',
+        'verseList' => [
+            'title' => 'My Passages',
+            'entries' => [
+                ['bookId' => 'gen', 'chapter' => 1, 'verse' => 1],
+            ],
+        ],
+    ], false);
+
+    expect($html)->toContain('My Passages')
+        ->and($html)->toContain('Genesis 1:1')
+        ->and($html)->toContain('beginning')
+        ->and($html)->toContain('column-verse-list');
+});
+
+test('comparison column prints interactive placeholder', function (): void {
+    $builder = app(StudyPrintHtmlBuilder::class);
+
+    $html = $builder->build([
+        'columnCount' => 2,
+        'columns' => ['comparison'],
+        'bookId' => 'gen',
+        'chapter' => 1,
+        'translationId' => 'asv',
+        'translationBId' => 'asv',
+        'translationCId' => 'asv',
+    ], false);
+
+    expect($html)->toContain('Comparison')
+        ->and($html)->toContain('Interactive view — not included in print.');
+});

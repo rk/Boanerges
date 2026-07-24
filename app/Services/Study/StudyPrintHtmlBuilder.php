@@ -4,6 +4,7 @@ namespace App\Services\Study;
 
 use App\Services\Bible\DbChapterReader;
 use App\Services\Bible\InstalledTranslationRegistry;
+use App\Services\Bible\OsisBookId;
 use App\Services\Notes\NotesChapterStore;
 use App\Services\ReadabilitySettingsStore;
 use App\Services\Scribe\ScribeChapterStore;
@@ -18,6 +19,8 @@ class StudyPrintHtmlBuilder
         'search' => 'Search',
         'cross-references' => 'Cross References',
         'dictionary' => 'Dictionary',
+        'comparison' => 'Comparison',
+        'verse-list' => 'Verse List',
     ];
 
     public function __construct(
@@ -36,7 +39,8 @@ class StudyPrintHtmlBuilder
      *     chapter: int,
      *     translationId: string,
      *     translationBId: string,
-     *     translationCId: string
+     *     translationCId: string,
+     *     verseList?: array{title: string, entries: list<array{bookId: string, chapter: int, verse: int}>}|null
      * }  $study
      */
     public function build(array $study, bool $includeUserWork): string
@@ -65,7 +69,8 @@ class StudyPrintHtmlBuilder
      *     chapter: int,
      *     translationId: string,
      *     translationBId: string,
-     *     translationCId: string
+     *     translationCId: string,
+     *     verseList?: array{title: string, entries: list<array{bookId: string, chapter: int, verse: int}>}|null
      * }  $study
      * @param  array{
      *     book: string,
@@ -110,11 +115,12 @@ class StudyPrintHtmlBuilder
                 ),
                 'notes' => $this->notesColumn($bookId, $chapterNumber, $primaryChapter['book'], $includeUserWork),
                 'scribe' => $this->scribeColumn($primaryChapter, $bookId, $chapterNumber, $includeUserWork),
-                'search', 'cross-references', 'dictionary' => [
+                'search', 'cross-references', 'dictionary', 'comparison' => [
                     'label' => self::COLUMN_LABELS[$type],
                     'kind' => 'message',
                     'message' => 'Interactive view — not included in print.',
                 ],
+                'verse-list' => $this->verseListColumn($study),
                 default => throw new InvalidArgumentException("Unknown column type: {$type}"),
             };
         }
@@ -130,7 +136,8 @@ class StudyPrintHtmlBuilder
      *     chapter: int,
      *     translationId: string,
      *     translationBId: string,
-     *     translationCId: string
+     *     translationCId: string,
+     *     verseList?: array{title: string, entries: list<array{bookId: string, chapter: int, verse: int}>}|null
      * }  $study
      * @return array{
      *     label: string,
@@ -276,5 +283,66 @@ class StudyPrintHtmlBuilder
             'sans-serif' => 'system-ui, sans-serif',
             default => 'Georgia, "Times New Roman", serif',
         };
+    }
+
+    /**
+     * @param  array{
+     *     translationId: string,
+     *     verseList?: array{title: string, entries: list<array{bookId: string, chapter: int, verse: int}>}|null
+     * }  $study
+     * @return array{
+     *     label: string,
+     *     kind: string,
+     *     entries: list<array{label: string, text: string}>
+     * }
+     */
+    private function verseListColumn(array $study): array
+    {
+        $verseList = $study['verseList'] ?? null;
+        $title = is_array($verseList) ? (string) ($verseList['title'] ?? 'Verse List') : 'Verse List';
+        $entries = is_array($verseList) ? ($verseList['entries'] ?? []) : [];
+        $translationId = (string) $study['translationId'];
+        $printedEntries = [];
+
+        foreach ($entries as $entry) {
+            $bookId = (string) ($entry['bookId'] ?? '');
+            $chapter = (int) ($entry['chapter'] ?? 0);
+            $verse = (int) ($entry['verse'] ?? 0);
+
+            if ($bookId === '' || $chapter < 1 || $verse < 1) {
+                continue;
+            }
+
+            $text = '—';
+
+            try {
+                $chapterData = $this->chapters->read($translationId, $bookId, $chapter);
+
+                foreach ($chapterData['verses'] as $verseData) {
+                    if ((int) $verseData['number'] === $verse) {
+                        $text = (string) $verseData['text'];
+                        break;
+                    }
+                }
+            } catch (\Throwable) {
+                $text = '—';
+            }
+
+            $printedEntries[] = [
+                'label' => sprintf(
+                    '%s %d:%d',
+                    OsisBookId::displayName($bookId),
+                    $chapter,
+                    $verse,
+                ),
+                'text' => $text,
+            ];
+        }
+
+        return [
+            'label' => $title,
+            'kind' => 'verse-list',
+            'entries' => $printedEntries,
+        ];
     }
 }

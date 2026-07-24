@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
     availableColumnOptions,
+    comparisonTargetSlot,
     crossReferencesTargetSlot,
     dictionaryTargetSlot,
     normalizeColumns,
     sanitizeStudySettings,
+    verseListTargetSlot,
 } from '@/lib/studyLayout';
 import type { ColumnContentType } from '@/lib/types/study';
 
@@ -60,6 +62,8 @@ describe('availableColumnOptions', () => {
         expect(options).toContain('search');
         expect(options).toContain('cross-references');
         expect(options).toContain('dictionary');
+        expect(options).toContain('comparison');
+        expect(options).toContain('verse-list');
     });
 
     it('allows two bible columns when translations differ', () => {
@@ -95,5 +99,17 @@ describe('dictionaryTargetSlot', () => {
     it('falls back to the last secondary slot', () => {
         expect(dictionaryTargetSlot(2, ['notes'])).toBe(0);
         expect(dictionaryTargetSlot(3, ['notes', 'search'])).toBe(1);
+    });
+});
+
+describe('comparisonTargetSlot', () => {
+    it('prefers the last slot already showing comparison', () => {
+        expect(comparisonTargetSlot(3, ['notes', 'comparison'])).toBe(1);
+    });
+});
+
+describe('verseListTargetSlot', () => {
+    it('prefers the last slot already showing verse list', () => {
+        expect(verseListTargetSlot(3, ['search', 'verse-list'])).toBe(1);
     });
 });

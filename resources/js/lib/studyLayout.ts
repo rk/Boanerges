@@ -8,6 +8,8 @@ export const COLUMN_CONTENT_TYPES: ColumnContentType[] = [
     'search',
     'cross-references',
     'dictionary',
+    'comparison',
+    'verse-list',
 ];
 
 export const COLUMN_CONTENT_LABELS: Record<ColumnContentType, string> = {
@@ -17,6 +19,8 @@ export const COLUMN_CONTENT_LABELS: Record<ColumnContentType, string> = {
     search: 'Search',
     'cross-references': 'Cross References',
     dictionary: 'Dictionary',
+    comparison: 'Comparison',
+    'verse-list': 'Verse List',
 };
 
 export function isColumnCount(value: number): value is 1 | 2 | 3 {
@@ -45,6 +49,8 @@ export function sanitizeStudySettings(settings: StudySettings): StudySettings {
         ...settings,
         columnCount,
         columns: normalizeColumns(columnCount, columns),
+        verseListShowContent: settings.verseListShowContent ?? true,
+        verseListActiveId: settings.verseListActiveId ?? null,
     };
 }
 
@@ -182,21 +188,37 @@ export function crossReferencesTargetSlot(
     columnCount: 1 | 2 | 3,
     columns: ColumnContentType[],
 ): number {
-    for (let index = columns.length - 1; index >= 0; index--) {
-        if (columns[index] === 'cross-references') {
-            return index;
-        }
-    }
-
-    return Math.max(0, columnCount - 2);
+    return columnTargetSlot('cross-references', columnCount, columns);
 }
 
 export function dictionaryTargetSlot(
     columnCount: 1 | 2 | 3,
     columns: ColumnContentType[],
 ): number {
+    return columnTargetSlot('dictionary', columnCount, columns);
+}
+
+export function comparisonTargetSlot(
+    columnCount: 1 | 2 | 3,
+    columns: ColumnContentType[],
+): number {
+    return columnTargetSlot('comparison', columnCount, columns);
+}
+
+export function verseListTargetSlot(
+    columnCount: 1 | 2 | 3,
+    columns: ColumnContentType[],
+): number {
+    return columnTargetSlot('verse-list', columnCount, columns);
+}
+
+function columnTargetSlot(
+    type: ColumnContentType,
+    columnCount: 1 | 2 | 3,
+    columns: ColumnContentType[],
+): number {
     for (let index = columns.length - 1; index >= 0; index--) {
-        if (columns[index] === 'dictionary') {
+        if (columns[index] === type) {
             return index;
         }
     }
