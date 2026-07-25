@@ -3,6 +3,7 @@ import { bible, fetchChapter } from '@/lib/bible.svelte.ts';
 import { formatScriptureReference } from '@/lib/scriptureReference';
 import type { ScriptureReference } from '@/lib/scriptureReference';
 import type { Book } from '@/lib/types/bible';
+import { verseListNeedsTextLoad as needsTextLoad } from '@/lib/verseListTextLoad';
 import {
     destroy as destroyVerseListRoute,
     index as verseListsRoute,
@@ -33,6 +34,22 @@ export const verseList = $state({
 });
 
 let textRequest = 0;
+let loadedTextTranslationId: string | null = null;
+
+export function verseListNeedsTextLoad(
+    entries: ReadonlyArray<{ text?: string }>,
+    showContent: boolean,
+    translationId: string,
+    loading: boolean,
+): boolean {
+    return needsTextLoad(
+        entries,
+        showContent,
+        translationId,
+        loading,
+        loadedTextTranslationId,
+    );
+}
 
 export function hydrateVerseListSettings(
     showContent: boolean,
@@ -49,6 +66,7 @@ export function setVerseListShowContent(enabled: boolean): void {
     verseList.showContent = enabled;
 
     if (!enabled) {
+        loadedTextTranslationId = null;
         verseList.entries = verseList.entries.map((entry) => ({
             ...entry,
             text: undefined,
@@ -203,11 +221,18 @@ export async function deleteSavedVerseList(id: string): Promise<void> {
 }
 
 export async function loadVerseTexts(translationId: string): Promise<void> {
-    const requestId = ++textRequest;
-
-    if (verseList.entries.length === 0) {
+    if (
+        !verseListNeedsTextLoad(
+            verseList.entries,
+            verseList.showContent,
+            translationId,
+            verseList.loading,
+        )
+    ) {
         return;
     }
+
+    const requestId = ++textRequest;
 
     verseList.loading = true;
 
@@ -217,7 +242,7 @@ export async function loadVerseTexts(translationId: string): Promise<void> {
             Awaited<ReturnType<typeof fetchChapter>>
         >();
 
-        const entries = await Promise.all(
+        const loaded = await Promise.all(
             verseList.entries.map(async (entry) => {
                 const key = `${entry.bookId}:${entry.chapter}`;
 
@@ -242,7 +267,9 @@ export async function loadVerseTexts(translationId: string): Promise<void> {
                 );
 
                 return {
-                    ...entry,
+                    bookId: entry.bookId,
+                    chapter: entry.chapter,
+                    verse: entry.verse,
                     text: verse?.text ?? '—',
                 };
             }),
@@ -252,7 +279,20 @@ export async function loadVerseTexts(translationId: string): Promise<void> {
             return;
         }
 
-        verseList.entries = entries;
+        loadedTextTranslationId = translationId;
+
+        for (const row of loaded) {
+            const entry = verseList.entries.find(
+                (candidate) =>
+                    candidate.bookId === row.bookId &&
+                    candidate.chapter === row.chapter &&
+                    candidate.verse === row.verse,
+            );
+
+            if (entry) {
+                entry.text = row.text;
+            }
+        }
     } finally {
         if (requestId === textRequest) {
             verseList.loading = false;

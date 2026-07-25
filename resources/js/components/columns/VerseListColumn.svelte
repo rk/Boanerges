@@ -20,8 +20,8 @@
         saveVerseList,
         setVerseListShowContent,
         verseList,
+        verseListNeedsTextLoad,
     } from '@/lib/verseList.svelte.ts';
-    import { verseListEntrySignature } from '@/lib/verseListSignature';
 
     let {
         slotIndex,
@@ -31,16 +31,19 @@
 
     let loadMenuOpen = $state(false);
 
-    const entrySignature = $derived(
-        verseListEntrySignature(verseList.entries),
-    );
-
     $effect(() => {
         void loadSavedLists();
     });
 
     $effect(() => {
-        if (!verseList.showContent || entrySignature === '') {
+        if (
+            !verseListNeedsTextLoad(
+                verseList.entries,
+                verseList.showContent,
+                study.translationId,
+                verseList.loading,
+            )
+        ) {
             return;
         }
 

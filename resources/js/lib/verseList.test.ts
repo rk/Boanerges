@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { verseListEntrySignature } from '@/lib/verseListSignature';
+import { verseListNeedsTextLoad } from '@/lib/verseListTextLoad';
 
 function entryKey(entry: {
     bookId: string;
@@ -51,5 +52,67 @@ describe('verseListEntrySignature', () => {
         ];
 
         expect(verseListEntrySignature(entries)).toBe('gen:1:1|jhn:3:16');
+    });
+});
+
+describe('verseListNeedsTextLoad', () => {
+    it('loads when a verse has no text', () => {
+        expect(
+            verseListNeedsTextLoad(
+                [{ bookId: 'gen', chapter: 1, verse: 1 }],
+                true,
+                'asv',
+                false,
+                null,
+            ),
+        ).toBe(true);
+    });
+
+    it('skips while loading', () => {
+        expect(
+            verseListNeedsTextLoad(
+                [{ bookId: 'gen', chapter: 1, verse: 1 }],
+                true,
+                'asv',
+                true,
+                null,
+            ),
+        ).toBe(false);
+    });
+
+    it('reloads when translation changes', () => {
+        expect(
+            verseListNeedsTextLoad(
+                [
+                    {
+                        bookId: 'gen',
+                        chapter: 1,
+                        verse: 1,
+                        text: 'In the beginning',
+                    },
+                ],
+                true,
+                'kjv',
+                false,
+                'asv',
+            ),
+        ).toBe(true);
+
+        expect(
+            verseListNeedsTextLoad(
+                [
+                    {
+                        bookId: 'gen',
+                        chapter: 1,
+                        verse: 1,
+                        text: 'In the beginning',
+                    },
+                ],
+                true,
+                'asv',
+                false,
+                'asv',
+            ),
+        ).toBe(false);
     });
 });
