@@ -57,40 +57,21 @@ describe('verseListEntrySignature', () => {
 
 describe('verseListNeedsTextLoad', () => {
     it('loads when a verse has no text', () => {
-        expect(
-            verseListNeedsTextLoad(
-                [{ bookId: 'gen', chapter: 1, verse: 1 }],
-                true,
-                'asv',
-                false,
-                null,
-            ),
-        ).toBe(true);
+        expect(verseListNeedsTextLoad([{}], true, 'asv', false, null)).toBe(
+            true,
+        );
     });
 
     it('skips while loading', () => {
-        expect(
-            verseListNeedsTextLoad(
-                [{ bookId: 'gen', chapter: 1, verse: 1 }],
-                true,
-                'asv',
-                true,
-                null,
-            ),
-        ).toBe(false);
+        expect(verseListNeedsTextLoad([{}], true, 'asv', true, null)).toBe(
+            false,
+        );
     });
 
     it('reloads when translation changes', () => {
         expect(
             verseListNeedsTextLoad(
-                [
-                    {
-                        bookId: 'gen',
-                        chapter: 1,
-                        verse: 1,
-                        text: 'In the beginning',
-                    },
-                ],
+                [{ text: 'In the beginning' }],
                 true,
                 'kjv',
                 false,
@@ -100,14 +81,7 @@ describe('verseListNeedsTextLoad', () => {
 
         expect(
             verseListNeedsTextLoad(
-                [
-                    {
-                        bookId: 'gen',
-                        chapter: 1,
-                        verse: 1,
-                        text: 'In the beginning',
-                    },
-                ],
+                [{ text: 'In the beginning' }],
                 true,
                 'asv',
                 false,

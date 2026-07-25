@@ -81,6 +81,7 @@ export default ts.config(
                         'sibling',
                         'index',
                     ],
+                    // Wayfinder @/actions resolve in CI after generate; keep them last among internals.
                     pathGroups: [
                         {
                             pattern: '@/actions/**',
