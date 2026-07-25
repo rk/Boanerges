@@ -1,27 +1,15 @@
+import { COLUMN_CATALOG, columnAllowsDuplicate } from '@/lib/columns/catalog';
+import type { ColumnContentType } from '@/lib/columns/catalog';
 import type { Book } from '@/lib/types/bible';
-import type { ColumnContentType, StudySettings } from '@/lib/types/study';
+import type { StudySettings } from '@/lib/types/study';
 
-export const COLUMN_CONTENT_TYPES: ColumnContentType[] = [
-    'bible-secondary',
-    'notes',
-    'scribe',
-    'search',
-    'cross-references',
-    'dictionary',
-    'comparison',
-    'verse-list',
-];
+export const COLUMN_CONTENT_TYPES: ColumnContentType[] = COLUMN_CATALOG.map(
+    (descriptor) => descriptor.type,
+);
 
-export const COLUMN_CONTENT_LABELS: Record<ColumnContentType, string> = {
-    'bible-secondary': 'Translation',
-    notes: 'Notes',
-    scribe: 'Scribe',
-    search: 'Search',
-    'cross-references': 'Cross References',
-    dictionary: 'Dictionary',
-    comparison: 'Comparison',
-    'verse-list': 'Verse List',
-};
+export const COLUMN_CONTENT_LABELS = Object.fromEntries(
+    COLUMN_CATALOG.map((descriptor) => [descriptor.type, descriptor.label]),
+) as Record<ColumnContentType, string>;
 
 export function isColumnCount(value: number): value is 1 | 2 | 3 {
     return value === 1 || value === 2 || value === 3;
@@ -72,7 +60,7 @@ function defaultColumnForSlot(
     existing: ColumnContentType[],
 ): ColumnContentType {
     for (const type of COLUMN_CONTENT_TYPES) {
-        if (type === 'bible-secondary' || !existing.includes(type)) {
+        if (columnAllowsDuplicate(type) || !existing.includes(type)) {
             return type;
         }
     }
@@ -89,7 +77,7 @@ export function availableColumnOptions(
     const used = new Set(columns.filter((_, index) => index !== slotIndex));
 
     return COLUMN_CONTENT_TYPES.filter((type) => {
-        if (type !== 'bible-secondary' && used.has(type)) {
+        if (!columnAllowsDuplicate(type) && used.has(type)) {
             return false;
         }
 
@@ -184,35 +172,7 @@ export function setColumnContentType(
     };
 }
 
-export function crossReferencesTargetSlot(
-    columnCount: 1 | 2 | 3,
-    columns: ColumnContentType[],
-): number {
-    return columnTargetSlot('cross-references', columnCount, columns);
-}
-
-export function dictionaryTargetSlot(
-    columnCount: 1 | 2 | 3,
-    columns: ColumnContentType[],
-): number {
-    return columnTargetSlot('dictionary', columnCount, columns);
-}
-
-export function comparisonTargetSlot(
-    columnCount: 1 | 2 | 3,
-    columns: ColumnContentType[],
-): number {
-    return columnTargetSlot('comparison', columnCount, columns);
-}
-
-export function verseListTargetSlot(
-    columnCount: 1 | 2 | 3,
-    columns: ColumnContentType[],
-): number {
-    return columnTargetSlot('verse-list', columnCount, columns);
-}
-
-function columnTargetSlot(
+export function columnTargetSlot(
     type: ColumnContentType,
     columnCount: 1 | 2 | 3,
     columns: ColumnContentType[],
@@ -224,4 +184,10 @@ function columnTargetSlot(
     }
 
     return Math.max(0, columnCount - 2);
+}
+
+export function firstNonBibleSlot(columns: ColumnContentType[]): number | null {
+    const index = columns.findIndex((column) => column !== 'bible-secondary');
+
+    return index >= 0 ? index : null;
 }

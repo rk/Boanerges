@@ -3,6 +3,10 @@
 use App\Data\CatalogEntry;
 use App\Enums\CatalogImportFormat;
 use App\Enums\VerseMarkupFormat;
+use Illuminate\Log\Events\MessageLogged;
+use Illuminate\Support\Facades\Event;
+
+uses(Tests\TestCase::class);
 
 it('maps OEB catalog entry to USFM import and markup', function () {
     $entry = CatalogEntry::fromArray([
@@ -29,6 +33,8 @@ it('defaults USFM verse markup when only import format is given', function () {
 });
 
 it('defaults unknown import formats to sword', function () {
+    Event::fake([MessageLogged::class]);
+
     $entry = CatalogEntry::fromArray([
         'short' => 'KJV',
         'name' => 'King James Version',
@@ -36,6 +42,28 @@ it('defaults unknown import formats to sword', function () {
     ]);
 
     expect($entry->importAs)->toBe(CatalogImportFormat::Sword);
+
+    Event::assertDispatched(MessageLogged::class, function (MessageLogged $event): bool {
+        return $event->level === 'warning'
+            && str_contains($event->message, 'import_as');
+    });
+});
+
+it('logs when legacy format string is unknown', function () {
+    Event::fake([MessageLogged::class]);
+
+    $entry = CatalogEntry::fromArray([
+        'short' => 'KJV',
+        'name' => 'King James Version',
+        'format' => 'not-a-real-format',
+    ]);
+
+    expect($entry->importAs)->toBe(CatalogImportFormat::Sword);
+
+    Event::assertDispatched(MessageLogged::class, function (MessageLogged $event): bool {
+        return $event->level === 'warning'
+            && str_contains($event->message, 'import format');
+    });
 });
 
 it('ignores unknown markup formats from catalog json', function () {

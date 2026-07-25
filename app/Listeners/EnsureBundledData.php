@@ -2,31 +2,16 @@
 
 namespace App\Listeners;
 
-use App\Enums\TranslationInstallStatus;
-use App\Jobs\Bible\ImportCrossReferencesJob;
-use App\Jobs\Bible\InstallTranslationJob;
 use App\Models\Translation;
-use App\Services\Bible\CrossReferenceService;
 use App\Services\Bible\TranslationInstaller;
-use App\Services\Dictionary\DictionaryBootstrap;
+use App\Support\BundledContentRegistry;
 use Illuminate\Support\Facades\Bus;
 
 class EnsureBundledData
 {
-    /** @var list<TranslationInstallStatus> */
-    private const ACTIVE_INSTALL_STATUSES = [
-        TranslationInstallStatus::Pending,
-        TranslationInstallStatus::Downloading,
-        TranslationInstallStatus::CreatingSchema,
-        TranslationInstallStatus::Importing,
-        TranslationInstallStatus::Verifying,
-        TranslationInstallStatus::Indexing,
-    ];
-
     public function __construct(
         private TranslationInstaller $installer,
-        private CrossReferenceService $crossReferences,
-        private DictionaryBootstrap $dictionaryBootstrap,
+        private BundledContentRegistry $bundledContent,
     ) {}
 
     public function handle(): void
@@ -35,7 +20,7 @@ class EnsureBundledData
             return;
         }
 
-        if (! Translation::query()->where('install_status', TranslationInstallStatus::Ready)->exists()) {
+        if (! Translation::query()->where('install_status', \App\Enums\TranslationInstallStatus::Ready)->exists()) {
             foreach (config('boanerges.bundled_modules', []) as $module) {
                 $existing = Translation::query()->where('abbrev', strtolower($module))->first();
 
@@ -43,9 +28,9 @@ class EnsureBundledData
                     continue;
                 }
 
-                if ($existing !== null && in_array($existing->install_status, self::ACTIVE_INSTALL_STATUSES, true)) {
+                if ($existing !== null && $existing->install_status->isActive()) {
                     if (config('queue.default') === 'sync') {
-                        Bus::dispatchSync(new InstallTranslationJob($existing->id));
+                        Bus::dispatchSync(new \App\Jobs\Bible\InstallTranslationJob($existing->id));
                     }
 
                     continue;
@@ -54,19 +39,19 @@ class EnsureBundledData
                 $translation = $this->installer->installBundled($module);
 
                 if (config('queue.default') === 'sync') {
-                    Bus::dispatchSync(new InstallTranslationJob($translation->id));
+                    Bus::dispatchSync(new \App\Jobs\Bible\InstallTranslationJob($translation->id));
                 }
             }
         }
 
-        if (! $this->crossReferences->isImported() && ! app()->environment('testing')) {
+        foreach ($this->bundledContent->pending() as $provider) {
+            $job = $provider->importJob();
+
             if (config('queue.default') === 'sync') {
-                Bus::dispatchSync(new ImportCrossReferencesJob());
+                Bus::dispatchSync($job);
             } else {
-                Bus::dispatch(new ImportCrossReferencesJob());
+                Bus::dispatch($job);
             }
         }
-
-        $this->dictionaryBootstrap->dispatchIfNeeded();
     }
 }

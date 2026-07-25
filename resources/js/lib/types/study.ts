@@ -1,12 +1,6 @@
-export type ColumnContentType =
-    | 'bible-secondary'
-    | 'notes'
-    | 'scribe'
-    | 'search'
-    | 'cross-references'
-    | 'dictionary'
-    | 'comparison'
-    | 'verse-list';
+import type { ColumnContentType } from '@/lib/columns/catalog';
+
+export type { ColumnContentType };
 
 export type StudySettings = {
     columnCount: 1 | 2 | 3;

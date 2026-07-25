@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\StudyColumnType;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -24,7 +25,7 @@ class PrintStudyRequest extends FormRequest
             'printerName' => ['nullable', 'string', 'max:255'],
             'columnCount' => ['required', 'integer', Rule::in([1, 2, 3])],
             'columns' => ['present', 'array'],
-            'columns.*' => ['string', Rule::in(['bible-secondary', 'notes', 'scribe', 'search', 'cross-references', 'dictionary', 'comparison', 'verse-list'])],
+            'columns.*' => ['string', Rule::enum(StudyColumnType::class)],
             'verseList' => ['sometimes', 'nullable', 'array'],
             'verseList.title' => ['required_with:verseList', 'string', 'max:255'],
             'verseList.entries' => ['required_with:verseList', 'array'],

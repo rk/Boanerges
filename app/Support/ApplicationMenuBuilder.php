@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Enums\StudyColumnType;
 use App\Services\StudySettingsStore;
 use Native\Desktop\Facades\Menu;
 
@@ -29,15 +30,13 @@ class ApplicationMenuBuilder
             )->label('File'),
             Menu::edit(),
             Menu::make(
-                Menu::label('Search')->id('study.search')->hotkey('CmdOrCtrl+F'),
-                Menu::label('Cross-References')->id('study.cross-references')->hotkey('CmdOrCtrl+Shift+R'),
-                Menu::label('Comparison')->id('study.comparison'),
-                Menu::label('Verse List')->id('study.verse-list'),
-                Menu::label('Dictionary')->id('study.dictionary')->hotkey('CmdOrCtrl+Shift+D'),
-                Menu::separator(),
-                Menu::label('Print')->id('study.print')->hotkey('CmdOrCtrl+P'),
-                Menu::link('mailto:' . config('boanerges.feedback_email'), 'Feedback')
-                    ->openInBrowser(),
+                ...[
+                    ...$this->studyColumnMenuItems(),
+                    Menu::separator(),
+                    Menu::label('Print')->id('study.print')->hotkey('CmdOrCtrl+P'),
+                    Menu::link('mailto:' . config('boanerges.feedback_email'), 'Feedback')
+                        ->openInBrowser(),
+                ],
             )->label('Study'),
             Menu::make(
                 Menu::radio('1 Column', $columnCount === 1)->id('view.columns.1'),
@@ -53,5 +52,32 @@ class ApplicationMenuBuilder
             )->label('View'),
             Menu::window(),
         );
+    }
+
+    /**
+     * @return list<\Native\Desktop\Menu\Items\MenuItem>
+     */
+    private function studyColumnMenuItems(): array
+    {
+        $items = [];
+
+        foreach (StudyColumnType::cases() as $type) {
+            $menuId = $type->menuId();
+
+            if ($menuId === null) {
+                continue;
+            }
+
+            $item = Menu::label($type->menuLabel())->id($menuId);
+            $hotkey = $type->menuHotkey();
+
+            if ($hotkey !== null) {
+                $item->hotkey($hotkey);
+            }
+
+            $items[] = $item;
+        }
+
+        return $items;
     }
 }

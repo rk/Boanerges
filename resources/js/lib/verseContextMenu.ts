@@ -1,13 +1,8 @@
 import { bible } from '@/lib/bible.svelte.ts';
+import { CONTEXT_MENU_COLUMNS } from '@/lib/columns/catalog';
 import { normalizeDictionaryWord } from '@/lib/normalizeDictionaryWord';
 import { formatScriptureReference } from '@/lib/scriptureReference';
-import {
-    ensureComparisonColumn,
-    ensureCrossReferencesColumn,
-    ensureDictionaryColumn,
-    ensureVerseListColumn,
-    study,
-} from '@/lib/study.svelte.ts';
+import { openColumn, study } from '@/lib/study.svelte.ts';
 import { wordAtPoint } from '@/lib/wordAtPoint';
 
 type ContextMenuItem = {
@@ -31,39 +26,38 @@ export function showVerseContextMenu(
     const resolvedWord =
         selectedWord.trim() !== '' ? selectedWord : wordAtPoint(event);
     const lookupWord = normalizeDictionaryWord(resolvedWord);
-    const items: ContextMenuItem[] = [
-        {
-            label: 'Cross References',
-            click() {
-                ensureCrossReferencesColumn(reference);
-            },
-        },
-        {
-            label: 'Compare Translations',
-            click() {
-                ensureComparisonColumn(reference);
-            },
-        },
-        {
-            label: 'Add to Verse List',
-            click() {
-                ensureVerseListColumn({
-                    bookId: study.bookId,
-                    chapter: study.chapter,
-                    verse,
+    const items: ContextMenuItem[] = CONTEXT_MENU_COLUMNS.filter(
+        (descriptor) => descriptor.type !== 'dictionary' || lookupWord !== '',
+    ).map((descriptor) => ({
+        label: descriptor.contextMenuLabel,
+        click() {
+            if (descriptor.type === 'cross-references') {
+                openColumn('cross-references', {
+                    kind: 'reference',
+                    reference,
                 });
-            },
+            } else if (descriptor.type === 'comparison') {
+                openColumn('comparison', {
+                    kind: 'reference',
+                    reference,
+                });
+            } else if (descriptor.type === 'verse-list') {
+                openColumn('verse-list', {
+                    kind: 'verse',
+                    ref: {
+                        bookId: study.bookId,
+                        chapter: study.chapter,
+                        verse,
+                    },
+                });
+            } else if (descriptor.type === 'dictionary') {
+                openColumn('dictionary', {
+                    kind: 'word',
+                    word: lookupWord,
+                });
+            }
         },
-    ];
-
-    if (lookupWord !== '') {
-        items.push({
-            label: 'Define Word',
-            click() {
-                ensureDictionaryColumn(lookupWord);
-            },
-        });
-    }
+    }));
 
     window.Native?.contextMenu(items satisfies ContextMenuItem[]);
 }

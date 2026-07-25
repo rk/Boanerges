@@ -4,6 +4,7 @@ namespace App\Data;
 
 use App\Enums\CatalogImportFormat;
 use App\Enums\VerseMarkupFormat;
+use Illuminate\Support\Facades\Log;
 
 readonly class CatalogEntry
 {
@@ -52,14 +53,31 @@ readonly class CatalogEntry
             if ($importAs !== null) {
                 return $importAs;
             }
+
+            Log::warning('Unknown catalog import_as; defaulting to sword.', [
+                'import_as' => $attributes['import_as'],
+                'short' => $attributes['short'] ?? null,
+            ]);
+
+            return CatalogImportFormat::Sword;
         }
 
         $format = $attributes['format'] ?? null;
 
-        return match ($format) {
-            'sword', 'usfm', 'accordance' => CatalogImportFormat::from($format),
-            default => CatalogImportFormat::Sword,
-        };
+        if (is_string($format)) {
+            $resolved = CatalogImportFormat::tryFrom($format);
+
+            if ($resolved !== null) {
+                return $resolved;
+            }
+
+            Log::warning('Unknown catalog import format; defaulting to sword.', [
+                'format' => $format,
+                'short' => $attributes['short'] ?? null,
+            ]);
+        }
+
+        return CatalogImportFormat::Sword;
     }
 
     /** @param  array<string, mixed>  $attributes */
@@ -75,9 +93,6 @@ readonly class CatalogEntry
             return VerseMarkupFormat::tryFrom(strtolower((string) $format));
         }
 
-        return match ($importAs) {
-            CatalogImportFormat::Usfm => VerseMarkupFormat::Usfm,
-            default => null,
-        };
+        return $importAs->defaultMarkupFormat();
     }
 }

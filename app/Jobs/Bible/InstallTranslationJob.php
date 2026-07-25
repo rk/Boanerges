@@ -4,9 +4,10 @@ namespace App\Jobs\Bible;
 
 use App\Models\Translation;
 use App\Services\Bible\TranslationImportPipeline;
-use App\Services\Dictionary\DictionaryBootstrap;
+use App\Support\BundledContentRegistry;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Bus;
 
 class InstallTranslationJob implements ShouldQueue
 {
@@ -20,7 +21,7 @@ class InstallTranslationJob implements ShouldQueue
 
     public function handle(
         TranslationImportPipeline $pipeline,
-        DictionaryBootstrap $dictionaryBootstrap,
+        BundledContentRegistry $bundledContent,
     ): void {
         $translation = Translation::query()->findOrFail($this->translationId);
 
@@ -30,8 +31,20 @@ class InstallTranslationJob implements ShouldQueue
 
         $pipeline->run($translation);
 
-        if ($translation->fresh()?->isReady() === true) {
-            $dictionaryBootstrap->dispatchIfNeeded();
+        if ($translation->fresh()?->isReady() !== true) {
+            return;
+        }
+
+        foreach ($bundledContent->pending() as $provider) {
+            if (! $provider->requiresReadyTranslation()) {
+                continue;
+            }
+
+            if (config('queue.default') === 'sync') {
+                Bus::dispatchSync($provider->importJob());
+            } else {
+                Bus::dispatch($provider->importJob());
+            }
         }
     }
 }

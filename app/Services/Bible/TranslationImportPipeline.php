@@ -7,26 +7,19 @@ use App\Enums\TranslationInstallStatus;
 use App\Enums\TranslationInstallStep;
 use App\Events\FtsIndexProgress;
 use App\Models\Translation;
-use App\Services\Bible\Import\AccordanceImporter;
-use App\Services\Bible\Import\SwordImporter;
-use App\Services\Bible\Import\UsfmImporter;
+use App\Services\Bible\Import\TranslationImporterRegistry;
 use App\Services\Bible\Markup\VerseTextFormatter;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
-use ZipArchive;
 
 class TranslationImportPipeline
 {
     private ?string $downloadedPath = null;
 
     public function __construct(
-        private BibleModuleManager $modules,
         private TranslationCatalog $catalog,
         private TranslationSchemaManager $schema,
-        private SwordImporter $swordImporter,
-        private UsfmImporter $usfmImporter,
-        private AccordanceImporter $accordanceImporter,
+        private TranslationImporterRegistry $importers,
         private VerseTextFormatter $verseTextFormatter,
         private TranslationMetadataSync $metadataSync,
     ) {}
@@ -55,9 +48,9 @@ class TranslationImportPipeline
 
     public function download(Translation $translation): void
     {
-        $importAs = $this->importAs($translation);
+        $importer = $this->importerFor($translation);
 
-        if ($importAs === CatalogImportFormat::Sword && $this->modules->isModuleInstalled($translation->abbrev)) {
+        if ($importer->isAlreadyAvailable($translation)) {
             $translation->updateProgress(TranslationInstallStatus::Downloading, TranslationInstallStep::SourceReady, 10);
             $this->syncMetadata($translation);
 
@@ -80,21 +73,8 @@ class TranslationImportPipeline
             throw new \RuntimeException("Failed to download {$entry->short}.");
         }
 
-        if ($importAs === CatalogImportFormat::Sword) {
-            $zip = new ZipArchive();
-
-            if ($zip->open($zipPath) !== true) {
-                @unlink($zipPath);
-                throw new \RuntimeException("Failed to open archive for {$entry->short}.");
-            }
-
-            $zip->extractTo($this->modules->localRoot());
-            $zip->close();
-            @unlink($zipPath);
-            $this->modules->clearCache();
-        } else {
-            $this->downloadedPath = $zipPath;
-        }
+        $preparedPath = $importer->prepareDownloadedSource($translation, $zipPath);
+        $this->downloadedPath = $preparedPath;
 
         $translation->updateProgress(TranslationInstallStatus::Downloading, TranslationInstallStep::Downloaded, 10);
 
@@ -116,45 +96,24 @@ class TranslationImportPipeline
 
     public function importVerses(Translation $translation): void
     {
-        switch ($this->importAs($translation)) {
-            case CatalogImportFormat::Usfm:
-                $translation->updateProgress(TranslationInstallStatus::Importing, TranslationInstallStep::Importing, 70);
-                $this->usfmImporter->importFromZip(
-                    $translation->abbrev,
-                    $this->downloadedPath ?? throw new \RuntimeException('Missing USFM source.'),
+        $importer = $this->importerFor($translation);
+
+        $importer->import(
+            $translation,
+            $this->downloadedPath,
+            function (float|int $percent) use ($translation): void {
+                $translation->updateProgress(
+                    TranslationInstallStatus::Importing,
+                    TranslationInstallStep::Importing,
+                    (int) round($percent),
                 );
-                break;
-            case CatalogImportFormat::Accordance:
-                $translation->updateProgress(TranslationInstallStatus::Importing, TranslationInstallStep::Importing, 70);
-                $this->accordanceImporter->importFromFile(
-                    $translation->abbrev,
-                    $this->downloadedPath ?? throw new \RuntimeException('Missing Accordance source.'),
-                );
-                break;
-            default:
-                $this->swordImporter->progressConfigure(
-                    20,
-                    50,
-                    static function (float $percent) use ($translation): void {
-                        $translation->updateProgress(
-                            TranslationInstallStatus::Importing,
-                            TranslationInstallStep::Importing,
-                            (int) round($percent),
-                        );
-                    },
-                );
-                $this->swordImporter->import($translation->abbrev, $translation->abbrev);
-                break;
-        }
+            },
+        );
     }
 
     public function verify(Translation $translation): void
     {
-        if ($this->importAs($translation) === CatalogImportFormat::Sword) {
-            $this->swordImporter->verify($translation->abbrev);
-        } elseif (! $this->hasVerse($translation->abbrev, 'gen', 1, 1) && ! $this->hasVerse($translation->abbrev, 'mat', 1, 1)) {
-            throw new \RuntimeException('Verification failed: no reference verses found.');
-        }
+        $this->importerFor($translation)->verify($translation);
 
         $translation->updateProgress(TranslationInstallStatus::Verifying, TranslationInstallStep::Verifying, 75);
     }
@@ -188,27 +147,13 @@ class TranslationImportPipeline
         ));
     }
 
+    private function importerFor(Translation $translation): \App\Services\Bible\Import\TranslationFormatImporter
+    {
+        return $this->importers->get($this->importAs($translation));
+    }
+
     private function importAs(Translation $translation): CatalogImportFormat
     {
         return $this->catalog->find($translation->abbrev)->importAs;
-    }
-
-    private function hasVerse(string $abbrev, string $bookId, int $chapter, int $verse): bool
-    {
-        $books = $this->schema->booksTable($abbrev);
-        $verses = $this->schema->versesTable($abbrev);
-
-        $book = DB::table($books)->where('osis_id', $bookId)->first();
-
-        if ($book === null) {
-            return false;
-        }
-
-        return DB::table($verses)
-            ->where('book_id', $book->id)
-            ->where('chapter', $chapter)
-            ->where('verse', $verse)
-            ->where('text', '!=', '')
-            ->exists();
     }
 }

@@ -8,13 +8,18 @@ trait ConfiguresSqliteDatabase
 {
     protected function configureSqliteDatabase(?string $databaseOption, ?callable $hasDataInDefaultDatabase = null): void
     {
-        if ($databaseOption !== null) {
+        if (is_string($databaseOption) && $databaseOption !== '') {
             $this->useSqliteDatabase($databaseOption);
 
             return;
         }
 
         if ($hasDataInDefaultDatabase !== null && $hasDataInDefaultDatabase()) {
+            return;
+        }
+
+        // Keep the in-memory test connection; NativePHP DB would poison RefreshDatabase.
+        if (app()->environment('testing')) {
             return;
         }
 

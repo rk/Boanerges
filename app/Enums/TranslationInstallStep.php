@@ -16,4 +16,20 @@ enum TranslationInstallStep: string
     case Indexed = 'indexed';
     case Ready = 'ready';
     case Failed = 'failed';
+
+    public function progressPercent(): int
+    {
+        return match ($this) {
+            self::Ready => 100,
+            self::Indexed => 95,
+            self::Indexing => 85,
+            self::Verifying => 75,
+            self::Importing => 50,
+            self::CreatingSchema => 30,
+            self::Downloaded, self::SourceReady => 20,
+            self::Downloading => 10,
+            self::Failed => 0,
+            default => 0,
+        };
+    }
 }

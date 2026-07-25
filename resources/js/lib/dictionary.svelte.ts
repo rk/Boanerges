@@ -131,12 +131,20 @@ export async function loadDictionarySuggestions(prefix: string): Promise<void> {
             return;
         }
 
-        if (response.status === 503 || !response.ok) {
+        if (response.status === 503) {
+            dictionary.importing = true;
             dictionary.suggestions = [];
 
             return;
         }
 
+        if (!response.ok) {
+            dictionary.suggestions = [];
+
+            return;
+        }
+
+        dictionary.importing = false;
         const data = (await response.json()) as { suggestions: string[] };
         dictionary.suggestions = data.suggestions;
     } catch {

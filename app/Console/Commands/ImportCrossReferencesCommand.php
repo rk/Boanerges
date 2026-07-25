@@ -2,15 +2,10 @@
 
 namespace App\Console\Commands;
 
-use App\Console\Concerns\ConfiguresSqliteDatabase;
-use App\Jobs\Bible\ImportCrossReferencesJob;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Bus;
 
 class ImportCrossReferencesCommand extends Command
 {
-    use ConfiguresSqliteDatabase;
-
     protected $signature = 'bible:import-cross-references
                             {--force : Re-import even if already completed}
                             {--database= : SQLite file path (defaults to NativePHP dev DB when present)}';
@@ -19,12 +14,17 @@ class ImportCrossReferencesCommand extends Command
 
     public function handle(): int
     {
-        $this->configureSqliteDatabase($this->option('database'));
+        $parameters = [
+            'key' => 'cross-references',
+            '--force' => $this->option('force'),
+        ];
 
-        Bus::dispatchSync(new ImportCrossReferencesJob(force: (bool) $this->option('force')));
+        $database = $this->option('database');
 
-        $this->info('Cross references imported.');
+        if (is_string($database) && $database !== '') {
+            $parameters['--database'] = $database;
+        }
 
-        return self::SUCCESS;
+        return $this->call('content:import', $parameters);
     }
 }

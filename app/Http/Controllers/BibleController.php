@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\TranslationInstallStatus;
 use App\Enums\TranslationInstallStep;
 use App\Http\Resources\Bible\BookResource;
 use App\Http\Resources\Bible\CatalogTranslationResource;
@@ -64,7 +63,9 @@ class BibleController extends Controller
             'abbrev' => $model->abbrev,
             'install_status' => $model->installStatusValue(),
             'step' => $model->installStepValue() ?? TranslationInstallStep::Pending->value,
-            'percent' => $this->percentForStatus($model->install_status, $model->install_step),
+            'percent' => $model->install_status->progressPercent()
+                ?? $model->install_step?->progressPercent()
+                ?? 0,
             'install_error' => $model->install_error,
         ]);
     }
@@ -140,30 +141,5 @@ class BibleController extends Controller
                 (int) $validated['verse'],
             ),
         ]);
-    }
-
-    private function percentForStatus(TranslationInstallStatus $status, ?TranslationInstallStep $step): int
-    {
-        return match ($status) {
-            TranslationInstallStatus::Ready => 100,
-            TranslationInstallStatus::Indexing => 85,
-            TranslationInstallStatus::Verifying => 75,
-            TranslationInstallStatus::Importing => 50,
-            TranslationInstallStatus::CreatingSchema => 30,
-            TranslationInstallStatus::Downloading => 10,
-            TranslationInstallStatus::Failed => 0,
-            default => match ($step) {
-                TranslationInstallStep::Ready => 100,
-                TranslationInstallStep::Indexed => 95,
-                TranslationInstallStep::Indexing => 85,
-                TranslationInstallStep::Verifying => 75,
-                TranslationInstallStep::Importing => 50,
-                TranslationInstallStep::CreatingSchema => 30,
-                TranslationInstallStep::Downloaded, TranslationInstallStep::SourceReady => 20,
-                TranslationInstallStep::Downloading => 10,
-                TranslationInstallStep::Failed => 0,
-                default => 0,
-            },
-        };
     }
 }

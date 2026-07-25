@@ -57,7 +57,7 @@
             </p>
         {:else}
             <ul class="divide-base-300 divide-y">
-                {#each search.results as result (result.bookId + result.chapter + result.verse)}
+                {#each search.results as result, resultIndex (`${result.bookId}:${result.chapter}:${result.verse}:${resultIndex}`)}
                     <li>
                         <button
                             type="button"
@@ -69,7 +69,7 @@
                                 {result.chapter}:{result.verse}
                             </p>
                             <p class="text-base-content/70 mt-1 text-sm">
-                                {#each parseHighlightSnippet(result.snippet) as part (part.text + part.highlight)}
+                                {#each parseHighlightSnippet(result.snippet) as part, partIndex (`${partIndex}:${part.highlight}:${part.text}`)}
                                     {#if part.highlight}<mark>{part.text}</mark
                                         >{:else}{part.text}{/if}
                                 {/each}

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\StudyColumnType;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -27,7 +28,7 @@ class UpdateStudySettingsRequest extends FormRequest
         return [
             'columnCount' => ['required', 'integer', Rule::in([1, 2, 3])],
             'columns' => ['present', 'array'],
-            'columns.*' => ['string', Rule::in(['bible-secondary', 'notes', 'scribe', 'search', 'cross-references', 'dictionary', 'comparison', 'verse-list'])],
+            'columns.*' => ['string', Rule::enum(StudyColumnType::class)],
             'verseListShowContent' => ['sometimes', 'boolean'],
             'verseListActiveId' => ['sometimes', 'nullable', 'string', 'max:36'],
             'bookId' => ['required', 'string', 'max:10'],
@@ -57,7 +58,9 @@ class UpdateStudySettingsRequest extends FormRequest
             $nonBible = [];
 
             foreach ($columns as $index => $column) {
-                if ($column === 'bible-secondary') {
+                $type = StudyColumnType::tryFrom((string) $column);
+
+                if ($type === null || $type->allowsDuplicate()) {
                     continue;
                 }
 

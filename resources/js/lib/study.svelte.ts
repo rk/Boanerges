@@ -1,5 +1,7 @@
 import { SvelteSet } from 'svelte/reactivity';
 import { getAdjacentChapter, bible } from '@/lib/bible.svelte.ts';
+import { columnDescriptor, menuItemForId } from '@/lib/columns/catalog';
+import type { ColumnContentType } from '@/lib/columns/catalog';
 import { setComparisonInput } from '@/lib/comparison.svelte.ts';
 import { setCrossReferenceInput } from '@/lib/crossrefs.svelte.ts';
 import { setDictionaryWord } from '@/lib/dictionary.svelte.ts';
@@ -7,14 +9,12 @@ import { patchJson } from '@/lib/patchJson';
 import { formatScriptureReference } from '@/lib/scriptureReference';
 import type { ScriptureReference } from '@/lib/scriptureReference';
 import {
-    comparisonTargetSlot,
-    crossReferencesTargetSlot,
-    dictionaryTargetSlot,
+    columnTargetSlot,
+    firstNonBibleSlot,
     normalizeColumns,
     sanitizeStudySettings,
-    verseListTargetSlot,
 } from '@/lib/studyLayout';
-import type { ColumnContentType, StudySettings } from '@/lib/types/study';
+import type { StudySettings } from '@/lib/types/study';
 import type { VerseHighlight } from '@/lib/verseHighlight';
 import {
     addVerseToList,
@@ -221,8 +221,80 @@ export function chapterLabel(
     return `${book} ${chapter}`;
 }
 
-export function ensureSearchColumn(): void {
-    if (study.columns.includes('search')) {
+type ColumnOpenPayload =
+    | { kind: 'reference'; reference: string }
+    | { kind: 'word'; word: string }
+    | { kind: 'verse'; ref: ScriptureReference };
+
+function resolveSlotIndex(type: ColumnContentType): number {
+    const descriptor = columnDescriptor(type);
+
+    if (descriptor.pickSlot === 'firstNonBible') {
+        const slot = firstNonBibleSlot(study.columns);
+
+        if (slot !== null) {
+            return slot;
+        }
+    }
+
+    return columnTargetSlot(type, study.columnCount, study.columns);
+}
+
+function seedColumn(
+    type: ColumnContentType,
+    payload?: ColumnOpenPayload,
+): void {
+    if (!payload) {
+        return;
+    }
+
+    switch (type) {
+        case 'search':
+            break;
+        case 'cross-references':
+            if (payload.kind === 'reference') {
+                setCrossReferenceInput(payload.reference);
+            }
+
+            break;
+        case 'dictionary':
+            if (payload.kind === 'word' && payload.word.trim() !== '') {
+                setDictionaryWord(payload.word);
+            }
+
+            break;
+        case 'comparison':
+            if (payload.kind === 'reference') {
+                setComparisonInput(payload.reference);
+            }
+
+            break;
+        case 'verse-list':
+            if (payload.kind === 'verse') {
+                addVerseToList(payload.ref, bible.books);
+            }
+
+            break;
+    }
+}
+
+export function openColumn(
+    type: ColumnContentType,
+    payload?: ColumnOpenPayload,
+): void {
+    if (type === 'dictionary') {
+        const existingSlot = study.columns.findIndex(
+            (column) => column === 'dictionary',
+        );
+
+        if (existingSlot >= 0) {
+            seedColumn(type, payload);
+
+            return;
+        }
+    }
+
+    if (type === 'search' && study.columns.includes('search')) {
         return;
     }
 
@@ -230,71 +302,43 @@ export function ensureSearchColumn(): void {
         setColumnCount(2);
     }
 
-    const slotIndex = study.columns.findIndex(
-        (column) => column !== 'bible-secondary',
-    );
+    const slotIndex = resolveSlotIndex(type);
 
-    if (slotIndex >= 0) {
-        setColumnContent(slotIndex, 'search');
-
-        return;
+    if (study.columns[slotIndex] !== type) {
+        setColumnContent(slotIndex, type);
     }
 
-    setColumnContent(study.columns.length - 1, 'search');
+    seedColumn(type, payload);
+}
+
+export function ensureSearchColumn(): void {
+    openColumn('search');
 }
 
 export function ensureCrossReferencesColumn(reference?: string): void {
-    if (study.columnCount === 1) {
-        setColumnCount(2);
-    }
-
-    const slotIndex = crossReferencesTargetSlot(
-        study.columnCount,
-        study.columns,
+    openColumn(
+        'cross-references',
+        reference
+            ? { kind: 'reference', reference }
+            : {
+                  kind: 'reference',
+                  reference: formatScriptureReference(
+                      study.bookId,
+                      study.chapter,
+                      study.verseHighlight?.verse ?? 1,
+                      bible.books,
+                  ),
+              },
     );
-
-    if (study.columns[slotIndex] !== 'cross-references') {
-        setColumnContent(slotIndex, 'cross-references');
-    }
-
-    const resolvedReference =
-        reference ??
-        formatScriptureReference(
-            study.bookId,
-            study.chapter,
-            study.verseHighlight?.verse ?? 1,
-            bible.books,
-        );
-
-    setCrossReferenceInput(resolvedReference);
 }
 
 export function ensureDictionaryColumn(word?: string): void {
-    const existingSlot = study.columns.findIndex(
-        (column) => column === 'dictionary',
+    openColumn(
+        'dictionary',
+        word !== undefined && word.trim() !== ''
+            ? { kind: 'word', word }
+            : undefined,
     );
-
-    if (existingSlot >= 0) {
-        if (word !== undefined && word.trim() !== '') {
-            setDictionaryWord(word);
-        }
-
-        return;
-    }
-
-    if (study.columnCount === 1) {
-        setColumnCount(2);
-    }
-
-    const slotIndex = dictionaryTargetSlot(study.columnCount, study.columns);
-
-    if (study.columns[slotIndex] !== 'dictionary') {
-        setColumnContent(slotIndex, 'dictionary');
-    }
-
-    if (word !== undefined && word.trim() !== '') {
-        setDictionaryWord(word);
-    }
 }
 
 export function setVerseListShowContentSetting(enabled: boolean): void {
@@ -308,40 +352,53 @@ export function setVerseListActiveId(id: string | null): void {
 }
 
 export function ensureComparisonColumn(reference?: string): void {
-    if (study.columnCount === 1) {
-        setColumnCount(2);
-    }
-
-    const slotIndex = comparisonTargetSlot(study.columnCount, study.columns);
-
-    if (study.columns[slotIndex] !== 'comparison') {
-        setColumnContent(slotIndex, 'comparison');
-    }
-
-    const resolvedReference =
-        reference ??
-        formatScriptureReference(
-            study.bookId,
-            study.chapter,
-            study.verseHighlight?.verse ?? 1,
-            bible.books,
-        );
-
-    setComparisonInput(resolvedReference);
+    openColumn(
+        'comparison',
+        reference
+            ? { kind: 'reference', reference }
+            : {
+                  kind: 'reference',
+                  reference: formatScriptureReference(
+                      study.bookId,
+                      study.chapter,
+                      study.verseHighlight?.verse ?? 1,
+                      bible.books,
+                  ),
+              },
+    );
 }
 
 export function ensureVerseListColumn(ref?: ScriptureReference): void {
-    if (study.columnCount === 1) {
-        setColumnCount(2);
+    openColumn('verse-list', ref ? { kind: 'verse', ref } : undefined);
+}
+
+export function openColumnFromMenu(menuId: string): boolean {
+    const descriptor = menuItemForId(menuId);
+
+    if (!descriptor) {
+        return false;
     }
 
-    const slotIndex = verseListTargetSlot(study.columnCount, study.columns);
-
-    if (study.columns[slotIndex] !== 'verse-list') {
-        setColumnContent(slotIndex, 'verse-list');
+    switch (descriptor.type) {
+        case 'search':
+            ensureSearchColumn();
+            break;
+        case 'cross-references':
+            ensureCrossReferencesColumn();
+            break;
+        case 'dictionary':
+            ensureDictionaryColumn();
+            break;
+        case 'comparison':
+            ensureComparisonColumn();
+            break;
+        case 'verse-list':
+            ensureVerseListColumn();
+            break;
+        default:
+            openColumn(descriptor.type);
+            break;
     }
 
-    if (ref) {
-        addVerseToList(ref, bible.books);
-    }
+    return true;
 }

@@ -2,27 +2,16 @@
 
 namespace App\Services\Study;
 
+use App\Enums\StudyColumnType;
 use App\Services\Bible\DbChapterReader;
 use App\Services\Bible\InstalledTranslationRegistry;
 use App\Services\Bible\OsisBookId;
 use App\Services\Notes\NotesChapterStore;
 use App\Services\ReadabilitySettingsStore;
 use App\Services\Scribe\ScribeChapterStore;
-use InvalidArgumentException;
 
 class StudyPrintHtmlBuilder
 {
-    private const COLUMN_LABELS = [
-        'bible-secondary' => 'Translation',
-        'notes' => 'Notes',
-        'scribe' => 'Scribe',
-        'search' => 'Search',
-        'cross-references' => 'Cross References',
-        'dictionary' => 'Dictionary',
-        'comparison' => 'Comparison',
-        'verse-list' => 'Verse List',
-    ];
-
     public function __construct(
         private DbChapterReader $chapters,
         private NotesChapterStore $notes,
@@ -106,22 +95,29 @@ class StudyPrintHtmlBuilder
         ]];
 
         foreach ($study['columns'] as $slotIndex => $type) {
-            $columns[] = match ($type) {
-                'bible-secondary' => $this->bibleColumn(
+            $columnType = StudyColumnType::from($type);
+
+            if (! $columnType->isPrintable()) {
+                $columns[] = [
+                    'label' => $columnType->label(),
+                    'kind' => 'message',
+                    'message' => 'Interactive view — not included in print.',
+                ];
+
+                continue;
+            }
+
+            $columns[] = match ($columnType) {
+                StudyColumnType::BibleSecondary => $this->bibleColumn(
                     $study,
                     $bookId,
                     $chapterNumber,
                     $slotIndex === 0 ? $study['translationBId'] : $study['translationCId'],
                 ),
-                'notes' => $this->notesColumn($bookId, $chapterNumber, $primaryChapter['book'], $includeUserWork),
-                'scribe' => $this->scribeColumn($primaryChapter, $bookId, $chapterNumber, $includeUserWork),
-                'search', 'cross-references', 'dictionary', 'comparison' => [
-                    'label' => self::COLUMN_LABELS[$type],
-                    'kind' => 'message',
-                    'message' => 'Interactive view — not included in print.',
-                ],
-                'verse-list' => $this->verseListColumn($study),
-                default => throw new InvalidArgumentException("Unknown column type: {$type}"),
+                StudyColumnType::Notes => $this->notesColumn($bookId, $chapterNumber, $primaryChapter['book'], $includeUserWork),
+                StudyColumnType::Scribe => $this->scribeColumn($primaryChapter, $bookId, $chapterNumber, $includeUserWork),
+                StudyColumnType::VerseList => $this->verseListColumn($study),
+                default => throw new \InvalidArgumentException("Missing print handler for printable column: {$type}"),
             };
         }
 

@@ -90,7 +90,12 @@ class ImportWebster1828DictionaryJob implements ShouldQueue
     private function dictionaryPath(): string
     {
         if (app()->environment('testing')) {
-            return base_path('tests/fixtures/websters1828/dictionary.json');
+            $database = (string) config('database.connections.' . config('database.default') . '.database');
+
+            // Never load the tiny test fixture into the NativePHP app database.
+            if (! str_contains($database, 'nativephp')) {
+                return base_path('tests/fixtures/websters1828/dictionary.json');
+            }
         }
 
         return Storage::disk('extras')->path((string) config('boanerges.dictionary_path'));

@@ -2,15 +2,10 @@
 
 namespace App\Console\Commands;
 
-use App\Console\Concerns\ConfiguresSqliteDatabase;
-use App\Jobs\Bible\ImportWebster1828DictionaryJob;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Bus;
 
 class ImportDictionaryCommand extends Command
 {
-    use ConfiguresSqliteDatabase;
-
     protected $signature = 'dictionary:import
                             {--force : Re-import even if already completed}
                             {--database= : SQLite file path (defaults to NativePHP dev DB when present)}';
@@ -19,12 +14,17 @@ class ImportDictionaryCommand extends Command
 
     public function handle(): int
     {
-        $this->configureSqliteDatabase($this->option('database'));
+        $parameters = [
+            'key' => 'dictionary',
+            '--force' => $this->option('force'),
+        ];
 
-        Bus::dispatchSync(new ImportWebster1828DictionaryJob(force: (bool) $this->option('force')));
+        $database = $this->option('database');
 
-        $this->info('Webster 1828 dictionary imported.');
+        if (is_string($database) && $database !== '') {
+            $parameters['--database'] = $database;
+        }
 
-        return self::SUCCESS;
+        return $this->call('content:import', $parameters);
     }
 }

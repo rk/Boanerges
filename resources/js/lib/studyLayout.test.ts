@@ -1,12 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
     availableColumnOptions,
-    comparisonTargetSlot,
-    crossReferencesTargetSlot,
-    dictionaryTargetSlot,
+    columnTargetSlot,
     normalizeColumns,
     sanitizeStudySettings,
-    verseListTargetSlot,
 } from '@/lib/studyLayout';
 import type { ColumnContentType } from '@/lib/types/study';
 
@@ -74,42 +71,33 @@ describe('availableColumnOptions', () => {
     });
 });
 
-describe('crossReferencesTargetSlot', () => {
-    it('prefers the last slot already showing cross references', () => {
+describe('columnTargetSlot', () => {
+    it('prefers the last slot already showing the requested type', () => {
         expect(
-            crossReferencesTargetSlot(3, ['search', 'cross-references']),
+            columnTargetSlot('cross-references', 3, [
+                'search',
+                'cross-references',
+            ]),
         ).toBe(1);
         expect(
-            crossReferencesTargetSlot(3, ['cross-references', 'notes']),
+            columnTargetSlot('cross-references', 3, [
+                'cross-references',
+                'notes',
+            ]),
         ).toBe(0);
+        expect(
+            columnTargetSlot('dictionary', 3, ['search', 'dictionary']),
+        ).toBe(1);
+        expect(columnTargetSlot('comparison', 3, ['notes', 'comparison'])).toBe(
+            1,
+        );
+        expect(
+            columnTargetSlot('verse-list', 3, ['search', 'verse-list']),
+        ).toBe(1);
     });
 
     it('falls back to the last secondary slot', () => {
-        expect(crossReferencesTargetSlot(2, ['notes'])).toBe(0);
-        expect(crossReferencesTargetSlot(3, ['notes', 'search'])).toBe(1);
-    });
-});
-
-describe('dictionaryTargetSlot', () => {
-    it('prefers the last slot already showing dictionary', () => {
-        expect(dictionaryTargetSlot(3, ['search', 'dictionary'])).toBe(1);
-        expect(dictionaryTargetSlot(3, ['dictionary', 'notes'])).toBe(0);
-    });
-
-    it('falls back to the last secondary slot', () => {
-        expect(dictionaryTargetSlot(2, ['notes'])).toBe(0);
-        expect(dictionaryTargetSlot(3, ['notes', 'search'])).toBe(1);
-    });
-});
-
-describe('comparisonTargetSlot', () => {
-    it('prefers the last slot already showing comparison', () => {
-        expect(comparisonTargetSlot(3, ['notes', 'comparison'])).toBe(1);
-    });
-});
-
-describe('verseListTargetSlot', () => {
-    it('prefers the last slot already showing verse list', () => {
-        expect(verseListTargetSlot(3, ['search', 'verse-list'])).toBe(1);
+        expect(columnTargetSlot('cross-references', 2, ['notes'])).toBe(0);
+        expect(columnTargetSlot('dictionary', 3, ['notes', 'search'])).toBe(1);
     });
 });
