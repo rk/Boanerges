@@ -2,9 +2,11 @@ import { openTranslationManager } from '@/lib/bible.svelte.ts';
 import { onNativeEvent } from '@/lib/nativeBroadcast.ts';
 import { openPrintOptions } from '@/lib/printStudy.svelte.ts';
 import {
+    ensureComparisonColumn,
     ensureCrossReferencesColumn,
     ensureDictionaryColumn,
     ensureSearchColumn,
+    ensureVerseListColumn,
     openSettings,
     setColumnCount,
     setScrollSync,
@@ -31,6 +33,12 @@ export function registerApplicationMenuHandlers(): void {
                     break;
                 case 'study.dictionary':
                     ensureDictionaryColumn();
+                    break;
+                case 'study.comparison':
+                    ensureComparisonColumn();
+                    break;
+                case 'study.verse-list':
+                    ensureVerseListColumn();
                     break;
                 case 'study.print':
                     openPrintOptions();

@@ -73,7 +73,23 @@ export default ts.config(
             'import/order': [
                 'error',
                 {
-                    groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+                    groups: [
+                        'builtin',
+                        'external',
+                        'internal',
+                        'parent',
+                        'sibling',
+                        'index',
+                    ],
+                    // Wayfinder @/actions resolve in CI after generate; keep them last among internals.
+                    pathGroups: [
+                        {
+                            pattern: '@/actions/**',
+                            group: 'internal',
+                            position: 'after',
+                        },
+                    ],
+                    pathGroupsExcludedImportTypes: ['builtin', 'external'],
                     alphabetize: {
                         order: 'asc',
                         caseInsensitive: true,

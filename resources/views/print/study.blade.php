@@ -124,6 +124,15 @@
             font-size: 0.9em;
             font-style: italic;
         }
+
+        .verse-list-entry {
+            margin-bottom: 0.75em;
+        }
+
+        .verse-list-entry strong {
+            display: block;
+            margin-bottom: 0.25em;
+        }
     </style>
 </head>
 <body>
@@ -157,6 +166,13 @@
                     </div>
                 @elseif (($column['kind'] ?? '') === 'message')
                     <p class="message">{{ $column['message'] }}</p>
+                @elseif (($column['kind'] ?? '') === 'verse-list')
+                    @foreach ($column['entries'] ?? [] as $entry)
+                        <div class="verse-list-entry">
+                            <strong>{{ $entry['label'] }}</strong>
+                            <p>{{ $entry['text'] }}</p>
+                        </div>
+                    @endforeach
                 @endif
             </div>
         @endforeach

@@ -10,4 +10,6 @@ enum StudyColumnType: string
     case Search = 'search';
     case CrossReferences = 'cross-references';
     case Dictionary = 'dictionary';
+    case Comparison = 'comparison';
+    case VerseList = 'verse-list';
 }

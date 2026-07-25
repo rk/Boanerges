@@ -2,8 +2,10 @@ import { bible } from '@/lib/bible.svelte.ts';
 import { normalizeDictionaryWord } from '@/lib/normalizeDictionaryWord';
 import { formatScriptureReference } from '@/lib/scriptureReference';
 import {
+    ensureComparisonColumn,
     ensureCrossReferencesColumn,
     ensureDictionaryColumn,
+    ensureVerseListColumn,
     study,
 } from '@/lib/study.svelte.ts';
 import { wordAtPoint } from '@/lib/wordAtPoint';
@@ -34,6 +36,22 @@ export function showVerseContextMenu(
             label: 'Cross References',
             click() {
                 ensureCrossReferencesColumn(reference);
+            },
+        },
+        {
+            label: 'Compare Translations',
+            click() {
+                ensureComparisonColumn(reference);
+            },
+        },
+        {
+            label: 'Add to Verse List',
+            click() {
+                ensureVerseListColumn({
+                    bookId: study.bookId,
+                    chapter: study.chapter,
+                    verse,
+                });
             },
         },
     ];

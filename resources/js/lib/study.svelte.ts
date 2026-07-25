@@ -1,18 +1,26 @@
 import { SvelteSet } from 'svelte/reactivity';
-import { updateStudy as updateStudySettings } from '@/actions/App/Http/Controllers/SettingsController';
 import { getAdjacentChapter, bible } from '@/lib/bible.svelte.ts';
+import { setComparisonInput } from '@/lib/comparison.svelte.ts';
 import { setCrossReferenceInput } from '@/lib/crossrefs.svelte.ts';
 import { setDictionaryWord } from '@/lib/dictionary.svelte.ts';
 import { patchJson } from '@/lib/patchJson';
 import { formatScriptureReference } from '@/lib/scriptureReference';
+import type { ScriptureReference } from '@/lib/scriptureReference';
 import {
+    comparisonTargetSlot,
     crossReferencesTargetSlot,
     dictionaryTargetSlot,
     normalizeColumns,
     sanitizeStudySettings,
+    verseListTargetSlot,
 } from '@/lib/studyLayout';
 import type { ColumnContentType, StudySettings } from '@/lib/types/study';
 import type { VerseHighlight } from '@/lib/verseHighlight';
+import {
+    addVerseToList,
+    hydrateVerseListSettings,
+} from '@/lib/verseList.svelte.ts';
+import { updateStudy as updateStudySettings } from '@/actions/App/Http/Controllers/SettingsController';
 
 export const study = $state({
     columnCount: 1 as 1 | 2 | 3,
@@ -22,6 +30,8 @@ export const study = $state({
     translationId: 'asv',
     translationBId: 'asv',
     translationCId: 'asv',
+    verseListShowContent: true,
+    verseListActiveId: null as string | null,
     scrollSync: false,
     settingsOpen: false,
     verseHighlight: null as VerseHighlight | null,
@@ -44,6 +54,12 @@ export function hydrateStudy(settings: StudySettings): void {
     study.translationId = sanitized.translationId;
     study.translationBId = sanitized.translationBId;
     study.translationCId = sanitized.translationCId;
+    study.verseListShowContent = sanitized.verseListShowContent ?? true;
+    study.verseListActiveId = sanitized.verseListActiveId ?? null;
+    hydrateVerseListSettings(
+        study.verseListShowContent,
+        study.verseListActiveId,
+    );
     hydrated = true;
 }
 
@@ -56,6 +72,8 @@ function studyPayload(): StudySettings {
         translationId: study.translationId,
         translationBId: study.translationBId,
         translationCId: study.translationCId,
+        verseListShowContent: study.verseListShowContent,
+        verseListActiveId: study.verseListActiveId,
     };
 }
 
@@ -276,5 +294,54 @@ export function ensureDictionaryColumn(word?: string): void {
 
     if (word !== undefined && word.trim() !== '') {
         setDictionaryWord(word);
+    }
+}
+
+export function setVerseListShowContentSetting(enabled: boolean): void {
+    study.verseListShowContent = enabled;
+    schedulePersist();
+}
+
+export function setVerseListActiveId(id: string | null): void {
+    study.verseListActiveId = id;
+    schedulePersist();
+}
+
+export function ensureComparisonColumn(reference?: string): void {
+    if (study.columnCount === 1) {
+        setColumnCount(2);
+    }
+
+    const slotIndex = comparisonTargetSlot(study.columnCount, study.columns);
+
+    if (study.columns[slotIndex] !== 'comparison') {
+        setColumnContent(slotIndex, 'comparison');
+    }
+
+    const resolvedReference =
+        reference ??
+        formatScriptureReference(
+            study.bookId,
+            study.chapter,
+            study.verseHighlight?.verse ?? 1,
+            bible.books,
+        );
+
+    setComparisonInput(resolvedReference);
+}
+
+export function ensureVerseListColumn(ref?: ScriptureReference): void {
+    if (study.columnCount === 1) {
+        setColumnCount(2);
+    }
+
+    const slotIndex = verseListTargetSlot(study.columnCount, study.columns);
+
+    if (study.columns[slotIndex] !== 'verse-list') {
+        setColumnContent(slotIndex, 'verse-list');
+    }
+
+    if (ref) {
+        addVerseToList(ref, bible.books);
     }
 }

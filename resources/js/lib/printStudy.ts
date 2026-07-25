@@ -1,9 +1,10 @@
+import { study } from '@/lib/study.svelte.ts';
+import { normalizeColumns } from '@/lib/studyLayout';
+import { verseListPrintPayload } from '@/lib/verseList.svelte.ts';
 import {
     index as printersRoute,
     store as printStudyRoute,
 } from '@/actions/App/Http/Controllers/StudyPrintController';
-import { study } from '@/lib/study.svelte.ts';
-import { normalizeColumns } from '@/lib/studyLayout';
 
 export type PrintMode = 'include-user-work' | 'blank-writing';
 
@@ -59,21 +60,28 @@ export async function printStudy(
     mode: PrintMode,
     printerName = '',
 ): Promise<string | null> {
+    const columns = normalizeColumns(study.columnCount, study.columns);
+    const payload: Record<string, unknown> = {
+        includeUserWork: mode === 'include-user-work',
+        printerName: printerName || null,
+        columnCount: study.columnCount,
+        columns,
+        bookId: study.bookId,
+        chapter: study.chapter,
+        translationId: study.translationId,
+        translationBId: study.translationBId,
+        translationCId: study.translationCId,
+    };
+
+    if (columns.includes('verse-list')) {
+        payload.verseList = verseListPrintPayload();
+    }
+
     const data = await jsonFetch<PrintStudyResponse | undefined>(
         printStudyRoute.url(),
         {
             method: 'POST',
-            body: JSON.stringify({
-                includeUserWork: mode === 'include-user-work',
-                printerName: printerName || null,
-                columnCount: study.columnCount,
-                columns: normalizeColumns(study.columnCount, study.columns),
-                bookId: study.bookId,
-                chapter: study.chapter,
-                translationId: study.translationId,
-                translationBId: study.translationBId,
-                translationCId: study.translationCId,
-            }),
+            body: JSON.stringify(payload),
         },
     );
 

@@ -12,18 +12,22 @@ class StudySettingsStore
     public function __construct(private AppSettingsRepository $settings) {}
 
     /**
-     * @return array{columnCount: int, columns: list<string>, bookId: string, chapter: int, translationId: string, translationBId: string, translationCId: string}
+     * @return array{columnCount: int, columns: list<string>, bookId: string, chapter: int, translationId: string, translationBId: string, translationCId: string, verseListShowContent: bool, verseListActiveId: string|null}
      */
     public function defaults(): array
     {
-        /** @var array{columnCount: int, columns: list<string>, bookId: string, chapter: int, translationId: string, translationBId: string, translationCId: string} $defaults */
+        /** @var array{columnCount: int, columns: list<string>, bookId: string, chapter: int, translationId: string, translationBId: string, translationCId: string, verseListShowContent?: bool, verseListActiveId?: string|null} $defaults */
         $defaults = config('boanerges.study');
 
-        return $defaults;
+        return [
+            ...$defaults,
+            'verseListShowContent' => (bool) ($defaults['verseListShowContent'] ?? true),
+            'verseListActiveId' => $defaults['verseListActiveId'] ?? null,
+        ];
     }
 
     /**
-     * @return array{columnCount: int, columns: list<string>, bookId: string, chapter: int, translationId: string, translationBId: string, translationCId: string}
+     * @return array{columnCount: int, columns: list<string>, bookId: string, chapter: int, translationId: string, translationBId: string, translationCId: string, verseListShowContent: bool, verseListActiveId: string|null}
      */
     public function get(): array
     {
@@ -76,6 +80,10 @@ class StudySettingsStore
                 'translationId' => (string) ($stored['translationId'] ?? $defaults['translationId']),
                 'translationBId' => (string) ($stored['translationBId'] ?? $defaults['translationBId']),
                 'translationCId' => (string) ($stored['translationCId'] ?? $defaults['translationCId']),
+                'verseListShowContent' => (bool) ($stored['verseListShowContent'] ?? $defaults['verseListShowContent']),
+                'verseListActiveId' => isset($stored['verseListActiveId']) && is_string($stored['verseListActiveId'])
+                    ? $stored['verseListActiveId']
+                    : null,
             ];
         }
 
@@ -101,6 +109,10 @@ class StudySettingsStore
             'translationId' => (string) ($stored['translationId'] ?? $defaults['translationId']),
             'translationBId' => (string) ($stored['translationBId'] ?? $defaults['translationBId']),
             'translationCId' => (string) ($stored['translationCId'] ?? $defaults['translationCId']),
+            'verseListShowContent' => (bool) ($stored['verseListShowContent'] ?? $defaults['verseListShowContent']),
+            'verseListActiveId' => isset($stored['verseListActiveId']) && is_string($stored['verseListActiveId'])
+                ? $stored['verseListActiveId']
+                : null,
         ];
     }
 

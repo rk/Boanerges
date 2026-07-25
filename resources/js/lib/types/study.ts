@@ -4,7 +4,9 @@ export type ColumnContentType =
     | 'scribe'
     | 'search'
     | 'cross-references'
-    | 'dictionary';
+    | 'dictionary'
+    | 'comparison'
+    | 'verse-list';
 
 export type StudySettings = {
     columnCount: 1 | 2 | 3;
@@ -14,4 +16,6 @@ export type StudySettings = {
     translationId: string;
     translationBId: string;
     translationCId: string;
+    verseListShowContent?: boolean;
+    verseListActiveId?: string | null;
 };

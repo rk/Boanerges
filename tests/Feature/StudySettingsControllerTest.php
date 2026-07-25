@@ -122,6 +122,39 @@ test('study settings accept dictionary column type', function () {
     $response->assertJsonPath('study.columns', ['dictionary']);
 });
 
+test('study settings accept comparison column type', function () {
+    $response = $this->patchJson(route('settings.study.update'), [
+        'columnCount' => 2,
+        'columns' => ['comparison'],
+        'bookId' => 'gen',
+        'chapter' => 1,
+        'translationId' => 'asv',
+        'translationBId' => 'asv',
+        'translationCId' => 'asv',
+    ]);
+
+    $response->assertSuccessful();
+    $response->assertJsonPath('study.columns', ['comparison']);
+});
+
+test('study settings accept verse-list column type', function () {
+    $response = $this->patchJson(route('settings.study.update'), [
+        'columnCount' => 2,
+        'columns' => ['verse-list'],
+        'bookId' => 'gen',
+        'chapter' => 1,
+        'translationId' => 'asv',
+        'translationBId' => 'asv',
+        'translationCId' => 'asv',
+        'verseListShowContent' => false,
+        'verseListActiveId' => null,
+    ]);
+
+    $response->assertSuccessful();
+    $response->assertJsonPath('study.columns', ['verse-list']);
+    $response->assertJsonPath('study.verseListShowContent', false);
+});
+
 test('study settings validation rejects invalid values', function () {
     $this->patchJson(route('settings.study.update'), [
         'columnCount' => 2,

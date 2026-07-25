@@ -1,7 +1,6 @@
-import { show, update } from '@/actions/App/Http/Controllers/ScribeController';
-import type {ScribeDraftEntry} from '@/lib/scribeParagraphBreaks.ts';
+import type { ScribeDraftEntry } from '@/lib/scribeParagraphBreaks.ts';
 import type { ScribeVerse } from '@/lib/types/bible';
-
+import { show, update } from '@/actions/App/Http/Controllers/ScribeController';
 
 export {
     applyPrimaryParagraphBreaks,
