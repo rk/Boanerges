@@ -6,12 +6,12 @@ import {
     store as storeVerseListRoute,
     update as updateVerseListRoute,
 } from '@/actions/App/Http/Controllers/VerseListController';
-import { fetchChapter, bible } from '@/lib/bible.svelte.ts';
+import { bible, fetchChapter } from '@/lib/bible.svelte.ts';
 import { formatScriptureReference } from '@/lib/scriptureReference';
 import type { ScriptureReference } from '@/lib/scriptureReference';
-import { verseListEntrySignature } from '@/lib/verseListSignature';
 import { study } from '@/lib/study.svelte.ts';
 import type { Book } from '@/lib/types/bible';
+import { verseListEntrySignature } from '@/lib/verseListSignature';
 
 export type VerseListEntry = ScriptureReference & {
     label: string;
