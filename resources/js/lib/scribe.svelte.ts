@@ -1,5 +1,14 @@
 import { show, update } from '@/actions/App/Http/Controllers/ScribeController';
+import type {ScribeDraftEntry} from '@/lib/scribeParagraphBreaks.ts';
 import type { ScribeVerse } from '@/lib/types/bible';
+
+
+export {
+    applyPrimaryParagraphBreaks,
+    effectiveParagraphStart,
+    resetInterVerseParagraphBreaks,
+    type ScribeDraftEntry,
+} from '@/lib/scribeParagraphBreaks.ts';
 
 const LEGACY_STORAGE_PREFIX = 'boanerges.scribe';
 
@@ -143,27 +152,6 @@ export function scheduleScribeSave(
             });
     }, 500);
 }
-
-export function effectiveParagraphStart(
-    verseNumber: number,
-    sourceParagraphStart?: boolean,
-    override?: boolean,
-): boolean {
-    if (override !== undefined) {
-        return override;
-    }
-
-    if (sourceParagraphStart) {
-        return true;
-    }
-
-    return verseNumber === 1;
-}
-
-export type ScribeDraftEntry = {
-    text: string;
-    paragraphStartOverride?: boolean;
-};
 
 export function entriesFromScribeVerses(
     verses: ScribeVerse[],

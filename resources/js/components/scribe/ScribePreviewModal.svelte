@@ -27,17 +27,11 @@
         toPreviewVerses(
             sourceVerses,
             (verseNumber) => entries[verseNumber]?.text ?? '',
-            (verseNumber) => {
-                const source = sourceVerses.find(
-                    (verse) => verse.number === verseNumber,
-                );
-
-                return effectiveParagraphStart(
+            (verseNumber) =>
+                effectiveParagraphStart(
                     verseNumber,
-                    source?.paragraphStart,
                     entries[verseNumber]?.paragraphStartOverride,
-                );
-            },
+                ),
         ),
     );
 

@@ -5,9 +5,11 @@
     import ScribeVerseSpan from '@/components/scribe/ScribeVerseSpan.svelte';
     import { getReaderStyle } from '@/lib/readability.svelte.ts';
     import {
+        applyPrimaryParagraphBreaks,
         effectiveParagraphStart,
         entriesFromScribeVerses,
         fetchScribeDraft,
+        resetInterVerseParagraphBreaks,
         scheduleScribeSave,
         serializeScribeDraft,
     } from '@/lib/scribe.svelte.ts';
@@ -39,11 +41,6 @@
     const readerStyle = $derived(getReaderStyle());
     const verseNumbers = $derived(verses.map((verse) => verse.number));
     const documentKey = $derived(`${study.bookId}-${study.chapter}`);
-    const hasParagraphOverrides = $derived(
-        Object.values(entries).some(
-            (entry) => entry.paragraphStartOverride !== undefined,
-        ),
-    );
 
     $effect(() => {
         const bookId = study.bookId;
@@ -109,18 +106,15 @@
             return;
         }
 
-        const source = verses.find((verse) => verse.number === verseNumber);
         const current = effectiveParagraphStart(
             verseNumber,
-            source?.paragraphStart,
             entries[verseNumber]?.paragraphStartOverride,
         );
         const next = !current;
-        const sourceDefault = source?.paragraphStart ?? false;
         const entry = entries[verseNumber] ?? { text: '' };
         const updated: ScribeDraftEntry = { ...entry };
 
-        if (next === sourceDefault) {
+        if (next === false) {
             delete updated.paragraphStartOverride;
         } else {
             updated.paragraphStartOverride = next;
@@ -133,14 +127,17 @@
         persist();
     }
 
-    function resetParagraphBreaks(): void {
-        entries = Object.fromEntries(
-            Object.entries(entries).map(([verseNumber, entry]) => {
-                const { paragraphStartOverride: _, ...rest } = entry;
+    export function openPreview(): void {
+        previewOpen = true;
+    }
 
-                return [Number(verseNumber), rest];
-            }),
-        );
+    export function setLineBreaksFromPrimary(): void {
+        entries = applyPrimaryParagraphBreaks(verseNumbers, entries, verses);
+        persist();
+    }
+
+    export function resetLineBreaks(): void {
+        entries = resetInterVerseParagraphBreaks(verseNumbers, entries);
         persist();
     }
 </script>
@@ -149,26 +146,6 @@
     class="flex h-full min-h-0 flex-col overflow-y-auto px-4 py-4 border-base-300 border-x"
     style={readerStyle}
 >
-    <div class="mb-4 flex flex-wrap justify-end gap-2">
-        <button
-            type="button"
-            class="btn btn-ghost btn-sm"
-            disabled={loading}
-            onclick={() => (previewOpen = true)}
-        >
-            Preview
-        </button>
-        {#if hasParagraphOverrides}
-            <button
-                type="button"
-                class="btn btn-ghost btn-sm"
-                onclick={resetParagraphBreaks}
-            >
-                Reset paragraph breaks
-            </button>
-        {/if}
-    </div>
-
     {#if loading}
         <div class="flex flex-1 items-center justify-center">
             <span class="loading loading-spinner loading-md text-primary"
@@ -187,7 +164,6 @@
                         verseNumber={verse.number}
                         paragraphStart={effectiveParagraphStart(
                             verse.number,
-                            verse.paragraphStart,
                             entries[verse.number]?.paragraphStartOverride,
                         )}
                         oninput={(value) => updateVerse(verse.number, value)}

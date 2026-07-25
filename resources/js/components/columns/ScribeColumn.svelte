@@ -1,5 +1,6 @@
 <script lang="ts">
     import CircleCheck from '@lucide/svelte/icons/circle-check';
+    import EllipsisVertical from '@lucide/svelte/icons/ellipsis-vertical';
     import LoaderCircle from '@lucide/svelte/icons/loader-circle';
     import ColumnHeader from '@/components/layout/ColumnHeader.svelte';
     import ChapterHeading from '@/components/reader/ChapterHeading.svelte';
@@ -10,6 +11,12 @@
     import { study } from '@/lib/study.svelte.ts';
     import type { Chapter } from '@/lib/types/bible';
 
+    type ScribeEditorHandle = {
+        openPreview(): void;
+        setLineBreaksFromPrimary(): void;
+        resetLineBreaks(): void;
+    };
+
     let {
         slotIndex,
     }: {
@@ -19,8 +26,47 @@
     let currentChapter = $state<Chapter | null>(null);
     let loading = $state(true);
     let lastLocationKey: string | null = null;
+    let editor = $state<ScribeEditorHandle | null>(null);
+    let actionsMenuOpen = $state(false);
+    let actionsTriggerEl = $state<HTMLButtonElement | null>(null);
+    let actionsPanelEl = $state<HTMLUListElement | null>(null);
 
     const readerStyle = $derived(getReaderStyle());
+    const actionsDisabled = $derived(loading || !currentChapter);
+
+    function closeActionsMenu(): void {
+        actionsMenuOpen = false;
+    }
+
+    function toggleActionsMenu(event: MouseEvent): void {
+        event.stopPropagation();
+        actionsMenuOpen = !actionsMenuOpen;
+    }
+
+    $effect(() => {
+        if (!actionsMenuOpen) {
+            return;
+        }
+
+        function handlePointerDown(event: PointerEvent): void {
+            const target = event.target as Node;
+
+            if (
+                actionsTriggerEl?.contains(target) ||
+                actionsPanelEl?.contains(target)
+            ) {
+                return;
+            }
+
+            closeActionsMenu();
+        }
+
+        document.addEventListener('pointerdown', handlePointerDown);
+
+        return () => {
+            document.removeEventListener('pointerdown', handlePointerDown);
+        };
+    });
 
     $effect(() => {
         const bookId = study.bookId;
@@ -86,6 +132,66 @@
                 aria-label="Saved"
             />
         {/if}
+        <div
+            class="dropdown dropdown-end ml-auto"
+            class:dropdown-open={actionsMenuOpen}
+            class:z-50={actionsMenuOpen}
+        >
+            <button
+                bind:this={actionsTriggerEl}
+                type="button"
+                class="btn btn-ghost btn-sm btn-square"
+                aria-label="Scribe actions"
+                aria-expanded={actionsMenuOpen}
+                aria-haspopup="menu"
+                disabled={actionsDisabled}
+                onclick={toggleActionsMenu}
+            >
+                <EllipsisVertical size={16} aria-hidden="true" />
+            </button>
+            <ul
+                bind:this={actionsPanelEl}
+                class="dropdown-content menu bg-base-100 rounded-box z-50 w-56 border border-base-300 p-1 shadow-lg"
+                role="menu"
+            >
+                <li role="none">
+                    <button
+                        type="button"
+                        role="menuitem"
+                        onclick={() => {
+                            editor?.setLineBreaksFromPrimary();
+                            closeActionsMenu();
+                        }}
+                    >
+                        Set Line Breaks from Primary
+                    </button>
+                </li>
+                <li role="none">
+                    <button
+                        type="button"
+                        role="menuitem"
+                        onclick={() => {
+                            editor?.resetLineBreaks();
+                            closeActionsMenu();
+                        }}
+                    >
+                        Reset Line Breaks
+                    </button>
+                </li>
+                <li role="none">
+                    <button
+                        type="button"
+                        role="menuitem"
+                        onclick={() => {
+                            editor?.openPreview();
+                            closeActionsMenu();
+                        }}
+                    >
+                        Preview
+                    </button>
+                </li>
+            </ul>
+        </div>
     </ColumnHeader>
 
     {#if loading || !currentChapter}
@@ -95,6 +201,7 @@
         </div>
     {:else}
         <ScribeEditor
+            bind:this={editor}
             book={currentChapter.book}
             chapter={currentChapter.chapter}
             verses={currentChapter.verses}
