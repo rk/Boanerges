@@ -1,4 +1,3 @@
-import { updateReadability as updateReadabilitySettings } from '@/actions/App/Http/Controllers/SettingsController';
 import { patchJson } from '@/lib/patchJson';
 import { normalizeReaderTheme } from '@/lib/themes';
 import type {
@@ -6,6 +5,7 @@ import type {
     ReaderFontFamily,
     ReaderTheme,
 } from '@/lib/types/readability';
+import { updateReadability as updateReadabilitySettings } from '@/actions/App/Http/Controllers/SettingsController';
 
 const fontStacks: Record<ReaderFontFamily, string> = {
     'sans-serif':

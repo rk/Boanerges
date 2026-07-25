@@ -1,4 +1,11 @@
 import { SvelteMap } from 'svelte/reactivity';
+import { watchInstallProgress } from '@/lib/nativeBroadcast.ts';
+import type {
+    Book,
+    CatalogTranslation,
+    Chapter,
+    Translation,
+} from '@/lib/types/bible';
 import {
     books as booksRoute,
     catalog as catalogRoute,
@@ -8,13 +15,6 @@ import {
     translations as translationsRoute,
     uninstall as uninstallRoute,
 } from '@/actions/App/Http/Controllers/BibleController';
-import { watchInstallProgress } from '@/lib/nativeBroadcast.ts';
-import type {
-    Book,
-    CatalogTranslation,
-    Chapter,
-    Translation,
-} from '@/lib/types/bible';
 
 export const bible = $state({
     translations: [] as Translation[],
