@@ -1,6 +1,7 @@
 <script lang="ts">
     import Bookmark from '@lucide/svelte/icons/bookmark';
     import ColumnHeader from '@/components/layout/ColumnHeader.svelte';
+    import FormattedVerseText from '@/components/reader/FormattedVerseText.svelte';
     import { bible } from '@/lib/bible.svelte.ts';
     import {
         comparison,
@@ -77,7 +78,9 @@
                                 >{row.abbrev}</span
                             >
                         </div>
-                        <p class="text-base-content/90 text-sm">{row.text}</p>
+                        <p class="reader-prose text-base-content/90 text-sm">
+                            <FormattedVerseText text={row.text} />
+                        </p>
                     </li>
                 {/each}
             </ul>

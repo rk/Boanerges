@@ -3,18 +3,17 @@
     import Save from '@lucide/svelte/icons/save';
     import Trash2 from '@lucide/svelte/icons/trash-2';
     import ColumnHeader from '@/components/layout/ColumnHeader.svelte';
+    import FormattedVerseText from '@/components/reader/FormattedVerseText.svelte';
     import { bible } from '@/lib/bible.svelte.ts';
     import { formatScriptureReference } from '@/lib/scriptureReference';
     import {
         goToVerseReference,
         setVerseListActiveId,
         setVerseListShowContentSetting,
-        study,
     } from '@/lib/study.svelte.ts';
     import {
         loadSavedLists,
         loadSavedVerseList,
-        loadVerseTexts,
         removeVerseFromList,
         saveVerseList,
         setVerseListShowContent,
@@ -31,14 +30,6 @@
 
     $effect(() => {
         void loadSavedLists();
-    });
-
-    $effect(() => {
-        const translationId = study.translationId;
-
-        if (verseList.showContent && verseList.entries.length > 0) {
-            void loadVerseTexts(translationId);
-        }
     });
 
     async function handleSave(): Promise<void> {
@@ -97,7 +88,7 @@
         >
             <Save size={16} aria-hidden="true" />
         </button>
-        <div class="dropdown" class:dropdown-open={loadMenuOpen}>
+        <div class="dropdown dropdown-end" class:dropdown-open={loadMenuOpen}>
             <button
                 type="button"
                 class="btn btn-ghost btn-sm btn-square"
@@ -170,8 +161,10 @@
                         >
                             <span class="font-medium">{entry.label}</span>
                             {#if verseList.showContent && entry.text}
-                                <p class="text-base-content/90 mt-1 text-sm">
-                                    {entry.text}
+                                <p
+                                    class="reader-prose text-base-content/90 mt-1 text-sm"
+                                >
+                                    <FormattedVerseText text={entry.text} />
                                 </p>
                             {/if}
                         </button>

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { verseListEntrySignature } from '@/lib/verseListSignature';
 
 function entryKey(entry: {
     bookId: string;
@@ -39,5 +40,16 @@ describe('verse list dedupe', () => {
             { bookId: 'gen', chapter: 1, verse: 1 },
             { bookId: 'jhn', chapter: 3, verse: 16 },
         ]);
+    });
+});
+
+describe('verseListEntrySignature', () => {
+    it('ignores verse text when building signature', () => {
+        const entries = [
+            { bookId: 'gen', chapter: 1, verse: 1, text: 'Before' },
+            { bookId: 'jhn', chapter: 3, verse: 16, text: 'After' },
+        ];
+
+        expect(verseListEntrySignature(entries)).toBe('gen:1:1|jhn:3:16');
     });
 });

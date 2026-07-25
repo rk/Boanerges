@@ -9,6 +9,7 @@ import {
 import { fetchChapter, bible } from '@/lib/bible.svelte.ts';
 import { formatScriptureReference } from '@/lib/scriptureReference';
 import type { ScriptureReference } from '@/lib/scriptureReference';
+import { verseListEntrySignature } from '@/lib/verseListSignature';
 import { study } from '@/lib/study.svelte.ts';
 import type { Book } from '@/lib/types/bible';
 
@@ -35,6 +36,16 @@ export const verseList = $state({
 
 let textRequest = 0;
 
+const entrySignature = $derived(verseListEntrySignature(verseList.entries));
+
+$effect(() => {
+    if (!verseList.showContent || entrySignature === '') {
+        return;
+    }
+
+    void loadVerseTexts(study.translationId);
+});
+
 export function hydrateVerseListSettings(
     showContent: boolean,
     activeId: string | null,
@@ -49,9 +60,7 @@ export function hydrateVerseListSettings(
 export function setVerseListShowContent(enabled: boolean): void {
     verseList.showContent = enabled;
 
-    if (enabled) {
-        void loadVerseTexts(study.translationId);
-    } else {
+    if (!enabled) {
         verseList.entries = verseList.entries.map((entry) => ({
             ...entry,
             text: undefined,
@@ -83,10 +92,6 @@ export function addVerseToList(ref: ScriptureReference, books: Book[]): void {
             ),
         },
     ];
-
-    if (verseList.showContent) {
-        void loadVerseTexts(study.translationId);
-    }
 }
 
 export function removeVerseFromList(index: number): void {
@@ -143,10 +148,6 @@ export async function loadSavedVerseList(id: string): Promise<void> {
                 bible.books,
             ),
         }));
-
-        if (verseList.showContent) {
-            await loadVerseTexts(study.translationId);
-        }
     } finally {
         verseList.loading = false;
     }
