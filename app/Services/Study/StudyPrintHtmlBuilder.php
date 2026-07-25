@@ -238,7 +238,6 @@ class StudyPrintHtmlBuilder
             $hasText = trim($text) !== '';
             $startsParagraph = $pendingBreak || $this->effectiveScribeParagraphStart(
                 $source['number'],
-                $source['paragraphStart'] ?? false,
                 $entry['paragraphStart'] ?? null,
             );
             $pendingBreak = false;
@@ -263,15 +262,10 @@ class StudyPrintHtmlBuilder
 
     private function effectiveScribeParagraphStart(
         int $verseNumber,
-        bool $sourceParagraphStart,
         ?bool $override,
     ): bool {
         if ($override !== null) {
             return $override;
-        }
-
-        if ($sourceParagraphStart) {
-            return true;
         }
 
         return $verseNumber === 1;

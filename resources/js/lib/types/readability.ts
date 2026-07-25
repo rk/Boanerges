@@ -1,6 +1,8 @@
-export type ReaderFontFamily = 'sans-serif' | 'serif';
+import type { ReaderTheme } from '@/lib/themes';
 
-export type ReaderTheme = 'light' | 'dark' | 'sepia';
+export type { ReaderTheme };
+
+export type ReaderFontFamily = 'sans-serif' | 'serif';
 
 export type ReadabilitySettings = {
     fontSize: number;

@@ -1,5 +1,6 @@
+@php($readabilityTheme = app(\App\Services\ReadabilitySettingsStore::class)->get()['theme'])
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="{{ app(\App\Services\ReadabilitySettingsStore::class)->get()['theme'] }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"@if($readabilityTheme !== 'auto') data-theme="{{ $readabilityTheme }}"@endif>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">

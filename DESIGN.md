@@ -46,7 +46,7 @@ This view displays a free text editor to the user that is saved for the chapter,
 
 ### Scribe View
 
-This view displays a verse-by-verse editable chapter, numbered and with paragraph breaks based upon the current primary translation.
+This view displays a verse-by-verse editable chapter, numbered and with user-controlled paragraph breaks (optionally copied from the primary translation via a header action).
 
 ### Search View
 

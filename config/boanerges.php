@@ -19,7 +19,7 @@ return [
     'readability' => [
         'fontSize' => 18,
         'lineHeight' => 1.7,
-        'theme' => 'light',
+        'theme' => 'auto',
         'fontFamily' => 'serif',
         'justifyText' => true,
     ],

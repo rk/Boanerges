@@ -1,4 +1,5 @@
 import { patchJson } from '@/lib/patchJson';
+import { normalizeReaderTheme } from '@/lib/themes';
 import type {
     ReadabilitySettings,
     ReaderFontFamily,
@@ -15,7 +16,7 @@ const fontStacks: Record<ReaderFontFamily, string> = {
 const defaults: ReadabilitySettings = {
     fontSize: 18,
     lineHeight: 1.7,
-    theme: 'light',
+    theme: 'auto',
     fontFamily: 'serif',
     justifyText: true,
 };
@@ -32,6 +33,12 @@ function applyTheme(theme: ReaderTheme): void {
         return;
     }
 
+    if (theme === 'auto') {
+        document.documentElement.removeAttribute('data-theme');
+
+        return;
+    }
+
     document.documentElement.setAttribute('data-theme', theme);
 }
 
@@ -42,8 +49,9 @@ export function hydrateReadability(settings: ReadabilitySettings): void {
 
     readability.fontSize = settings.fontSize;
     readability.lineHeight = settings.lineHeight;
-    readability.theme = settings.theme;
+    readability.theme = normalizeReaderTheme(settings.theme);
     readability.fontFamily = settings.fontFamily;
+    readability.justifyText = settings.justifyText;
     applyTheme(readability.theme);
     hydrated = true;
 }
