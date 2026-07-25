@@ -2,9 +2,7 @@ import { SvelteMap } from 'svelte/reactivity';
 import { bible, fetchChapter } from '@/lib/bible.svelte.ts';
 import { formatScriptureReference } from '@/lib/scriptureReference';
 import type { ScriptureReference } from '@/lib/scriptureReference';
-import { study } from '@/lib/study.svelte.ts';
 import type { Book } from '@/lib/types/bible';
-import { verseListEntrySignature } from '@/lib/verseListSignature';
 import {
     destroy as destroyVerseListRoute,
     index as verseListsRoute,
@@ -35,16 +33,6 @@ export const verseList = $state({
 });
 
 let textRequest = 0;
-
-const entrySignature = $derived(verseListEntrySignature(verseList.entries));
-
-$effect(() => {
-    if (!verseList.showContent || entrySignature === '') {
-        return;
-    }
-
-    void loadVerseTexts(study.translationId);
-});
 
 export function hydrateVerseListSettings(
     showContent: boolean,

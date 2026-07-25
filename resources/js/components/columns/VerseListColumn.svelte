@@ -10,15 +10,18 @@
         goToVerseReference,
         setVerseListActiveId,
         setVerseListShowContentSetting,
+        study,
     } from '@/lib/study.svelte.ts';
     import {
         loadSavedLists,
         loadSavedVerseList,
+        loadVerseTexts,
         removeVerseFromList,
         saveVerseList,
         setVerseListShowContent,
         verseList,
     } from '@/lib/verseList.svelte.ts';
+    import { verseListEntrySignature } from '@/lib/verseListSignature';
 
     let {
         slotIndex,
@@ -28,8 +31,20 @@
 
     let loadMenuOpen = $state(false);
 
+    const entrySignature = $derived(
+        verseListEntrySignature(verseList.entries),
+    );
+
     $effect(() => {
         void loadSavedLists();
+    });
+
+    $effect(() => {
+        if (!verseList.showContent || entrySignature === '') {
+            return;
+        }
+
+        void loadVerseTexts(study.translationId);
     });
 
     async function handleSave(): Promise<void> {
