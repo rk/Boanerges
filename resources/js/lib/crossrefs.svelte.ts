@@ -1,6 +1,6 @@
+import { crossReferences as crossReferencesRoute } from '@/actions/App/Http/Controllers/BibleController';
 import { parseScriptureReference } from '@/lib/scriptureReference';
 import type { Book, CrossReference } from '@/lib/types/bible';
-import { crossReferences as crossReferencesRoute } from '@/actions/App/Http/Controllers/BibleController';
 
 export const crossrefs = $state({
     loading: false,

@@ -1,10 +1,10 @@
-import { study } from '@/lib/study.svelte.ts';
-import { normalizeColumns } from '@/lib/studyLayout';
-import { verseListPrintPayload } from '@/lib/verseList.svelte.ts';
 import {
     index as printersRoute,
     store as printStudyRoute,
 } from '@/actions/App/Http/Controllers/StudyPrintController';
+import { study } from '@/lib/study.svelte.ts';
+import { normalizeColumns } from '@/lib/studyLayout';
+import { verseListPrintPayload } from '@/lib/verseList.svelte.ts';
 
 export type PrintMode = 'include-user-work' | 'blank-writing';
 
