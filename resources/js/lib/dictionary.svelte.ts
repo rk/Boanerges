@@ -1,8 +1,8 @@
+import { normalizeDictionaryWord } from '@/lib/normalizeDictionaryWord';
 import {
     show,
     suggest,
 } from '@/actions/App/Http/Controllers/DictionaryController';
-import { normalizeDictionaryWord } from '@/lib/normalizeDictionaryWord';
 
 export type DictionaryVariant = {
     partOfSpeech: string | null;
