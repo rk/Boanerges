@@ -1,19 +1,30 @@
 <script lang="ts">
-  import { BibleService, Service } from "../mygo";
+  import { onMount } from "svelte";
+  import { Service } from "../mygo";
+  import ColumnLayout from "../components/layout/ColumnLayout.svelte";
+  import ReadabilitySettings from "../components/settings/ReadabilitySettings.svelte";
+  import StudyToolbar from "../components/toolbar/StudyToolbar.svelte";
+  import { hydrateReadability } from "../lib/readability.svelte.ts";
+  import { hydrateStudy, study } from "../lib/study.svelte.ts";
 
-  let chapterText = $state<string>("Loading…");
-
-  $effect(() => {
-    void (async () => {
-      const study = await Service.getStudy();
-      const ch = await BibleService.chapter(study.translationId || "asv", study.bookId || "gen", study.chapter || 1);
-      chapterText = `${ch.book} ${ch.chapter}: ${ch.verses[0]?.text ?? ""}`;
-    })();
+  onMount(() => {
+    void Service.getStudy().then(hydrateStudy);
+    void Service.getReadability().then(hydrateReadability);
   });
 </script>
 
-<div class="p-6">
-  <h1 class="text-2xl font-bold">Study</h1>
-  <p class="text-base-content/70 mt-2">Shell placeholder — column layout in issue 7.</p>
-  <article class="prose mt-4 max-w-none font-[family-name:var(--font-reader)]">{@html chapterText}</article>
+<div class="flex h-screen flex-col bg-base-100 text-base-content">
+  <StudyToolbar />
+  <div class="relative min-h-0 flex-1">
+    <ColumnLayout />
+    {#if study.settingsOpen}
+      <aside class="absolute right-0 top-0 z-10 h-full w-80 border-l border-base-300 bg-base-100 shadow-lg">
+        <div class="flex items-center justify-between border-b border-base-300 px-4 py-2">
+          <h2 class="font-semibold">Readability</h2>
+          <button type="button" class="btn btn-xs btn-ghost" onclick={() => (study.settingsOpen = false)}>Close</button>
+        </div>
+        <ReadabilitySettings />
+      </aside>
+    {/if}
+  </div>
 </div>
