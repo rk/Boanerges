@@ -284,14 +284,18 @@ export const AppChrome = {
   setWindow(win: Window | null): Promise<void> {
     return call("AppChrome.SetWindow", win);
   },
+  /** StudyPrintHTML builds printable HTML for the current study layout (primary bible + optional notes). */
+  studyPrintHTML(study: StudySettings, readability: ReadabilitySettings, includeUserWork: boolean): Promise<string> {
+    return call("AppChrome.StudyPrintHTML", study, readability, includeUserWork);
+  },
 } as const;
 
 // ---- Events ----
 
 /** Events sent by the Go side. Subscribe with `events.name.on(listener)`. */
 export const events = {
-  /** MenuAction is emitted when the user picks a custom application menu item. */
-  studyMenu: event<string>("studyMenu"),
   /** TranslationInstallProgress is emitted during translation installs. */
   translationInstallProgress: event<Payload>("translationInstallProgress"),
+  /** MenuAction is emitted when the user picks a custom application menu item. */
+  studyMenu: event<string>("studyMenu"),
 } as const;

@@ -5,17 +5,21 @@ import (
 	"path/filepath"
 	"sync"
 
+	"boanerges/internal/settings"
+	"boanerges/internal/studyprint"
+
 	"github.com/egoist/mygo"
 )
 
 // AppChrome exposes desktop print for the main window.
 type AppChrome struct {
-	mu  sync.Mutex
-	win *mygo.Window
+	mu     sync.Mutex
+	win    *mygo.Window
+	dbPath string
 }
 
-func NewAppChrome() *AppChrome {
-	return &AppChrome{}
+func NewAppChrome(dbPath string) *AppChrome {
+	return &AppChrome{dbPath: dbPath}
 }
 
 func (s *AppChrome) SetWindow(win *mygo.Window) {
@@ -61,4 +65,9 @@ func (s *AppChrome) PrintToPDF(filename string) (string, error) {
 	}
 
 	return dest, nil
+}
+
+// StudyPrintHTML builds printable HTML for the current study layout (primary bible + optional notes).
+func (s *AppChrome) StudyPrintHTML(study settings.StudySettings, readability settings.ReadabilitySettings, includeUserWork bool) (string, error) {
+	return studyprint.BuildStudyHTML(s.dbPath, study, readability, includeUserWork)
 }

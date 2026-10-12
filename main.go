@@ -22,7 +22,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	chrome := appchrome.NewAppChrome()
+	chrome := appchrome.NewAppChrome(dbPath)
 
 	mygo.Bind(
 		settings.NewService(&settings.Repository{}),
