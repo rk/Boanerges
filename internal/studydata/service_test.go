@@ -7,10 +7,7 @@ import (
 )
 
 func TestNotesRoundTrip(t *testing.T) {
-	svc, err := studydata.NewService()
-	if err != nil {
-		t.Skip("mygo user data path unavailable:", err)
-	}
+	svc := studydata.NewServiceForTest(t.TempDir())
 
 	if err := svc.NotesPut("gen", 1, "hello notes"); err != nil {
 		t.Fatal(err)

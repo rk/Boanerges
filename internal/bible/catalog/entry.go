@@ -9,8 +9,9 @@ import (
 type ImportFormat string
 
 const (
-	FormatSword ImportFormat = "sword"
-	FormatUsfm  ImportFormat = "usfm"
+	FormatSword      ImportFormat = "sword"
+	FormatUsfm       ImportFormat = "usfm"
+	FormatAccordance ImportFormat = "accordance" // ponytail: not ported; catalog has zero active entries
 )
 
 // Entry is one row from extras/translations.json.
@@ -41,7 +42,7 @@ func entryFromRaw(raw map[string]any) (Entry, error) {
 	importAs := FormatSword
 	if v, ok := raw["import_as"].(string); ok && v != "" {
 		importAs = ImportFormat(strings.ToLower(v))
-		if importAs != FormatSword && importAs != FormatUsfm {
+		if importAs != FormatSword && importAs != FormatUsfm && importAs != FormatAccordance {
 			importAs = FormatSword
 		}
 	} else if v, ok := raw["format"].(string); ok {

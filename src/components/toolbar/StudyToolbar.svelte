@@ -22,12 +22,12 @@
 
 <header class="navbar bg-base-200 border-b border-base-300 px-3 gap-2">
   <div class="flex flex-wrap items-center gap-2">
-    <select class="select select-sm select-bordered" value={study.bookId} onchange={onBookChange}>
+    <select class="select select-sm select-bordered" data-testid="book-select" value={study.bookId} onchange={onBookChange}>
       {#each books as book}
         <option value={book.id}>{book.name}</option>
       {/each}
     </select>
-    <select class="select select-sm select-bordered w-24" value={String(study.chapter)} onchange={onChapterChange}>
+    <select class="select select-sm select-bordered w-24" data-testid="chapter-select" value={String(study.chapter)} onchange={onChapterChange}>
       {#each Array.from({ length: books.find((b) => b.id === study.bookId)?.chapters ?? 1 }, (_, i) => i + 1) as ch}
         <option value={String(ch)}>{ch}</option>
       {/each}

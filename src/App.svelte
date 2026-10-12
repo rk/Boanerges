@@ -1,10 +1,15 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { AppChrome, BibleService, events, type ProgressPayload } from "./mygo";
+  import { BibleService, events, type ProgressPayload } from "./mygo";
   import { setColumnCount, study, toggleColumn } from "./lib/study.svelte.ts";
   import type { ColumnType } from "./lib/study.svelte.ts";
+  import TranslationManagerModal from "./components/sidebar/TranslationManagerModal.svelte";
+  import PrintOptionsModal from "./components/print/PrintOptionsModal.svelte";
+  import { openTranslationManager } from "./lib/translations.svelte.ts";
   import Study from "./pages/Study.svelte";
   import Welcome from "./pages/Welcome.svelte";
+
+  let printOpen = $state(false);
 
   let ready = $state(false);
   let progress = $state({ step: "starting", percent: 0 });
@@ -17,8 +22,12 @@
   }
 
   function handleMenu(id: string) {
+    if (id === "file.manage-translations") {
+      void openTranslationManager();
+      return;
+    }
     if (id === "study.print") {
-      void AppChrome.print();
+      printOpen = true;
       return;
     }
     if (id === "view.settings") {
@@ -34,6 +43,8 @@
       return;
     }
     const map: Record<string, ColumnType> = {
+      "study.notes": "notes",
+      "study.scribe": "scribe",
       "study.search": "search",
       "study.cross-references": "cross-references",
       "study.dictionary": "dictionary",
@@ -46,13 +57,20 @@
   onMount(() => {
     const offProgress = events.translationInstallProgress.on(applyStatus);
     const offMenu = events.studyMenu.on(handleMenu);
-    void BibleService.asvInstallStatus().then(applyStatus);
+    if (import.meta.env.VITE_E2E === "1") {
+      ready = true;
+    } else {
+      void BibleService.asvInstallStatus().then(applyStatus);
+    }
     return () => {
       offProgress();
       offMenu();
     };
   });
 </script>
+
+<TranslationManagerModal />
+<PrintOptionsModal bind:open={printOpen} />
 
 {#if ready}
   <Study />

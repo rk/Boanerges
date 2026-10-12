@@ -22,5 +22,11 @@
 
 <div class="flex h-full flex-col">
   <div class="border-b border-base-300 px-3 py-2 text-sm font-medium">Notes</div>
-  <textarea class="textarea textarea-ghost h-full resize-none rounded-none p-4" bind:value={content} oninput={save} placeholder="Chapter notes…"></textarea>
+  <textarea
+    class="textarea textarea-ghost h-full resize-none rounded-none p-4"
+    data-testid="notes-editor"
+    bind:value={content}
+    oninput={save}
+    placeholder="Chapter notes…"
+  ></textarea>
 </div>

@@ -31,4 +31,8 @@ func TestEveryCatalogImportFormatResolves(t *testing.T) {
 			t.Fatalf("format %s resolved to %s", format, imp.Format())
 		}
 	}
+
+	if _, err := reg.Format(catalog.FormatAccordance); err == nil {
+		t.Fatal("expected Accordance format to be unsupported")
+	}
 }

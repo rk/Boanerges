@@ -18,7 +18,13 @@
 
 <div class="flex h-full flex-col">
   <div class="border-b border-base-300 p-3">
-    <input class="input input-bordered input-sm w-full" bind:value={query} oninput={suggest} onkeydown={(e) => e.key === "Enter" && lookup(query)} />
+    <input
+      class="input input-bordered input-sm w-full"
+      data-testid="dictionary-input"
+      bind:value={query}
+      oninput={suggest}
+      onkeydown={(e) => e.key === "Enter" && lookup(query)}
+    />
   </div>
   {#if suggestions.length}
     <div class="flex flex-wrap gap-1 p-2">

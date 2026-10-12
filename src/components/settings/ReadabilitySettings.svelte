@@ -1,12 +1,22 @@
 <script lang="ts">
   import { readability, saveReadability } from "../../lib/readability.svelte.ts";
 
+  let error = $state<string | null>(null);
+
   async function changed() {
-    await saveReadability();
+    error = null;
+    try {
+      await saveReadability();
+    } catch (err) {
+      error = err instanceof Error ? err.message : String(err);
+    }
   }
 </script>
 
-<div class="grid gap-3 p-4">
+<div class="grid gap-3 p-4" data-testid="readability-settings">
+  {#if error}
+    <p class="text-error text-sm" data-testid="readability-error">{error}</p>
+  {/if}
   <label class="form-control">
     <span class="label-text">Font size</span>
     <input class="range range-primary" type="range" min="14" max="28" bind:value={readability.fontSize} onchange={changed} />

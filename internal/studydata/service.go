@@ -30,6 +30,11 @@ func NewService() (*Service, error) {
 	return &Service{root: dir}, nil
 }
 
+// NewServiceForTest uses an explicit root (legacy-compatible on-disk layout).
+func NewServiceForTest(root string) *Service {
+	return &Service{root: root}
+}
+
 func (s *Service) NotesGet(bookID string, chapter int) (string, error) {
 	if !bookIDPattern.MatchString(bookID) {
 		return "", fmt.Errorf("invalid book id")

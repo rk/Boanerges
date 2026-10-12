@@ -13,7 +13,7 @@
   });
 </script>
 
-<div class="flex h-screen flex-col bg-base-100 text-base-content">
+<div class="flex h-screen flex-col bg-base-100 text-base-content" data-testid="study-screen">
   <StudyToolbar />
   <div class="relative min-h-0 flex-1">
     <ColumnLayout />

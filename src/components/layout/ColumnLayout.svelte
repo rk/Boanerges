@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { syncScrollFromSource } from "../../lib/scrollSync.ts";
   import { study } from "../../lib/study.svelte.ts";
   import BibleColumn from "../columns/BibleColumn.svelte";
   import ComparisonColumn from "../columns/ComparisonColumn.svelte";
@@ -19,16 +20,42 @@
     dictionary: DictionaryColumn,
     "bible-secondary": BibleColumn,
   } as const;
+
+  let primaryScroll = $state<HTMLElement | null>(null);
+  let secondaryScroll = $state<HTMLElement | null>(null);
+  let comparisonScrolls = $state<[HTMLElement | null, HTMLElement | null]>([null, null]);
+
+  function onPrimaryScroll() {
+    if (!study.scrollSync || !primaryScroll) return;
+    const targets: HTMLElement[] = [];
+    if (secondaryScroll) targets.push(secondaryScroll);
+    for (const el of comparisonScrolls) {
+      if (el) targets.push(el);
+    }
+    syncScrollFromSource(primaryScroll, targets);
+  }
 </script>
 
-<div class="flex h-[calc(100vh-3rem)] min-h-0">
+<div class="flex h-[calc(100vh-3rem)] min-h-0" data-testid="column-layout">
   <section class="min-w-0 flex-1 border-r border-base-300">
-    <BibleColumn translationId={study.translationId} primary />
+    <BibleColumn translationId={study.translationId} primary bind:scrollRef={primaryScroll} onscroll={onPrimaryScroll} />
   </section>
   {#each study.columns.slice(0, study.columnCount - 1) as column, i}
     {@const Component = slotComponents[column as keyof typeof slotComponents] ?? NotesColumn}
     <section class="min-w-0 flex-1 border-r border-base-300 last:border-r-0">
-      <Component translationId={column === "bible-secondary" ? study.translationBId : study.translationId} slotIndex={i} columnType={column} />
+      {#if column === "bible-secondary"}
+        <BibleColumn
+          translationId={study.translationBId}
+          slotIndex={i}
+          columnType={column}
+          bind:scrollRef={secondaryScroll}
+          onscroll={onPrimaryScroll}
+        />
+      {:else if column === "comparison"}
+        <ComparisonColumn bind:scrollRefs={comparisonScrolls} onscroll={onPrimaryScroll} />
+      {:else}
+        <Component translationId={study.translationId} slotIndex={i} columnType={column} />
+      {/if}
     </section>
   {/each}
 </div>
