@@ -1,6 +1,0 @@
-#!/bin/sh
-set -e
-
-composer lint:check
-npm run lint:check
-npm run format:check

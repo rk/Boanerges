@@ -15,15 +15,4 @@
 /.mygo/
 /node_modules/
 
-# Legacy vendored docs (not in git on master)
-/legacy/_doc/usfm-docs/
-/legacy/_doc/nativephp/docs/
-
-# Legacy Laravel app (optional local deps)
-/legacy/vendor/
-/legacy/node_modules/
-/legacy/.phpunit.cache
-/legacy/public/build
-/legacy/public/hot
-/legacy/storage/*.key
-/legacy/bootstrap/ssr
+/boanerges

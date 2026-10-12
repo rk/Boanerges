@@ -1,16 +1,32 @@
 # Boanerges
 
-Local-first desktop study Bible, rewritten in [MyGo](https://mygo.egoist.dev) (Go + web frontend).
-
-The previous Laravel / NativePHP implementation lives in [`legacy/`](legacy/) as the behavior spec until cutover.
+Local-first desktop study Bible built with [MyGo](https://mygo.egoist.dev) (Go services + Svelte 5 frontend).
 
 ## Develop
 
-Requires Go 1.27+, Bun, and the platform webview (see `mygo doctor`).
+Requires Go 1.27+, Bun, and a working platform webview (`mygo doctor`).
 
 ```bash
 bun install
 bun run dev
+```
+
+After changing bound Go APIs:
+
+```bash
+bun run generate
+```
+
+Typecheck:
+
+```bash
+bun run typecheck
+```
+
+Go tests:
+
+```bash
+go test ./...
 ```
 
 ## Build
@@ -19,15 +35,12 @@ bun run dev
 bun run build
 ```
 
-Packaged apps appear under `build/`.
+macOS `.app` bundles land in `build/`. Code signing and auto-update are out of scope for this rewrite.
 
-## Legacy app
+## Data layout
 
-From `legacy/`:
+User data (SQLite bible DB, notes, scribe, verse lists, downloaded SWORD zips) lives under MyGo user data. See [MIGRATION.md](MIGRATION.md) for optional import from the old NativePHP app.
 
-```bash
-composer install && npm ci
-php artisan test
-```
+## Bundled resources
 
-Legacy tests are not CI gates on `go-rewrite`.
+Shipped under `extras/` (ASV SQLite, SWORD ASV module, translation catalog, cross-references, Webster 1828). MyGo copies them via `mygo.config.ts` `resources`.
