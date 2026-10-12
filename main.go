@@ -2,9 +2,11 @@ package main
 
 import (
 	"log"
+	"path/filepath"
 	"runtime"
 
 	"boanerges/internal/bible/bootstrap"
+	"boanerges/internal/bible/bundled"
 	"boanerges/internal/bibleapp"
 	"boanerges/internal/settings"
 
@@ -18,15 +20,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	translations, err := bibleapp.NewTranslationService(dbPath, boot)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	mygo.Bind(
 		settings.NewService(&settings.Repository{}),
 		bibleapp.NewBibleService(dbPath, boot),
-		translations,
+		bibleapp.NewTranslationService(dbPath, boot),
+		bibleapp.NewDictionaryService(dbPath),
 	)
 
 	mygo.App.WhenReady(func() {
@@ -50,6 +48,15 @@ func main() {
 			}
 			if err := boot.RunASV(dbPath, resDir); err != nil {
 				log.Printf("bundled ASV import: %v", err)
+				return
+			}
+			crossPath := filepath.Join(resDir, "cross-references", "cross_references.txt")
+			if err := bundled.ImportCrossReferences(dbPath, crossPath); err != nil {
+				log.Printf("cross references import: %v", err)
+			}
+			websterPath := filepath.Join(resDir, "websters1828", "dictionary.json")
+			if err := bundled.ImportWebster1828(dbPath, websterPath); err != nil {
+				log.Printf("webster dictionary import: %v", err)
 			}
 		}()
 	})

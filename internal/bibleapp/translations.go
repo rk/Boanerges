@@ -2,6 +2,7 @@ package bibleapp
 
 import (
 	"path/filepath"
+	"sync"
 
 	"boanerges/internal/bible/bootstrap"
 	"boanerges/internal/bible/catalog"
@@ -19,60 +20,66 @@ import (
 
 // TranslationService exposes catalog install/uninstall to the frontend.
 type TranslationService struct {
+	dbPath string
+	boot   *bootstrap.Service
+
+	once sync.Once
+	err  error
+
 	catalog   *catalog.Catalog
 	registry  *registry.Registry
 	installer *install.Installer
 	store     *translations.Store
+	mgr       *schema.Manager
 }
 
-func NewTranslationService(dbPath string, boot *bootstrap.Service) (*TranslationService, error) {
-	mgr, err := schema.Open(dbPath)
-	if err != nil {
-		return nil, err
-	}
-	if err := mgr.CreateAppSchema(); err != nil {
-		mgr.Close()
-		return nil, err
-	}
+func NewTranslationService(dbPath string, boot *bootstrap.Service) *TranslationService {
+	return &TranslationService{dbPath: dbPath, boot: boot}
+}
 
-	resDir, err := mygo.App.Path(mygo.PathResources)
-	if err != nil {
-		mgr.Close()
-		return nil, err
-	}
-	dataDir, err := mygo.App.Path(mygo.PathUserData)
-	if err != nil {
-		mgr.Close()
-		return nil, err
-	}
+func (s *TranslationService) setup() error {
+	s.once.Do(func() {
+		s.mgr, s.err = schema.Open(s.dbPath)
+		if s.err != nil {
+			return
+		}
+		if s.err = s.mgr.CreateAppSchema(); s.err != nil {
+			return
+		}
 
-	cat, err := catalog.Load(filepath.Join(resDir, "translations.json"))
-	if err != nil {
-		mgr.Close()
-		return nil, err
-	}
+		resDir, err := mygo.App.Path(mygo.PathResources)
+		if err != nil {
+			s.err = err
+			return
+		}
+		dataDir, err := mygo.App.Path(mygo.PathUserData)
+		if err != nil {
+			s.err = err
+			return
+		}
 
-	store := translations.NewStore(mgr)
-	reg := registry.New(store)
+		s.catalog, s.err = catalog.Load(filepath.Join(resDir, "translations.json"))
+		if s.err != nil {
+			return
+		}
 
-	bundledSword := filepath.Join(resDir, "sword")
-	localSword := filepath.Join(dataDir, "sword")
-	roots := swordpath.Roots(bundledSword, localSword)
+		s.store = translations.NewStore(s.mgr)
+		s.registry = registry.New(s.store)
 
-	swordImp := swordfmt.NewImporter(mgr, nil, roots)
-	usfmImp := usfm.NewImporter(mgr, nil)
-	importers := bibleimport.NewRegistry(swordImp, usfmImp)
+		bundledSword := filepath.Join(resDir, "sword")
+		localSword := filepath.Join(dataDir, "sword")
+		roots := swordpath.Roots(bundledSword, localSword)
 
-	tmpDir := filepath.Join(dataDir, "tmp")
-	pipeline := install.NewPipeline(cat, store, mgr, importers, bundledSword, localSword, tmpDir, boot.Emitter())
-	installer := install.NewInstaller(cat, store, reg, mgr, pipeline)
+		importers := bibleimport.NewRegistry(
+			swordfmt.NewImporter(s.mgr, nil, roots),
+			usfm.NewImporter(s.mgr, nil),
+		)
+		tmpDir := filepath.Join(dataDir, "tmp")
+		pipeline := install.NewPipeline(s.catalog, s.store, s.mgr, importers, bundledSword, localSword, tmpDir, s.boot.Emitter())
+		s.installer = install.NewInstaller(s.catalog, s.store, s.registry, s.mgr, pipeline)
+	})
 
-	return &TranslationService{
-		catalog:   cat,
-		registry:  reg,
-		installer: installer,
-		store:     store,
-	}, nil
+	return s.err
 }
 
 type catalogResponse struct {
@@ -88,7 +95,11 @@ type installResponse struct {
 }
 
 // Catalog lists catalog entries with install status (legacy bible.translations.catalog).
-func (s *TranslationService) Catalog() catalogResponse {
+func (s *TranslationService) Catalog() (catalogResponse, error) {
+	if err := s.setup(); err != nil {
+		return catalogResponse{}, err
+	}
+
 	items := make([]translations.CatalogItem, 0, len(s.catalog.All()))
 	for _, entry := range s.catalog.All() {
 		rec, _ := s.store.FindByAbbrev(entry.ID())
@@ -102,36 +113,37 @@ func (s *TranslationService) Catalog() catalogResponse {
 			}
 		}
 		items = append(items, translations.CatalogItem{
-			ID:            entry.ID(),
-			Module:        entry.Module(),
-			Name:          entry.Name,
-			Abbrev:        entry.Short,
-			Installed:     installed,
-			Bundled:       s.registry.IsBundled(entry.Short),
-			About:         entry.About,
-			InstallStatus: status,
+			ID: entry.ID(), Module: entry.Module(), Name: entry.Name, Abbrev: entry.Short,
+			Installed: installed, Bundled: s.registry.IsBundled(entry.Short),
+			About: entry.About, InstallStatus: status,
 		})
 	}
 
-	return catalogResponse{Translations: items}
+	return catalogResponse{Translations: items}, nil
 }
 
 // Installed lists ready translations (legacy bible.translations.index).
-func (s *TranslationService) Installed() installedResponse {
+func (s *TranslationService) Installed() (installedResponse, error) {
+	if err := s.setup(); err != nil {
+		return installedResponse{}, err
+	}
 	recs, err := s.registry.Ready()
 	if err != nil {
-		return installedResponse{Translations: []translations.Config{}}
+		return installedResponse{}, err
 	}
 	out := make([]translations.Config, 0, len(recs))
 	for _, rec := range recs {
 		out = append(out, s.registry.ToConfig(rec))
 	}
 
-	return installedResponse{Translations: out}
+	return installedResponse{Translations: out}, nil
 }
 
 // Install queues a catalog translation install (legacy POST install).
 func (s *TranslationService) Install(module string) (installResponse, error) {
+	if err := s.setup(); err != nil {
+		return installResponse{}, err
+	}
 	rec, err := s.installer.Install(module)
 	if err != nil {
 		return installResponse{}, err
@@ -142,10 +154,18 @@ func (s *TranslationService) Install(module string) (installResponse, error) {
 
 // Uninstall removes an installed translation.
 func (s *TranslationService) Uninstall(module string) error {
+	if err := s.setup(); err != nil {
+		return err
+	}
+
 	return s.installer.Uninstall(module)
 }
 
 // InstallStatus returns in-progress install state for a module.
 func (s *TranslationService) InstallStatus(module string) (map[string]any, error) {
+	if err := s.setup(); err != nil {
+		return nil, err
+	}
+
 	return s.installer.InstallStatus(module)
 }
