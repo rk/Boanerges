@@ -86,7 +86,7 @@ class StudyPrintService
     {
         return [
             'landscape' => $landscape,
-            'pageSize' => 'A4',
+            'pageSize' => 'Letter',
             'silent' => false,
             'usePrinterDefaultPageSize' => false,
             'printBackground' => true,
@@ -100,7 +100,7 @@ class StudyPrintService
     {
         return [
             'landscape' => $landscape,
-            'pageSize' => 'A4',
+            'pageSize' => 'Letter',
             'printBackground' => true,
         ];
     }
