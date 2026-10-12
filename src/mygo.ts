@@ -4,6 +4,35 @@ import { call, event } from "mygo-runtime";
 
 // ---- Types ----
 
+export interface Book {
+  id: string;
+  name: string;
+  abbrev: string;
+  testament: string;
+  chapters: number;
+  firstChapter: number;
+  lastChapter: number;
+}
+
+export interface BooksResponse {
+  books: Book[];
+}
+
+export interface CatalogItem {
+  id: string;
+  module: string;
+  name: string;
+  abbrev: string;
+  installed: boolean;
+  bundled: boolean;
+  about?: string;
+  install_status: string | null;
+}
+
+export interface CatalogResponse {
+  translations: CatalogItem[];
+}
+
 export interface Chapter {
   book: string;
   bookAbbrev: string;
@@ -11,7 +40,35 @@ export interface Chapter {
   verses: Verse[];
 }
 
-export interface ProgressPayload {
+export interface ChapterResponse {
+  chapter: Chapter;
+}
+
+export interface Config {
+  id: string;
+  module: string;
+  name: string;
+  abbrev: string;
+  bundled: boolean;
+  about?: string;
+  install_status?: string;
+  install_step?: string;
+  install_error?: string;
+}
+
+export interface CrossRefsResponse {
+  references: Reference[];
+}
+
+export interface InstallResponse {
+  translation: Config;
+}
+
+export interface InstalledResponse {
+  translations: Config[];
+}
+
+export interface Payload {
   abbrev: string;
   step: string;
   percent: number;
@@ -26,6 +83,35 @@ export interface ReadabilitySettings {
   theme: string;
   fontFamily: string;
   justifyText: boolean;
+}
+
+export interface Reference {
+  rank: number;
+  bookId: string;
+  bookName: string;
+  chapter: number;
+  verse: number;
+  endVerse: number | null;
+}
+
+export interface Response {
+  results: Result[];
+  total: number;
+  hasMore: boolean;
+}
+
+export interface Result {
+  bookId: string;
+  chapter: number;
+  verse: number;
+  snippet: string;
+  translation: string;
+}
+
+export interface ScribeVerse {
+  verse: number;
+  text: string;
+  paragraphStart?: boolean;
 }
 
 /** StudySettings match legacy study store shape. */
@@ -46,6 +132,31 @@ export interface Verse {
   text: string;
   paragraphStart?: boolean;
 }
+
+export interface VerseList {
+  id: string;
+  title: string;
+  entries: VerseListEntry[];
+  updatedAt: string;
+}
+
+export interface VerseListEntry {
+  bookId: string;
+  chapter: number;
+  verse: number;
+}
+
+export interface VerseListSummary {
+  id: string;
+  title: string;
+  updatedAt: string;
+}
+
+/**
+ * Window is a native window hosting a web page, or the Content of package
+ * ui. Create windows with NewWindow once the application is ready.
+ */
+export interface Window {}
 
 // ---- Services ----
 
@@ -72,12 +183,24 @@ export const Service = {
 /** BibleService exposes bible reads to the frontend. */
 export const BibleService = {
   /** ASVInstallStatus returns bundled import progress for the welcome page. */
-  asvInstallStatus(): Promise<ProgressPayload> {
+  asvInstallStatus(): Promise<Payload> {
     return call("BibleService.ASVInstallStatus");
   },
+  /** Books lists books for an installed translation. */
+  books(translation: string): Promise<BooksResponse> {
+    return call("BibleService.Books", translation);
+  },
   /** Chapter returns a chapter for translation/book (legacy JSON shape). */
-  chapter(translation: string, book: string, chapter: number): Promise<Chapter> {
+  chapter(translation: string, book: string, chapter: number): Promise<ChapterResponse> {
     return call("BibleService.Chapter", translation, book, chapter);
+  },
+  /** CrossReferences returns ranked cross references for a verse. */
+  crossReferences(book: string, chapter: number, verse: number): Promise<CrossRefsResponse> {
+    return call("BibleService.CrossReferences", book, chapter, verse);
+  },
+  /** Search runs FTS query across ready translations. */
+  search(query: string, translation: string, limit: number, offset: number): Promise<Response> {
+    return call("BibleService.Search", query, translation, limit, offset);
   },
   /** UserDBPath returns the app bible database path (for debugging). */
   userDBPath(): Promise<string> {
@@ -85,10 +208,90 @@ export const BibleService = {
   },
 } as const;
 
+/** TranslationService exposes catalog install/uninstall to the frontend. */
+export const TranslationService = {
+  /** Catalog lists catalog entries with install status (legacy bible.translations.catalog). */
+  catalog(): Promise<CatalogResponse> {
+    return call("TranslationService.Catalog");
+  },
+  /** Install queues a catalog translation install (legacy POST install). */
+  install(module: string): Promise<InstallResponse> {
+    return call("TranslationService.Install", module);
+  },
+  /** InstallStatus returns in-progress install state for a module. */
+  installStatus(module: string): Promise<Record<string, unknown>> {
+    return call("TranslationService.InstallStatus", module);
+  },
+  /** Installed lists ready translations (legacy bible.translations.index). */
+  installed(): Promise<InstalledResponse> {
+    return call("TranslationService.Installed");
+  },
+  /** Uninstall removes an installed translation. */
+  uninstall(module: string): Promise<void> {
+    return call("TranslationService.Uninstall", module);
+  },
+} as const;
+
+/** DictionaryService exposes Webster 1828 lookup/suggest. */
+export const DictionaryService = {
+  /** Lookup returns dictionary entry for a word. */
+  lookup(word: string): Promise<unknown> {
+    return call("DictionaryService.Lookup", word);
+  },
+  /** Suggest returns dictionary prefix matches. */
+  suggest(query: string, limit: number): Promise<unknown> {
+    return call("DictionaryService.Suggest", query, limit);
+  },
+} as const;
+
+/** StudyData exposes study file stores to the frontend (lazy-init for mygo generate). */
+export const StudyData = {
+  notesGet(bookID: string, chapter: number): Promise<string> {
+    return call("StudyData.NotesGet", bookID, chapter);
+  },
+  notesPut(bookID: string, chapter: number, content: string): Promise<void> {
+    return call("StudyData.NotesPut", bookID, chapter, content);
+  },
+  scribeGet(bookID: string, chapter: number): Promise<ScribeVerse[]> {
+    return call("StudyData.ScribeGet", bookID, chapter);
+  },
+  scribePut(bookID: string, chapter: number, verses: ScribeVerse[]): Promise<void> {
+    return call("StudyData.ScribePut", bookID, chapter, verses);
+  },
+  verseListDelete(id: string): Promise<void> {
+    return call("StudyData.VerseListDelete", id);
+  },
+  verseListGet(id: string): Promise<VerseList> {
+    return call("StudyData.VerseListGet", id);
+  },
+  verseListIndex(): Promise<VerseListSummary[]> {
+    return call("StudyData.VerseListIndex");
+  },
+  verseListSave(title: string, entries: VerseListEntry[], id: string): Promise<VerseList> {
+    return call("StudyData.VerseListSave", title, entries, id);
+  },
+} as const;
+
+/** AppChrome exposes desktop print for the main window. */
+export const AppChrome = {
+  print(): Promise<void> {
+    return call("AppChrome.Print");
+  },
+  /** PrintToPDF writes a PDF export to the user downloads folder (ponytail: fixed path). */
+  printToPDF(filename: string): Promise<string> {
+    return call("AppChrome.PrintToPDF", filename);
+  },
+  setWindow(win: Window | null): Promise<void> {
+    return call("AppChrome.SetWindow", win);
+  },
+} as const;
+
 // ---- Events ----
 
 /** Events sent by the Go side. Subscribe with `events.name.on(listener)`. */
 export const events = {
-  /** TranslationInstallProgress is emitted during bundled ASV copy (welcome flow). */
-  translationInstallProgress: event<ProgressPayload>("translationInstallProgress"),
+  /** MenuAction is emitted when the user picks a custom application menu item. */
+  studyMenu: event<string>("studyMenu"),
+  /** TranslationInstallProgress is emitted during translation installs. */
+  translationInstallProgress: event<Payload>("translationInstallProgress"),
 } as const;
