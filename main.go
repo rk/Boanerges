@@ -5,6 +5,8 @@ import (
 	"runtime"
 	"time"
 
+	"boanerges/internal/settings"
+
 	"github.com/egoist/mygo"
 )
 
@@ -36,7 +38,7 @@ func (Greeter) Info() SystemInfo {
 var Tick = mygo.NewEvent[time.Time]("tick")
 
 func main() {
-	mygo.Bind(Greeter{})
+	mygo.Bind(Greeter{}, settings.NewService(&settings.Repository{}))
 
 	mygo.App.WhenReady(func() {
 		win := mygo.NewWindow(mygo.WindowOptions{

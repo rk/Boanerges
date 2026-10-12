@@ -4,6 +4,28 @@ import { call, event } from "mygo-runtime";
 
 // ---- Types ----
 
+/** ReadabilitySettings match legacy readability store shape. */
+export interface ReadabilitySettings {
+  fontSize: number;
+  lineHeight: number;
+  theme: string;
+  fontFamily: string;
+  justifyText: boolean;
+}
+
+/** StudySettings match legacy study store shape. */
+export interface StudySettings {
+  columnCount: number;
+  columns: string[];
+  bookId: string;
+  chapter: number;
+  translationId: string;
+  translationBId: string;
+  translationCId: string;
+  verseListShowContent: boolean;
+  verseListActiveId: string | null;
+}
+
 /** SystemInfo describes the machine the app runs on. */
 export interface SystemInfo {
   os: string;
@@ -25,6 +47,26 @@ export const Greeter = {
   /** Info returns information about the system. */
   info(): Promise<SystemInfo> {
     return call("Greeter.Info");
+  },
+} as const;
+
+/** Service is bound for the web frontend (`mygo.Bind`). */
+export const Service = {
+  /** GetReadability returns current readability settings. */
+  getReadability(): Promise<ReadabilitySettings> {
+    return call("Service.GetReadability");
+  },
+  /** GetStudy returns current study layout settings. */
+  getStudy(): Promise<StudySettings> {
+    return call("Service.GetStudy");
+  },
+  /** UpdateReadability validates and saves readability settings. */
+  updateReadability(settings: ReadabilitySettings): Promise<ReadabilitySettings> {
+    return call("Service.UpdateReadability", settings);
+  },
+  /** UpdateStudy validates and saves study settings. */
+  updateStudy(settings: StudySettings): Promise<StudySettings> {
+    return call("Service.UpdateStudy", settings);
   },
 } as const;
 
