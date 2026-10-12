@@ -6,12 +6,14 @@ on:
       - develop
       - main
       - master
+      - go-rewrite
       - workos
   pull_request:
     branches:
       - develop
       - main
       - master
+      - go-rewrite
       - workos
 
 permissions:
@@ -25,41 +27,25 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+      - name: Setup Go
+        uses: actions/setup-go@40a38d2a293f6d632133142112aabb43d4a3f579 # v5.6.0
         with:
-          php-version: '8.4'
+          go-version: "1.27.x"
+          cache-dependency-path: go.sum
 
-      - name: Setup Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v6
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: '22'
-          cache: 'npm'
+          bun-version: latest
 
-      - name: Restore ESLint cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: node_modules/.cache/eslint
-          key: eslint-${{ runner.os }}-${{ hashFiles('eslint.config.js', 'package-lock.json') }}
-          restore-keys: |
-            eslint-${{ runner.os }}-
+      - name: Install frontend dependencies
+        run: bun install --frozen-lockfile
 
-      - name: Install Dependencies
-        run: |
-          composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
-          npm ci
+      - name: Check Go formatting
+        run: test -z "$(gofmt -l .)"
 
-      - name: Generate Wayfinder Types
-        run: php artisan wayfinder:generate --with-form
+      - name: Go vet
+        run: go vet ./...
 
-      - name: Check PHP Style
-        run: composer lint:check
-
-      - name: Check Frontend Formatting
-        run: npm run format:check
-
-      - name: Check Frontend Lint
-        run: npm run lint:check
-
-      - name: Check Svelte Types
-        run: npm run types:check
+      - name: Typecheck frontend
+        run: bun run typecheck
