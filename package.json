@@ -13,6 +13,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@lucide/svelte": "^1.55.0",
     "mygo-runtime": "^0.4.7"
   },
   "devDependencies": {

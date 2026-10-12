@@ -1,5 +1,6 @@
 <script lang="ts">
   import { BibleService, type Chapter } from "../../mygo";
+  import VerseLine from "../reader/VerseLine.svelte";
   import { readerStyle } from "../../lib/readability.svelte.ts";
   import { study } from "../../lib/study.svelte.ts";
 
@@ -37,16 +38,16 @@
     <article bind:this={leftEl} class="overflow-y-auto p-3 text-sm" style={readerStyle()} data-testid="comparison-pane" onscroll={onscroll}>
       <h3 class="mb-2 font-semibold">{study.translationBId.toUpperCase()}</h3>
       {#if left}
-        {#each left.verses as verse}
-          <p class="mb-2"><sup>{verse.number}</sup> {@html verse.text}</p>
+        {#each left.verses as verse (verse.number)}
+          <VerseLine {verse} />
         {/each}
       {/if}
     </article>
     <article bind:this={rightEl} class="overflow-y-auto p-3 text-sm" style={readerStyle()} data-testid="comparison-pane" onscroll={onscroll}>
       <h3 class="mb-2 font-semibold">{study.translationCId.toUpperCase()}</h3>
       {#if right}
-        {#each right.verses as verse}
-          <p class="mb-2"><sup>{verse.number}</sup> {@html verse.text}</p>
+        {#each right.verses as verse (verse.number)}
+          <VerseLine {verse} />
         {/each}
       {/if}
     </article>

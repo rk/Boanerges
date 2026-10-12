@@ -81,6 +81,17 @@ export function toggleColumn(type: ColumnType): void {
   schedulePersistStudy();
 }
 
+export function setBook(bookId: string): void {
+  study.bookId = bookId;
+  study.chapter = 1;
+  schedulePersistStudy();
+}
+
+export function setChapter(chapter: number): void {
+  study.chapter = chapter;
+  schedulePersistStudy();
+}
+
 export function setLocation(bookId: string, chapter: number): void {
   study.bookId = bookId;
   study.chapter = chapter;

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { BibleService, type Chapter } from "../../mygo";
+  import VerseLine from "../reader/VerseLine.svelte";
   import { readerStyle } from "../../lib/readability.svelte.ts";
   import { study } from "../../lib/study.svelte.ts";
 
@@ -45,11 +46,8 @@
       <p>Loading…</p>
     {:else if chapter}
       <h2 data-testid="chapter-heading">{chapter.book} {chapter.chapter}</h2>
-      {#each chapter.verses as verse}
-        {#if verse.paragraphStart && verse.number > 1}
-          <div class="my-3 border-t border-base-300" aria-hidden="true"></div>
-        {/if}
-        <p data-verse={verse.number}><sup>{verse.number}</sup> {@html verse.text}</p>
+      {#each chapter.verses as verse (verse.number)}
+        <VerseLine {verse} highlighted={primary && verse.number === study.selectedVerse} />
       {/each}
     {/if}
   </article>
