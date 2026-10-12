@@ -18,9 +18,15 @@ func main() {
 		log.Fatal(err)
 	}
 
+	translations, err := bibleapp.NewTranslationService(dbPath, boot)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	mygo.Bind(
 		settings.NewService(&settings.Repository{}),
 		bibleapp.NewBibleService(dbPath, boot),
+		translations,
 	)
 
 	mygo.App.WhenReady(func() {

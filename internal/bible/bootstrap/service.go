@@ -5,44 +5,44 @@ import (
 	"sync"
 
 	"boanerges/internal/bible/bundled"
-	"boanerges/internal/bible/install"
+	"boanerges/internal/bible/progress"
 
 	"github.com/egoist/mygo"
 )
 
-// ProgressPayload matches legacy TranslationInstallProgress broadcast fields.
-type ProgressPayload struct {
-	Abbrev        string `json:"abbrev"`
-	Step          string `json:"step"`
-	Percent       int    `json:"percent"`
-	Error         string `json:"error,omitempty"`
-	InstallStatus string `json:"install_status,omitempty"`
-}
+// ProgressPayload is the install progress JSON shape (alias for mygo bindings).
+type ProgressPayload = progress.Payload
 
-// TranslationInstallProgress is emitted during bundled ASV copy (welcome flow).
-var TranslationInstallProgress = mygo.NewEvent[ProgressPayload]("translationInstallProgress")
+// TranslationInstallProgress re-exports the mygo event for bindings.
+var TranslationInstallProgress = progress.TranslationInstallProgress
 
 // Service runs first-launch bundled imports.
 type Service struct {
-	mu     sync.Mutex
-	status ProgressPayload
-	done   bool
-	win    *mygo.Window
+	mu      sync.Mutex
+	status  progress.Payload
+	done    bool
+	emitter *progress.Emitter
 }
 
 func NewService() *Service {
 	return &Service{
-		status: ProgressPayload{
+		emitter: progress.NewEmitter(),
+		status: progress.Payload{
 			Abbrev:        "asv",
-			Step:          string(install.StepPending),
+			Step:          string(progress.StepPending),
 			Percent:       0,
 			InstallStatus: "pending",
 		},
 	}
 }
 
+// Emitter returns shared install progress broadcaster.
+func (s *Service) Emitter() *progress.Emitter {
+	return s.emitter
+}
+
 // ASVStatus returns current bundled ASV install progress.
-func (s *Service) ASVStatus() ProgressPayload {
+func (s *Service) ASVStatus() progress.Payload {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -57,49 +57,45 @@ func (s *Service) ASVReady() bool {
 	return s.done
 }
 
-func (s *Service) setStatus(step install.Step, installStatus string, errMsg string) {
+func (s *Service) setStatus(step progress.Step, installStatus string, errMsg string) {
 	s.mu.Lock()
-	s.status = ProgressPayload{
+	s.status = progress.Payload{
 		Abbrev:        "asv",
 		Step:          string(step),
 		Percent:       step.Percent(),
 		InstallStatus: installStatus,
 		Error:         errMsg,
 	}
-	if step == install.StepReady {
+	if step == progress.StepReady {
 		s.done = true
 		s.status.Percent = 100
 	}
 	payload := s.status
 	s.mu.Unlock()
 
-	if s.win != nil {
-		_ = TranslationInstallProgress.Emit(s.win, payload)
-	}
+	s.emitter.Emit(payload)
 }
 
 // SetWindow sets the window used for install progress events.
 func (s *Service) SetWindow(win *mygo.Window) {
-	s.mu.Lock()
-	s.win = win
-	s.mu.Unlock()
+	s.emitter.SetWindow(win)
 }
 
 // RunASV copies bundled sqlite into userDB (idempotent).
 func (s *Service) RunASV(userDB, resourcesDir string) error {
-	s.setStatus(install.StepQueued, "pending", "")
+	s.setStatus(progress.StepQueued, "pending", "")
 
 	bundledSQLite := filepath.Join(resourcesDir, bundled.SQLiteFile)
 	confPath := filepath.Join(resourcesDir, bundled.ConfFile)
 
-	s.setStatus(install.StepCreatingSchema, "creating_schema", "")
+	s.setStatus(progress.StepCreatingSchema, "creating_schema", "")
 	if err := bundled.ImportASV(userDB, bundledSQLite, confPath); err != nil {
-		s.setStatus(install.StepFailed, "failed", err.Error())
+		s.setStatus(progress.StepFailed, "failed", err.Error())
 		return err
 	}
 
-	s.setStatus(install.StepIndexing, "indexing", "")
-	s.setStatus(install.StepReady, "ready", "")
+	s.setStatus(progress.StepIndexing, "indexing", "")
+	s.setStatus(progress.StepReady, "ready", "")
 
 	return nil
 }
