@@ -25,7 +25,7 @@
   }
 </script>
 
-<div class="flex h-full flex-col">
+<div class="flex h-full flex-col" data-testid="verse-list-column">
   <div class="flex items-center justify-between border-b border-base-300 px-3 py-2 text-sm">
     <span class="font-medium">Verse list</span>
     <button type="button" class="btn btn-xs" onclick={addCurrentVerse}>Add verse</button>

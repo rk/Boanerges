@@ -55,9 +55,17 @@
   }
 
   onMount(() => {
+    if (import.meta.env.VITE_E2E === "1") {
+      window.__openTranslationManager = () => openTranslationManager();
+    }
     const offProgress = events.translationInstallProgress.on(applyStatus);
     const offMenu = events.studyMenu.on(handleMenu);
-    if (import.meta.env.VITE_E2E === "1") {
+    const welcomeQuery =
+      typeof window !== "undefined" && new URLSearchParams(window.location.search).get("e2eWelcome") === "1";
+    const mode = import.meta.env.VITE_E2E;
+    if (welcomeQuery) {
+      // welcome-flow e2e drives progress via mock events
+    } else if (mode === "1") {
       ready = true;
     } else {
       void BibleService.asvInstallStatus().then(applyStatus);

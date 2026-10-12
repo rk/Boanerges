@@ -26,5 +26,11 @@
 
 <div class="flex h-full flex-col">
   <div class="border-b border-base-300 px-3 py-2 text-sm font-medium">Scribe</div>
-  <textarea class="textarea textarea-ghost h-full resize-none rounded-none p-4 font-mono text-sm" bind:value={draft} onblur={save} placeholder="1. Verse draft…"></textarea>
+  <textarea
+    class="textarea textarea-ghost h-full resize-none rounded-none p-4 font-mono text-sm"
+    data-testid="scribe-editor"
+    bind:value={draft}
+    onblur={save}
+    placeholder="1. Verse draft…"
+  ></textarea>
 </div>

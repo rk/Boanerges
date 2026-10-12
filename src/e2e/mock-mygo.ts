@@ -51,7 +51,7 @@ const store = {
       abbrev: "ASV",
       installed: false,
       bundled: true,
-      install_status: null,
+      install_status: null as string | null,
     },
     {
       id: "kjv",
@@ -60,7 +60,16 @@ const store = {
       abbrev: "KJV",
       installed: false,
       bundled: false,
-      install_status: null,
+      install_status: null as string | null,
+    },
+    {
+      id: "oeb",
+      module: "OEB",
+      name: "Open English Bible (US Spelling)",
+      abbrev: "OEB",
+      installed: false,
+      bundled: false,
+      install_status: null as string | null,
     },
   ],
 };
@@ -72,6 +81,7 @@ function key(bookId: string, chapter: number) {
 declare global {
   interface Window {
     __dispatchStudyMenu?: (id: string) => void;
+    __openTranslationManager?: () => Promise<void>;
     __e2eReset?: () => void;
   }
   // eslint-disable-next-line no-var
@@ -83,23 +93,46 @@ declare global {
   };
 }
 
-export function installMygoMock(): void {
+export function installMygoMock(mode: string = "1"): void {
   const listeners = new Map<string, Set<(payload: unknown) => void>>();
 
+  const emit = (name: string, payload: unknown) => {
+    listeners.get(name)?.forEach((fn) => fn(payload));
+  };
+
   const handlers: Record<string, (...args: unknown[]) => unknown> = {
-    "BibleService.ASVInstallStatus": (): Payload => ({ abbrev: "ASV", step: "ready", percent: 100, install_status: "ready" }),
+    "BibleService.ASVInstallStatus": (): Payload =>
+      mode === "welcome"
+        ? { abbrev: "ASV", step: "creating_schema", percent: 30, install_status: "creating_schema" }
+        : { abbrev: "ASV", step: "ready", percent: 100, install_status: "ready" },
     "BibleService.Books": (): BooksResponse => ({
       books: [
         { id: "gen", name: "Genesis", abbrev: "Gen", testament: "OT", chapters: 50, firstChapter: 1, lastChapter: 50 },
         { id: "mat", name: "Matthew", abbrev: "Matt", testament: "NT", chapters: 28, firstChapter: 1, lastChapter: 28 },
       ],
     }),
-    "BibleService.Chapter": (): ChapterResponse => genesisChapter,
-    "BibleService.Search": (_query: unknown, _t: unknown, limit: unknown, offset: unknown): Response => ({
-      results: (offset as number) === 0 ? [{ bookId: "gen", chapter: 1, verse: 1, snippet: "In the <b>beginning</b>", translation: "asv" }] : [],
-      total: 1,
-      hasMore: (offset as number) + (limit as number) < 1,
-    }),
+    "BibleService.Chapter": (_translation: unknown, book: unknown, chapter: unknown): ChapterResponse => {
+      const ch = Number(chapter) || 1;
+      const bookId = String(book);
+      const bookName = bookId === "gen" ? "Genesis" : bookId;
+      return {
+        chapter: {
+          book: bookName,
+          bookAbbrev: "Gen",
+          chapter: ch,
+          verses: genesisChapter.chapter.verses.map((v) => ({ ...v })),
+        },
+      };
+    },
+    "BibleService.Search": (_query: unknown, _t: unknown, limit: unknown, offset: unknown): Response => {
+      const off = offset as number;
+      const hit = { bookId: "gen", chapter: 1, verse: 1, snippet: "In the <b>beginning</b>", translation: "asv" };
+      const hit2 = { bookId: "gen", chapter: 1, verse: 2, snippet: "earth was <b>without</b> form", translation: "asv" };
+      if (off === 0) {
+        return { results: [hit], total: 2, hasMore: true };
+      }
+      return { results: [hit2], total: 2, hasMore: false };
+    },
     "BibleService.CrossReferences": (): CrossRefsResponse => ({
       references: [{ rank: 1, bookId: "jhn", bookName: "John", chapter: 1, verse: 1, endVerse: null }],
     }),
@@ -135,7 +168,23 @@ export function installMygoMock(): void {
           name: "CallError",
         });
       }
-      return { translation: { id: "kjv", module: "KJV", name: "KJV", abbrev: "KJV", bundled: false, install_status: "ready" } };
+      const mod = String(module);
+      for (const entry of store.catalog) {
+        if (entry.module === mod) {
+          entry.installed = true;
+          entry.install_status = "ready";
+        }
+      }
+      return {
+        translation: {
+          id: mod.toLowerCase(),
+          module: mod,
+          name: mod,
+          abbrev: mod,
+          bundled: false,
+          install_status: "ready",
+        },
+      };
     },
     "TranslationService.Uninstall": (module: unknown) => {
       if (module === "ASV") {
@@ -161,8 +210,15 @@ export function installMygoMock(): void {
       store.notes.set(k, content as string);
       sessionStorage.setItem(`e2e.notes.${k}`, content as string);
     },
-    "StudyData.ScribeGet": () => [],
-    "StudyData.ScribePut": () => undefined,
+    "StudyData.ScribeGet": (bookId: unknown, chapter: unknown) => {
+      const k = key(bookId as string, chapter as number);
+      const raw = sessionStorage.getItem(`e2e.scribe.${k}`);
+      return raw ? (JSON.parse(raw) as { verse: number; text: string }[]) : [];
+    },
+    "StudyData.ScribePut": (bookId: unknown, chapter: unknown, verses: unknown) => {
+      const k = key(bookId as string, chapter as number);
+      sessionStorage.setItem(`e2e.scribe.${k}`, JSON.stringify(verses));
+    },
     "StudyData.VerseListIndex": () => [...store.verseLists.values()].map(({ id, title, updatedAt }) => ({ id, title, updatedAt })),
     "StudyData.VerseListSave": (title: unknown, entries: unknown, id: unknown) => {
       const list = { id: (id as string) || "list1", title: title as string, entries: entries as { bookId: string; chapter: number; verse: number }[], updatedAt: new Date().toISOString() };
@@ -175,6 +231,7 @@ export function installMygoMock(): void {
     },
     "AppChrome.Print": () => undefined,
     "AppChrome.PrintToPDF": () => "/tmp/boanerges-study.pdf",
+    "AppChrome.StudyPrintHTML": () => "<html><body><h1>Genesis 1</h1></body></html>",
   };
 
   globalThis.mygo = {
@@ -216,4 +273,13 @@ export function installMygoMock(): void {
   window.__dispatchStudyMenu = (id: string) => {
     listeners.get("studyMenu")?.forEach((fn) => fn(id));
   };
+
+  if (mode === "welcome") {
+    queueMicrotask(() => {
+      emit("translationInstallProgress", { abbrev: "ASV", step: "creating_schema", percent: 30, install_status: "creating_schema" });
+      setTimeout(() => {
+        emit("translationInstallProgress", { abbrev: "ASV", step: "ready", percent: 100, install_status: "ready" });
+      }, 300);
+    });
+  }
 }

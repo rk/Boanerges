@@ -11,6 +11,11 @@
       error = err instanceof Error ? err.message : String(err);
     }
   }
+
+  async function simulateInvalid() {
+    readability.fontSize = 10;
+    await changed();
+  }
 </script>
 
 <div class="grid gap-3 p-4" data-testid="readability-settings">
@@ -19,7 +24,7 @@
   {/if}
   <label class="form-control">
     <span class="label-text">Font size</span>
-    <input class="range range-primary" type="range" min="14" max="28" bind:value={readability.fontSize} onchange={changed} />
+    <input class="range range-primary" type="range" min="14" max="24" bind:value={readability.fontSize} onchange={changed} />
   </label>
   <label class="form-control">
     <span class="label-text">Line height</span>
@@ -37,4 +42,7 @@
     <input type="checkbox" class="checkbox" bind:checked={readability.justifyText} onchange={changed} />
     <span class="label-text">Justify text</span>
   </label>
+  {#if import.meta.env.VITE_E2E}
+    <button type="button" class="btn btn-xs btn-outline" data-testid="readability-invalid" onclick={simulateInvalid}>Simulate invalid</button>
+  {/if}
 </div>

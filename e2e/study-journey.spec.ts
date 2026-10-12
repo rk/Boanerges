@@ -78,3 +78,65 @@ test("print dialog opens", async ({ page }) => {
   await page.getByRole("button", { name: "Print…" }).click();
   await expect(page.getByTestId("print-options")).toBeHidden();
 });
+
+test("readability validation error", async ({ page }) => {
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByTestId("readability-invalid").click();
+  await expect(page.getByTestId("readability-error")).toBeVisible();
+});
+
+test("chapter navigation", async ({ page }) => {
+  await page.getByTestId("chapter-next").click();
+  await expect(page.getByTestId("chapter-heading")).toHaveText("Genesis 2");
+  await page.getByTestId("chapter-prev").click();
+  await expect(page.getByTestId("chapter-heading")).toHaveText("Genesis 1");
+});
+
+test("search load more", async ({ page }) => {
+  await page.evaluate(() => window.__dispatchStudyMenu?.("view.columns.2"));
+  await page.evaluate(() => window.__dispatchStudyMenu?.("study.search"));
+  await page.getByTestId("search-input").fill("beginning");
+  await page.getByTestId("search-input").press("Enter");
+  await page.getByTestId("search-load-more").click();
+  await expect(page.getByTestId("search-hit")).toHaveCount(2);
+});
+
+test("catalog USFM module install", async ({ page }) => {
+  await page.evaluate(async () => {
+    await window.__openTranslationManager?.();
+  });
+  const row = page.getByTestId("translation-manager").locator("li").filter({ hasText: "Open English Bible" });
+  await expect(row).toBeVisible({ timeout: 10_000 });
+  await row.getByRole("button", { name: "Install" }).click();
+  await expect(row.getByRole("button", { name: "Remove" })).toBeVisible({ timeout: 5000 });
+});
+
+test("catalog translation install", async ({ page }) => {
+  await page.evaluate(async () => {
+    await window.__openTranslationManager?.();
+  });
+  const row = page.getByTestId("translation-manager").locator("li").filter({ hasText: "King James Version" });
+  await expect(row).toBeVisible({ timeout: 10_000 });
+  await row.getByRole("button", { name: "Install" }).click();
+  await expect(row.getByRole("button", { name: "Remove" })).toBeVisible({ timeout: 5000 });
+});
+
+test("scribe persists", async ({ page }) => {
+  await page.evaluate(() => window.__dispatchStudyMenu?.("view.columns.2"));
+  await page.evaluate(() => window.__dispatchStudyMenu?.("study.scribe"));
+  await page.getByTestId("scribe-editor").fill("1. scribe e2e line");
+  await page.getByTestId("scribe-editor").blur();
+  await page.reload();
+  await expect(page.getByTestId("study-screen")).toBeVisible({ timeout: 15_000 });
+  await page.evaluate(() => window.__dispatchStudyMenu?.("view.columns.2"));
+  await page.evaluate(() => window.__dispatchStudyMenu?.("study.scribe"));
+  await expect(page.getByTestId("scribe-editor")).toHaveValue(/scribe e2e/, { timeout: 10_000 });
+});
+
+test("verse list add entry", async ({ page }) => {
+  await page.evaluate(() => window.__dispatchStudyMenu?.("view.columns.2"));
+  await page.evaluate(() => window.__dispatchStudyMenu?.("study.verse-list"));
+  await expect(page.getByTestId("verse-list-column")).toBeVisible();
+  await page.getByRole("button", { name: "Add verse" }).click();
+  await expect(page.getByText("gen 1:1")).toBeVisible();
+});
