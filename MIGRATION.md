@@ -52,9 +52,9 @@ On macOS with MyGo CLI installed:
 bun run build         # mygo build — produces build/Boanerges.app (or platform output under build/)
 ```
 
-As of 2026-10-12, `mygo build` completes the frontend (`tsc`, `vite build`, bindings) but may exit non-zero if `mygo.config.ts` `resources` duplicates the bundled `resources/` tree (CLI error: *list only extra files*). Fix that config before treating packaging as green.
+`mygo.config.ts` lists only `extras` under `resources` (the `resources/` tree is included automatically). Record the git SHA when validating cutover.
 
-Record the git SHA and any build warnings when validating cutover. CI may skip `mygo build` when the MyGo toolchain is unavailable; local macOS smoke is the source of truth until CI runners install `mygo-cli`.
+CI runs `go test ./...` and `bun run typecheck`; run `bun run test:e2e` locally before closing cutover. macOS `bun run build` smoke is recommended when changing packaging or embedded assets.
 
 ## Legacy reference tree
 

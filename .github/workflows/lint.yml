@@ -49,3 +49,12 @@ jobs:
 
       - name: Typecheck frontend
         run: bun run typecheck
+
+      - name: Go tests
+        run: go test ./...
+
+      - name: Install Playwright
+        run: bunx playwright install chromium
+
+      - name: E2E tests
+        run: bun run test:e2e

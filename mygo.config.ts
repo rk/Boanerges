@@ -12,5 +12,5 @@ export default defineConfig({
   frontendDist: "dist",
   bindings: "src/mygo.ts",
   out: "build",
-  resources: ["extras", "resources"],
+  resources: ["extras"],
 });

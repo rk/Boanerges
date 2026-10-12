@@ -19,3 +19,6 @@
 
 # Local reference port (keep on disk until MyGO issue #33 gaps closed; not in git)
 /legacy/
+/test-results/
+/playwright-report/
+/blob-report/
