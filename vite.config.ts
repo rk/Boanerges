@@ -1,11 +1,12 @@
+import { svelte } from "@sveltejs/vite-plugin-svelte";
+import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 
 export default defineConfig({
+  plugins: [tailwindcss(), svelte()],
   server: {
-    // The app loads this address during `mygo dev` (devUrl in mygo.json).
     port: 5173,
     strictPort: true,
-    // The development app and the packaged builds are not the page's.
     watch: { ignored: ["**/.mygo/**", "**/build/**"] },
   },
 });

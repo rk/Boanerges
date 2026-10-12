@@ -4,6 +4,21 @@ import { call, event } from "mygo-runtime";
 
 // ---- Types ----
 
+export interface Chapter {
+  book: string;
+  bookAbbrev: string;
+  chapter: number;
+  verses: Verse[];
+}
+
+export interface ProgressPayload {
+  abbrev: string;
+  step: string;
+  percent: number;
+  error?: string;
+  install_status?: string;
+}
+
 /** ReadabilitySettings match legacy readability store shape. */
 export interface ReadabilitySettings {
   fontSize: number;
@@ -26,29 +41,13 @@ export interface StudySettings {
   verseListActiveId: string | null;
 }
 
-/** SystemInfo describes the machine the app runs on. */
-export interface SystemInfo {
-  os: string;
-  arch: string;
-  goVersion: string;
+export interface Verse {
+  number: number;
+  text: string;
+  paragraphStart?: boolean;
 }
 
 // ---- Services ----
-
-/**
- * Greeter is callable from the frontend: `mygo generate` turns its methods
- * into typed TypeScript functions in src/mygo.ts.
- */
-export const Greeter = {
-  /** Greet returns a greeting for name. */
-  greet(name: string): Promise<string> {
-    return call("Greeter.Greet", name);
-  },
-  /** Info returns information about the system. */
-  info(): Promise<SystemInfo> {
-    return call("Greeter.Info");
-  },
-} as const;
 
 /** Service is bound for the web frontend (`mygo.Bind`). */
 export const Service = {
@@ -70,10 +69,26 @@ export const Service = {
   },
 } as const;
 
+/** BibleService exposes bible reads to the frontend. */
+export const BibleService = {
+  /** ASVInstallStatus returns bundled import progress for the welcome page. */
+  asvInstallStatus(): Promise<ProgressPayload> {
+    return call("BibleService.ASVInstallStatus");
+  },
+  /** Chapter returns a chapter for translation/book (legacy JSON shape). */
+  chapter(translation: string, book: string, chapter: number): Promise<Chapter> {
+    return call("BibleService.Chapter", translation, book, chapter);
+  },
+  /** UserDBPath returns the app bible database path (for debugging). */
+  userDBPath(): Promise<string> {
+    return call("BibleService.UserDBPath");
+  },
+} as const;
+
 // ---- Events ----
 
 /** Events sent by the Go side. Subscribe with `events.name.on(listener)`. */
 export const events = {
-  /** Tick is sent to the page every second. */
-  tick: event<string>("tick"),
+  /** TranslationInstallProgress is emitted during bundled ASV copy (welcome flow). */
+  translationInstallProgress: event<ProgressPayload>("translationInstallProgress"),
 } as const;
