@@ -35,6 +35,11 @@ func (m *Manager) Close() error {
 	return m.db.Close()
 }
 
+// DB exposes the underlying connection for attach/copy operations.
+func (m *Manager) DB() *sql.DB {
+	return m.db
+}
+
 func (m *Manager) ValidateAbbrev(abbrev string) (string, error) {
 	normalized := strings.ToLower(abbrev)
 	if !abbrevPattern.MatchString(normalized) {

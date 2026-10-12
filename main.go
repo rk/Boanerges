@@ -2,9 +2,11 @@ package main
 
 import (
 	"log"
+	"path/filepath"
 	"runtime"
 	"time"
 
+	"boanerges/internal/bible/bundled"
 	"boanerges/internal/settings"
 
 	"github.com/egoist/mygo"
@@ -41,6 +43,10 @@ func main() {
 	mygo.Bind(Greeter{}, settings.NewService(&settings.Repository{}))
 
 	mygo.App.WhenReady(func() {
+		if err := ensureBundledASV(); err != nil {
+			log.Printf("bundled ASV import: %v", err)
+		}
+
 		win := mygo.NewWindow(mygo.WindowOptions{
 			Title:           "Boanerges",
 			Width:           960,
@@ -65,4 +71,17 @@ func main() {
 	if err := mygo.App.Run(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func ensureBundledASV() error {
+	userDir, err := mygo.App.Path(mygo.PathUserData)
+	if err != nil {
+		return err
+	}
+	resDir, err := mygo.App.Path(mygo.PathResources)
+	if err != nil {
+		return err
+	}
+
+	return bundled.Bootstrap(filepath.Join(userDir, "bible.sqlite"), resDir)
 }
