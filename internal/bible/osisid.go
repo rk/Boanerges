@@ -1,31 +1,24 @@
 package bible
 
-import "strings"
+import (
+	"strings"
+	"sync"
+)
 
-// ponytail: alias map only; full canon + BibleCanon lives in issue 3.
+var (
+	canonOnce sync.Once
+	canonSet  map[string]struct{}
 
-var canonOSIS = map[string]struct{}{
-	"gen": {}, "exo": {}, "lev": {}, "num": {}, "deu": {}, "jos": {}, "jdg": {}, "rut": {},
-	"1sa": {}, "2sa": {}, "1ki": {}, "2ki": {}, "1ch": {}, "2ch": {}, "ezr": {}, "neh": {},
-	"est": {}, "job": {}, "psa": {}, "pro": {}, "ecc": {}, "sng": {}, "isa": {}, "jer": {},
-	"lam": {}, "ezk": {}, "dan": {}, "hos": {}, "jol": {}, "amo": {}, "oba": {}, "jon": {},
-	"mic": {}, "nam": {}, "hab": {}, "zep": {}, "hag": {}, "zec": {}, "mal": {}, "mat": {},
-	"mrk": {}, "luk": {}, "jhn": {}, "act": {}, "rom": {}, "1co": {}, "2co": {}, "gal": {},
-	"eph": {}, "php": {}, "col": {}, "1th": {}, "2th": {}, "1ti": {}, "2ti": {}, "tit": {},
-	"phm": {}, "heb": {}, "jas": {}, "1pe": {}, "2pe": {}, "1jn": {}, "2jn": {}, "3jn": {},
-	"jud": {}, "rev": {},
-}
-
-var osisAliases = map[string]string{
-	"exod": "exo", "deut": "deu", "josh": "jos", "judg": "jdg", "1sam": "1sa", "2sam": "2sa",
-	"1kgs": "1ki", "2kgs": "2ki", "1chr": "1ch", "2chr": "2ch", "matt": "mat", "matthew": "mat",
-	"mark": "mrk", "luke": "luk", "john": "jhn", "genesis": "gen",
-}
+	lookupOnce sync.Once
+	lookupMap  map[string][]string
+)
 
 // NormalizeBookID returns the canonical OSIS id when input is known.
 func NormalizeBookID(bookID string) (string, bool) {
 	key := normalizeKey(bookID)
-	if _, ok := canonOSIS[key]; ok {
+	canonOnce.Do(func() { canonSet = canonOSISSet() })
+
+	if _, ok := canonSet[key]; ok {
 		return key, true
 	}
 	if canonical, ok := osisAliases[key]; ok {
@@ -33,6 +26,69 @@ func NormalizeBookID(bookID string) (string, bool) {
 	}
 
 	return "", false
+}
+
+// IsCanon reports whether bookID resolves to a canon book.
+func IsCanon(bookID string) bool {
+	_, ok := NormalizeBookID(bookID)
+
+	return ok
+}
+
+// DisplayName returns the English book name for UI.
+func DisplayName(bookID string) string {
+	canonical, ok := NormalizeBookID(bookID)
+	if !ok {
+		return strings.ToUpper(bookID)
+	}
+	if name, ok := osisDisplayNames[canonical]; ok {
+		return name
+	}
+
+	return strings.ToUpper(canonical)
+}
+
+// LookupValues returns DB match keys for a canonical or alias id.
+func LookupValues(bookID string) []string {
+	canonical, ok := NormalizeBookID(bookID)
+	if !ok {
+		return []string{normalizeKey(bookID)}
+	}
+
+	lookupOnce.Do(func() { lookupMap = buildLookupValues() })
+
+	if values, ok := lookupMap[canonical]; ok {
+		out := make([]string, len(values))
+		copy(out, values)
+
+		return out
+	}
+
+	return []string{canonical}
+}
+
+func buildLookupValues() map[string][]string {
+	values := map[string][]string{}
+	for _, book := range Books() {
+		values[book.Osis] = []string{book.Osis}
+	}
+	for alias, canonical := range osisAliases {
+		values[canonical] = append(values[canonical], alias)
+	}
+	for canonical, aliases := range values {
+		seen := map[string]struct{}{}
+		unique := make([]string, 0, len(aliases))
+		for _, a := range aliases {
+			if _, ok := seen[a]; ok {
+				continue
+			}
+			seen[a] = struct{}{}
+			unique = append(unique, a)
+		}
+		values[canonical] = unique
+	}
+
+	return values
 }
 
 func normalizeKey(bookID string) string {
