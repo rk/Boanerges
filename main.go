@@ -7,8 +7,10 @@ import (
 
 	"boanerges/internal/bible/bootstrap"
 	"boanerges/internal/bible/bundled"
+	"boanerges/internal/appchrome"
 	"boanerges/internal/bibleapp"
 	"boanerges/internal/settings"
+	"boanerges/internal/studydata"
 
 	"github.com/egoist/mygo"
 )
@@ -20,11 +22,15 @@ func main() {
 		log.Fatal(err)
 	}
 
+	chrome := appchrome.NewAppChrome()
+
 	mygo.Bind(
 		settings.NewService(&settings.Repository{}),
 		bibleapp.NewBibleService(dbPath, boot),
 		bibleapp.NewTranslationService(dbPath, boot),
 		bibleapp.NewDictionaryService(dbPath),
+		&studydata.StudyData{},
+		chrome,
 	)
 
 	mygo.App.WhenReady(func() {
@@ -40,6 +46,8 @@ func main() {
 		})
 
 		boot.SetWindow(win)
+		chrome.SetWindow(win)
+		appchrome.SetupApplicationMenu(win)
 		go func() {
 			resDir, err := mygo.App.Path(mygo.PathResources)
 			if err != nil {
