@@ -243,15 +243,28 @@ func ProgressPercent(status, step string) int {
 	switch step {
 	case "ready":
 		return 100
-	case "indexing", "indexed":
+	case "indexing", "indexed", "indexing_coverage":
 		return 85
-	case "importing":
-		return 50
+	case "verifying":
+		return 65
+	case "importing", "backfill_plain_text":
+		return 55
 	case "creating_schema":
 		return 30
 	case "downloaded", "source_ready":
 		return 10
+	case "queued", "pending":
+		return 5
 	default:
+		if status == StatusVerifying {
+			return 65
+		}
+		if status == StatusIndexing {
+			return 85
+		}
+		if status == StatusImporting {
+			return 50
+		}
 		return 0
 	}
 }

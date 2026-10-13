@@ -1,17 +1,32 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { AppChrome, BibleService, events, type ProgressPayload } from "./mygo";
-  import { setColumnCount, study, toggleColumn } from "./lib/study.svelte.ts";
+  import { AppChrome, BibleService, events, Service, type ProgressPayload } from "./mygo";
+  import {
+    addVerseToList,
+    applyStudySettings,
+    copyVerseReference,
+    hydrateStudy,
+    openCrossReferencesForVerse,
+    openDictionaryForWord,
+    setColumnCount,
+    study,
+    toggleColumn,
+  } from "./lib/study.svelte.ts";
   import type { ColumnType } from "./lib/study.svelte.ts";
   import TranslationManagerModal from "./components/sidebar/TranslationManagerModal.svelte";
   import PrintOptionsModal from "./components/print/PrintOptionsModal.svelte";
   import { bindTranslationInstallProgress, openTranslationManager } from "./lib/translations.svelte.ts";
   import Study from "./pages/Study.svelte";
   import Welcome from "./pages/Welcome.svelte";
+  import BookChapterFlyout from "./pages/BookChapterFlyout.svelte";
+  import VerseActionsFlyout from "./pages/VerseActionsFlyout.svelte";
 
+  const flyoutParam =
+    typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("flyout") : null;
   let printOpen = $state(false);
 
   let ready = $state(false);
+  let studyLoaded = $state(import.meta.env.VITE_E2E === "1");
   let progress = $state({ step: "starting", percent: 0, error: "" });
 
   function applyStatus(p: ProgressPayload) {
@@ -89,6 +104,31 @@
     const offProgress = events.translationInstallProgress.on(applyStatus);
     const offTranslationProgress = bindTranslationInstallProgress();
     const offMenu = events.studyMenu.on(handleMenu);
+    const offStudy = events.studySettingsChanged.on(() => {
+      if (ready) {
+        void Service.getStudy().then(applyStudySettings);
+      }
+    });
+    const offVerseMenu = events.verseMenuAction.on((payload) => {
+      const { action, bookId, chapter, verse, word } = payload;
+      const ch = Number(chapter);
+      const v = Number(verse);
+      if (action === "cross-references") {
+        openCrossReferencesForVerse(String(bookId), ch, v);
+        return;
+      }
+      if (action === "verse-list") {
+        void addVerseToList(String(bookId), ch, v);
+        return;
+      }
+      if (action === "copy-reference") {
+        void copyVerseReference(String(bookId), ch, v);
+        return;
+      }
+      if (action === "dictionary" && word) {
+        openDictionaryForWord(word);
+      }
+    });
     const welcomeQuery =
       typeof window !== "undefined" && new URLSearchParams(window.location.search).get("e2eWelcome") === "1";
     const mode = import.meta.env.VITE_E2E;
@@ -102,16 +142,36 @@
     return () => {
       offProgress();
       offTranslationProgress();
+      offStudy();
+      offVerseMenu();
       offMenu();
     };
   });
+
+  $effect(() => {
+    if (!ready || studyLoaded) {
+      return;
+    }
+    void Service.getStudy().then((settings) => {
+      hydrateStudy(settings);
+      studyLoaded = true;
+    });
+  });
 </script>
 
-<TranslationManagerModal />
-<PrintOptionsModal bind:open={printOpen} />
-
-{#if ready}
-  <Study />
+{#if flyoutParam === "verse-actions"}
+  <VerseActionsFlyout />
+{:else if flyoutParam === "book-chapter"}
+  <BookChapterFlyout />
 {:else}
-  <Welcome {progress} />
+  <TranslationManagerModal />
+  <PrintOptionsModal bind:open={printOpen} />
+
+  {#if ready && studyLoaded}
+    <Study />
+  {:else if ready}
+    <p class="flex h-screen items-center justify-center opacity-60">Loading study…</p>
+  {:else}
+    <Welcome {progress} />
+  {/if}
 {/if}

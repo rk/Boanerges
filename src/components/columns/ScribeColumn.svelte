@@ -1,46 +1,167 @@
 <script lang="ts">
+  import CircleCheck from "@lucide/svelte/icons/circle-check";
+  import EllipsisVertical from "@lucide/svelte/icons/ellipsis-vertical";
+  import LoaderCircle from "@lucide/svelte/icons/loader-circle";
   import ColumnHeader from "../layout/ColumnHeader.svelte";
-  import { StudyData, type ScribeVerse } from "../../mygo";
+  import ScribeEditor from "../scribe/ScribeEditor.svelte";
+  import { BibleService, type Chapter } from "../../mygo";
+  import { readerStyle } from "../../lib/readability.svelte.ts";
+  import { scribe } from "../../lib/scribe.svelte.ts";
   import { study } from "../../lib/study.svelte.ts";
+
+  type ScribeEditorHandle = {
+    openPreview(): void;
+    setLineBreaksFromPrimary(): void;
+    resetLineBreaks(): void;
+  };
 
   let { slotIndex = 0 }: { slotIndex?: number; columnType?: string } = $props();
 
-  let draft = $state("");
-  let loaded = $state<ScribeVerse[]>([]);
+  let currentChapter = $state<Chapter | null>(null);
+  let loading = $state(true);
+  let editor = $state<ScribeEditorHandle | null>(null);
+  let actionsMenuOpen = $state(false);
+  let actionsTriggerEl = $state<HTMLButtonElement | null>(null);
+  let actionsPanelEl = $state<HTMLUListElement | null>(null);
+
+  const actionsDisabled = $derived(loading || !currentChapter);
+
+  function closeActionsMenu(): void {
+    actionsMenuOpen = false;
+  }
+
+  function toggleActionsMenu(event: MouseEvent): void {
+    event.stopPropagation();
+    actionsMenuOpen = !actionsMenuOpen;
+  }
 
   $effect(() => {
-    void StudyData.scribeGet(study.bookId, study.chapter).then((verses) => {
-      loaded = verses;
-      draft = verses.map((v) => `${v.verse}. ${v.text}`).join("\n");
-    });
+    if (!actionsMenuOpen) {
+      return;
+    }
+
+    function handlePointerDown(event: PointerEvent): void {
+      const target = event.target as Node;
+
+      if (actionsTriggerEl?.contains(target) || actionsPanelEl?.contains(target)) {
+        return;
+      }
+
+      closeActionsMenu();
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
   });
 
-  function save() {
-    const byVerse = new Map(loaded.map((v) => [v.verse, v]));
-    const verses = draft
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean)
-      .map((line) => {
-        const m = line.match(/^(\d+)\.\s*(.*)$/);
-        const verse = m ? Number(m[1]) : 0;
-        const text = m ? m[2] : line;
-        const prev = byVerse.get(verse);
-        return { verse, text, paragraphStart: prev?.paragraphStart ?? false };
+  $effect(() => {
+    const bookId = study.bookId;
+    const chapterNumber = study.chapter;
+    const translationId = study.translationId;
+    let cancelled = false;
+
+    loading = true;
+    currentChapter = null;
+
+    void BibleService.chapter(translationId, bookId, chapterNumber)
+      .then((resp) => {
+        if (!cancelled) {
+          currentChapter = resp.chapter;
+          loading = false;
+        }
       })
-      .filter((v) => v.verse > 0);
-    void StudyData.scribePut(study.bookId, study.chapter, verses);
-    loaded = verses;
-  }
+      .catch(() => {
+        if (!cancelled) {
+          loading = false;
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  });
 </script>
 
-<div class="flex h-full flex-col">
-  <ColumnHeader contentType="scribe" {slotIndex} showViewSelector />
-  <textarea
-    class="textarea textarea-ghost h-full resize-none rounded-none p-4 font-mono text-sm"
-    data-testid="scribe-editor"
-    bind:value={draft}
-    onblur={save}
-    placeholder="1. Verse draft…"
-  ></textarea>
+<div class="flex h-full min-h-0 min-w-0 flex-col" style={readerStyle()}>
+  <ColumnHeader contentType="scribe" {slotIndex} showViewSelector>
+    {#if currentChapter}
+      <span class="text-sm opacity-80">{currentChapter.book} {currentChapter.chapter}</span>
+    {/if}
+    {#if scribe.saveStatus === "saving"}
+      <LoaderCircle size={14} class="text-base-content/60 shrink-0 animate-spin" aria-label="Saving" />
+    {:else if scribe.saveStatus === "saved"}
+      <CircleCheck size={14} class="text-success shrink-0" aria-label="Saved" />
+    {/if}
+    <div
+      class="dropdown dropdown-end ml-auto"
+      class:dropdown-open={actionsMenuOpen}
+      class:z-50={actionsMenuOpen}
+    >
+      <button
+        bind:this={actionsTriggerEl}
+        type="button"
+        class="btn btn-ghost btn-sm btn-square"
+        aria-label="Scribe actions"
+        aria-expanded={actionsMenuOpen}
+        aria-haspopup="menu"
+        disabled={actionsDisabled}
+        onclick={toggleActionsMenu}
+      >
+        <EllipsisVertical size={16} aria-hidden="true" />
+      </button>
+      <ul
+        bind:this={actionsPanelEl}
+        class="dropdown-content menu bg-base-100 rounded-box z-50 w-56 border border-base-300 p-1 shadow-lg"
+        role="menu"
+      >
+        <li role="none">
+          <button
+            type="button"
+            role="menuitem"
+            onclick={() => {
+              editor?.setLineBreaksFromPrimary();
+              closeActionsMenu();
+            }}
+          >
+            Set Line Breaks from Primary
+          </button>
+        </li>
+        <li role="none">
+          <button
+            type="button"
+            role="menuitem"
+            onclick={() => {
+              editor?.resetLineBreaks();
+              closeActionsMenu();
+            }}
+          >
+            Reset Line Breaks
+          </button>
+        </li>
+        <li role="none">
+          <button
+            type="button"
+            role="menuitem"
+            onclick={() => {
+              editor?.openPreview();
+              closeActionsMenu();
+            }}
+          >
+            Preview
+          </button>
+        </li>
+      </ul>
+    </div>
+  </ColumnHeader>
+
+  {#if loading || !currentChapter}
+    <div class="flex flex-1 items-center justify-center p-8">
+      <span class="loading loading-lg loading-spinner text-primary"></span>
+    </div>
+  {:else}
+    <ScribeEditor bind:this={editor} book={currentChapter.book} chapter={currentChapter.chapter} verses={currentChapter.verses} />
+  {/if}
 </div>

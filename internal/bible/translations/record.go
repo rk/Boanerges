@@ -32,14 +32,16 @@ type Config struct {
 
 // CatalogItem is legacy CatalogTranslationResource shape.
 type CatalogItem struct {
-	ID            string  `json:"id"`
-	Module        string  `json:"module"`
-	Name          string  `json:"name"`
-	Abbrev        string  `json:"abbrev"`
-	Installed     bool    `json:"installed"`
-	Bundled       bool    `json:"bundled"`
-	About         string  `json:"about,omitempty"`
-	InstallStatus *string `json:"install_status"`
+	ID             string  `json:"id"`
+	Module         string  `json:"module"`
+	Name           string  `json:"name"`
+	Abbrev         string  `json:"abbrev"`
+	Installed      bool    `json:"installed"`
+	Bundled        bool    `json:"bundled"`
+	About          string  `json:"about,omitempty"`
+	InstallStatus  *string `json:"install_status"`
+	InstallStep    *string `json:"install_step,omitempty"`
+	InstallPercent int     `json:"install_percent,omitempty"`
 }
 
 const (

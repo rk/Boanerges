@@ -135,6 +135,9 @@ func (i *Importer) Import(abbrev, moduleKey string, onProgress func(done, total 
 					text = ""
 				}
 				plain := i.formatter.ToPlainText(text)
+				if plain == "" && strings.TrimSpace(text) != "" {
+					plain = text
+				}
 				rows = append(rows, schema.VerseRow{
 					BookID: bookID, Chapter: ch, Verse: v, Text: text, PlainText: plain,
 				})

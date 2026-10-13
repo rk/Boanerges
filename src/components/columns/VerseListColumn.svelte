@@ -38,6 +38,9 @@
   }
 
   async function addCurrentVerse() {
+    if (study.selectedVerse === null) {
+      return;
+    }
     const entries = [...(active?.entries ?? [])];
     entries.push({ bookId: study.bookId, chapter: study.chapter, verse: study.selectedVerse });
     await saveList(entries);
@@ -62,7 +65,9 @@
   <ColumnHeader contentType="verse-list" {slotIndex} showViewSelector />
   <div class="flex flex-wrap items-center gap-2 border-b border-base-300 px-3 py-2">
     <input class="input input-bordered input-xs flex-1" bind:value={titleDraft} placeholder="List title" />
-    <button type="button" class="btn btn-xs" onclick={addCurrentVerse}>Add verse</button>
+    <button type="button" class="btn btn-xs" onclick={addCurrentVerse} disabled={study.selectedVerse === null}>
+      Add verse
+    </button>
     {#if active}
       <button type="button" class="btn btn-xs btn-ghost" data-testid="verse-list-delete" onclick={deleteActiveList}>Delete</button>
     {/if}

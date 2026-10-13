@@ -108,17 +108,13 @@ func (p *Pipeline) Run(translationID int64) error {
 		if err := try("import_verses", func() error { return p.importVerses(rec, entry, downloaded) }); err != nil {
 			return err
 		}
+		// ponytail: pipeline backfill disabled — import sets plain_text; FTS uses COALESCE; revisit BackfillPlainTextIfEmpty later.
 		if err := try("verify", func() error { return p.verify(rec, entry) }); err != nil {
 			return err
 		}
 	}
 
-	if err := try("index_coverage", func() error { return p.schema.IndexBookCoverage(rec.Abbrev) }); err != nil {
-		return err
-	}
-	if err := try("backfill_plain_text", func() error {
-		return p.schema.BackfillPlainTextIfEmpty(rec.Abbrev, p.formatter)
-	}); err != nil {
+	if err := try("index_coverage", func() error { return p.indexCoverage(rec) }); err != nil {
 		return err
 	}
 
@@ -135,7 +131,7 @@ func (p *Pipeline) Run(translationID int64) error {
 	if err := p.store.MarkReady(translationID); err != nil {
 		return err
 	}
-	p.emit(rec.Abbrev, translations.StatusReady, "ready", "")
+	p.updateProgress(translationID, rec.Abbrev, translations.StatusReady, "ready")
 
 	return nil
 }
@@ -278,6 +274,8 @@ func (p *Pipeline) importVerses(rec *translations.Record, entry catalog.Entry, d
 }
 
 func (p *Pipeline) verify(rec *translations.Record, entry catalog.Entry) error {
+	p.updateProgress(rec.ID, rec.Abbrev, translations.StatusVerifying, "verifying")
+
 	switch entry.ImportAs {
 	case catalog.FormatSword:
 		if err := p.importers.Sword().Verify(entry.Short); err != nil {
@@ -289,9 +287,13 @@ func (p *Pipeline) verify(rec *translations.Record, entry catalog.Entry) error {
 		}
 	}
 
-	p.updateProgress(rec.ID, rec.Abbrev, translations.StatusVerifying, "verifying")
-
 	return nil
+}
+
+func (p *Pipeline) indexCoverage(rec *translations.Record) error {
+	p.updateProgress(rec.ID, rec.Abbrev, translations.StatusIndexing, "indexing_coverage")
+
+	return p.schema.IndexBookCoverage(rec.Abbrev)
 }
 
 func (p *Pipeline) hasVerse(abbrev, book string, chapter, verse int) bool {

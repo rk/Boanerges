@@ -8,6 +8,15 @@ import (
 
 const plainTextBackfillChunk = 500
 
+func countEmptyPlain(m *Manager, verses string) (int, error) {
+	var n int
+	err := m.db.QueryRow(fmt.Sprintf(
+		`SELECT COUNT(*) FROM %s WHERE plain_text IS NULL OR TRIM(plain_text) = ''`, verses,
+	)).Scan(&n)
+
+	return n, err
+}
+
 // BackfillPlainTextIfEmpty fills plain_text from markup in chunks (separate from FTS rebuild).
 func (m *Manager) BackfillPlainTextIfEmpty(abbrev string, formatter *markup.Formatter) error {
 	if formatter == nil {
@@ -18,10 +27,21 @@ func (m *Manager) BackfillPlainTextIfEmpty(abbrev string, formatter *markup.Form
 		return err
 	}
 
-	var empty int
-	if err := m.db.QueryRow(fmt.Sprintf(
-		`SELECT COUNT(*) FROM %s WHERE plain_text IS NULL OR plain_text = ''`, verses,
-	)).Scan(&empty); err != nil {
+	empty, err := countEmptyPlain(m, verses)
+	if err != nil {
+		return err
+	}
+	if empty == 0 {
+		return nil
+	}
+
+	// ponytail: one UPDATE for rows import missed — avoids 31k formatter passes when plain was left empty.
+	_, _ = m.db.Exec(fmt.Sprintf(`
+		UPDATE %s SET plain_text = text
+		WHERE (plain_text IS NULL OR TRIM(plain_text) = '') AND TRIM(text) <> ''`, verses))
+
+	empty, err = countEmptyPlain(m, verses)
+	if err != nil {
 		return err
 	}
 	if empty == 0 {
@@ -30,7 +50,7 @@ func (m *Manager) BackfillPlainTextIfEmpty(abbrev string, formatter *markup.Form
 
 	for {
 		rows, err := m.db.Query(fmt.Sprintf(
-			`SELECT id, text FROM %s WHERE plain_text IS NULL OR plain_text = '' ORDER BY id LIMIT ?`, verses,
+			`SELECT id, text FROM %s WHERE plain_text IS NULL OR TRIM(plain_text) = '' ORDER BY id LIMIT ?`, verses,
 		), plainTextBackfillChunk)
 		if err != nil {
 			return err

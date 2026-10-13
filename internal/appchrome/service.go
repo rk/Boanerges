@@ -13,9 +13,11 @@ import (
 
 // AppChrome exposes desktop print for the main window.
 type AppChrome struct {
-	mu     sync.Mutex
-	win    *mygo.Window
-	dbPath string
+	mu          sync.Mutex
+	win         *mygo.Window
+	bookFlyout  *mygo.Window
+	verseFlyout *mygo.Window
+	dbPath      string
 }
 
 func NewAppChrome(dbPath string) *AppChrome {

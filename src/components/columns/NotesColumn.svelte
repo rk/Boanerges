@@ -23,10 +23,10 @@
   }
 </script>
 
-<div class="flex h-full flex-col">
+<div class="flex h-full min-h-0 flex-col">
   <ColumnHeader contentType="notes" {slotIndex} showViewSelector />
   <textarea
-    class="textarea textarea-ghost h-full resize-none rounded-none p-4"
+    class="textarea textarea-ghost min-h-0 flex-1 resize-none rounded-none p-4"
     data-testid="notes-editor"
     bind:value={content}
     oninput={save}

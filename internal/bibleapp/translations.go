@@ -107,17 +107,26 @@ func (s *TranslationService) Catalog() (catalogResponse, error) {
 		rec, _ := s.store.FindByAbbrev(entry.ID())
 		var status *string
 		installed := false
+		var step *string
+		percent := 0
 		if rec != nil {
 			installed = rec.IsReady()
 			if rec.InstallStatus != "" {
 				st := rec.InstallStatus
 				status = &st
 			}
+			if rec.InstallStep != "" {
+				s := rec.InstallStep
+				step = &s
+			}
+			if !rec.IsReady() {
+				percent = translations.ProgressPercent(rec.InstallStatus, rec.InstallStep)
+			}
 		}
 		items = append(items, translations.CatalogItem{
 			ID: entry.ID(), Module: entry.Module(), Name: entry.Name, Abbrev: entry.Short,
 			Installed: installed, Bundled: s.registry.IsBundled(entry.Short),
-			About: entry.About, InstallStatus: status,
+			About: entry.About, InstallStatus: status, InstallStep: step, InstallPercent: percent,
 		})
 	}
 

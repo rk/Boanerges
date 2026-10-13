@@ -27,6 +27,8 @@ export interface CatalogItem {
   bundled: boolean;
   about?: string;
   install_status: string | null;
+  install_step?: string;
+  install_percent?: number;
 }
 
 export interface CatalogResponse {
@@ -150,6 +152,15 @@ export interface VerseListSummary {
   id: string;
   title: string;
   updatedAt: string;
+}
+
+/** VerseMenuPayload is dispatched on the main window after a verse context action. */
+export interface VerseMenuPayload {
+  action: string;
+  bookId: string;
+  chapter: number;
+  verse: number;
+  word?: string;
 }
 
 /**
@@ -278,6 +289,21 @@ export const StudyData = {
 
 /** AppChrome exposes desktop print for the main window. */
 export const AppChrome = {
+  /** CloseBookChapterFlyout dismisses the picker flyout if open. */
+  closeBookChapterFlyout(): Promise<void> {
+    return call("AppChrome.CloseBookChapterFlyout");
+  },
+  /** CloseVerseActionsFlyout dismisses the verse menu flyout if open. */
+  closeVerseActionsFlyout(): Promise<void> {
+    return call("AppChrome.CloseVerseActionsFlyout");
+  },
+  /**
+   * OpenBookChapterFlyout shows the book/chapter picker in a native flyout (not clipped by the webview).
+   * Anchor is in DIPs relative to the main window content area, e.g. from getBoundingClientRect().
+   */
+  openBookChapterFlyout(anchorX: number, anchorY: number, anchorWidth: number, anchorHeight: number): Promise<void> {
+    return call("AppChrome.OpenBookChapterFlyout", anchorX, anchorY, anchorWidth, anchorHeight);
+  },
   /** OpenDevTools toggles the main window developer tools. */
   openDevTools(): Promise<void> {
     return call("AppChrome.OpenDevTools");
@@ -285,6 +311,14 @@ export const AppChrome = {
   /** OpenFeedback opens the feedback mailto link in the system handler. */
   openFeedback(): Promise<void> {
     return call("AppChrome.OpenFeedback");
+  },
+  /** OpenVerseActionsFlyout shows verse context actions in a native flyout (not clipped by the webview). */
+  openVerseActionsFlyout(anchorX: number, anchorY: number, bookID: string, chapter: number, verse: number, word: string): Promise<void> {
+    return call("AppChrome.OpenVerseActionsFlyout", anchorX, anchorY, bookID, chapter, verse, word);
+  },
+  /** PerformVerseAction closes the flyout and notifies the main window. */
+  performVerseAction(action: string, bookID: string, chapter: number, verse: number, word: string): Promise<void> {
+    return call("AppChrome.PerformVerseAction", action, bookID, chapter, verse, word);
   },
   print(): Promise<void> {
     return call("AppChrome.Print");
@@ -316,6 +350,10 @@ export const AppChrome = {
 export const events = {
   /** TranslationInstallProgress is emitted during translation installs. */
   translationInstallProgress: event<Payload>("translationInstallProgress"),
+  /** StudySettingsChanged is emitted on the main window when the flyout picker saves location. */
+  studySettingsChanged: event<{}>("studySettingsChanged"),
   /** MenuAction is emitted when the user picks a custom application menu item. */
   studyMenu: event<string>("studyMenu"),
+  /** VerseMenuAction is emitted on the main window when the verse-actions flyout picks an item. */
+  verseMenuAction: event<VerseMenuPayload>("verseMenuAction"),
 } as const;

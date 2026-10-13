@@ -27,7 +27,9 @@ test("search hit navigates location", async ({ page }) => {
 test("cross references panel", async ({ page }) => {
   await page.evaluate(() => window.__dispatchStudyMenu?.("view.columns.2"));
   await page.evaluate(() => window.__dispatchStudyMenu?.("study.cross-references"));
-  await expect(page.getByText("John")).toBeVisible();
+  await page.getByTestId("bible-reader-primary").locator("[data-verse='1']").click({ button: "right" });
+  await page.getByRole("menuitem", { name: "Cross-references" }).click();
+  await expect(page.getByTestId("cross-ref-hit").first()).toContainText("John");
 });
 
 test("dictionary lookup", async ({ page }) => {
@@ -133,13 +135,17 @@ test("catalog translation install", async ({ page }) => {
 test("scribe persists", async ({ page }) => {
   await page.evaluate(() => window.__dispatchStudyMenu?.("view.columns.2"));
   await page.evaluate(() => window.__dispatchStudyMenu?.("study.scribe"));
-  await page.getByTestId("scribe-editor").fill("1. scribe e2e line");
-  await page.getByTestId("scribe-editor").blur();
+  const verse1 = page.getByRole("textbox", { name: "Verse 1" });
+  await expect(verse1).toBeVisible({ timeout: 10_000 });
+  await verse1.click();
+  await verse1.fill("scribe e2e line");
+  await verse1.blur();
+  await page.waitForTimeout(700);
   await page.reload();
   await expect(page.getByTestId("study-screen")).toBeVisible({ timeout: 15_000 });
   await page.evaluate(() => window.__dispatchStudyMenu?.("view.columns.2"));
   await page.evaluate(() => window.__dispatchStudyMenu?.("study.scribe"));
-  await expect(page.getByTestId("scribe-editor")).toHaveValue(/scribe e2e/, { timeout: 10_000 });
+  await expect(page.getByRole("textbox", { name: "Verse 1" })).toContainText("scribe e2e", { timeout: 10_000 });
 });
 
 test("verse list add entry", async ({ page }) => {

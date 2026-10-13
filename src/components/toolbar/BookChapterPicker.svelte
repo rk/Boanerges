@@ -1,85 +1,21 @@
 <script lang="ts">
-  import ArrowLeft from "@lucide/svelte/icons/arrow-left";
   import ChevronDown from "@lucide/svelte/icons/chevron-down";
-  import { SvelteMap } from "svelte/reactivity";
-  import type { Book } from "../../mygo";
-  import { bible, fetchBooksForTranslations, getBooksForTranslation } from "../../lib/bible.svelte.ts";
-  import { CANON_NT_BOOK_IDS, CANON_OT_BOOK_IDS, canonBookName } from "../../lib/canonBookNames";
-  import { setBook, setChapter, study } from "../../lib/study.svelte.ts";
-  import { activeBibleTranslationIds, isBookAvailableInTranslations } from "../../lib/studyLayout";
+  import { AppChrome } from "../../mygo";
+  import { bible, getBooksForTranslation } from "../../lib/bible.svelte.ts";
+  import { study } from "../../lib/study.svelte.ts";
+  import BookChapterPickerPanel from "./BookChapterPickerPanel.svelte";
 
-  type Step = "book" | "chapter";
-
-  type BookRow = {
-    id: string;
-    name: string;
-    chapters: number;
-    available: boolean;
-  };
+  const useNativeFlyout = import.meta.env.VITE_E2E !== "1";
 
   let triggerEl = $state<HTMLButtonElement | null>(null);
   let panelEl = $state<HTMLDivElement | null>(null);
   let open = $state(false);
   let panelStyle = $state("");
-  let step = $state<Step>("book");
-  let pendingBookId = $state<string | null>(null);
+  let step = $state<"book" | "chapter">("book");
 
   const primaryBooks = $derived(getBooksForTranslation(study.translationId) ?? bible.books);
-
   const currentBook = $derived(primaryBooks.find((book) => book.id === study.bookId));
   const locationLabel = $derived(currentBook ? `${currentBook.name} ${study.chapter}` : "Book & chapter");
-
-  const activeTranslationIds = $derived(activeBibleTranslationIds(study));
-
-  const booksByTranslationMap = $derived.by(() => {
-    const map = new SvelteMap<string, readonly Book[]>();
-    for (const translationId of activeTranslationIds) {
-      const books = getBooksForTranslation(translationId);
-      if (books) {
-        map.set(translationId, books);
-      }
-    }
-    return map;
-  });
-
-  const booksReady = $derived(
-    activeTranslationIds.every((translationId) => getBooksForTranslation(translationId) !== undefined),
-  );
-
-  function buildBookRows(ids: readonly string[]): BookRow[] {
-    return ids.map((id) => {
-      const primaryBook = primaryBooks.find((book) => book.id === id);
-      return {
-        id,
-        name: primaryBook?.name ?? canonBookName(id),
-        chapters: primaryBook?.chapters ?? 1,
-        available:
-          booksReady && isBookAvailableInTranslations(id, activeTranslationIds, booksByTranslationMap),
-      };
-    });
-  }
-
-  const otBooks = $derived(buildBookRows(CANON_OT_BOOK_IDS));
-  const ntBooks = $derived(buildBookRows(CANON_NT_BOOK_IDS));
-
-  const pendingBook = $derived(
-    primaryBooks.find((book) => book.id === pendingBookId) ??
-      otBooks.find((book) => book.id === pendingBookId) ??
-      ntBooks.find((book) => book.id === pendingBookId) ??
-      currentBook,
-  );
-
-  const chapterOptions = $derived(Array.from({ length: pendingBook?.chapters ?? 1 }, (_, index) => index + 1));
-
-  function resetPicker(): void {
-    step = "book";
-    pendingBookId = null;
-  }
-
-  function closePicker(): void {
-    open = false;
-    resetPicker();
-  }
 
   function updatePosition(): void {
     if (!triggerEl) {
@@ -89,31 +25,28 @@
     panelStyle = `top:${rect.bottom + 4}px;left:${rect.left}px;`;
   }
 
-  function togglePicker(event: MouseEvent): void {
+  function closeFallback(): void {
+    open = false;
+    step = "book";
+  }
+
+  async function togglePicker(event: MouseEvent): Promise<void> {
     event.stopPropagation();
+    if (useNativeFlyout && triggerEl) {
+      const rect = triggerEl.getBoundingClientRect();
+      await AppChrome.openBookChapterFlyout(
+        Math.round(rect.x),
+        Math.round(rect.y),
+        Math.round(rect.width),
+        Math.round(rect.height),
+      );
+      return;
+    }
     open = !open;
     if (open) {
-      resetPicker();
+      step = "book";
       updatePosition();
     }
-  }
-
-  function selectBook(bookId: string): void {
-    pendingBookId = bookId;
-    step = "chapter";
-  }
-
-  function selectChapter(chapterNumber: number): void {
-    if (pendingBookId && pendingBookId !== study.bookId) {
-      setBook(pendingBookId);
-    }
-    setChapter(chapterNumber);
-    closePicker();
-  }
-
-  function goBack(): void {
-    step = "book";
-    pendingBookId = null;
   }
 
   function portal(node: HTMLElement): { destroy: () => void } {
@@ -126,14 +59,7 @@
   }
 
   $effect(() => {
-    if (!open) {
-      return;
-    }
-    void fetchBooksForTranslations(activeTranslationIds);
-  });
-
-  $effect(() => {
-    if (!open) {
+    if (!open || useNativeFlyout) {
       return;
     }
     updatePosition();
@@ -143,7 +69,7 @@
       if (triggerEl?.contains(target) || panelEl?.contains(target)) {
         return;
       }
-      closePicker();
+      closeFallback();
     }
 
     function handleReposition(): void {
@@ -175,81 +101,15 @@
   <ChevronDown size={14} aria-hidden="true" />
 </button>
 
-{#if open}
+{#if open && !useNativeFlyout}
   <div
     use:portal
     bind:this={panelEl}
-    class="bg-base-100 rounded-box fixed z-[1000] w-[min(36rem,calc(100vw-1.5rem))] overflow-x-hidden border border-base-300 p-3 shadow-lg"
+    class="bg-base-100 rounded-box fixed z-[1000] w-[min(36rem,calc(100vw-1.5rem))] overflow-x-hidden border border-base-300 shadow-lg"
     style={panelStyle}
     role="dialog"
     aria-label="Book and chapter picker"
   >
-    {#if step === "chapter"}
-      <button type="button" class="btn btn-ghost btn-xs mb-2 gap-1 px-1" onclick={goBack}>
-        <ArrowLeft size={14} aria-hidden="true" />
-        Back
-      </button>
-    {/if}
-
-    {#if step === "book"}
-      {#if !booksReady || bible.booksLoading}
-        <div class="flex items-center justify-center py-8">
-          <span class="loading loading-spinner loading-md text-primary"></span>
-        </div>
-      {:else}
-        <div class="overflow-x-hidden overflow-y-auto overscroll-y-contain">
-          <div class="grid grid-cols-2 gap-3">
-            <section class="min-w-0">
-              <p class="menu-title px-0">Old Testament</p>
-              <div class="columns-2 w-full space-y-1">
-                {#each otBooks as book (book.id)}
-                  <button
-                    type="button"
-                    disabled={!book.available}
-                    class="btn btn-info btn-xs block w-full min-w-0 truncate"
-                    class:btn-active={study.bookId === book.id}
-                    class:opacity-40={!book.available}
-                    onclick={() => selectBook(book.id)}
-                  >
-                    {book.name}
-                  </button>
-                {/each}
-              </div>
-            </section>
-            <section class="min-w-0">
-              <p class="menu-title px-0">New Testament</p>
-              <div class="columns-2 w-full space-y-1">
-                {#each ntBooks as book (book.id)}
-                  <button
-                    type="button"
-                    disabled={!book.available}
-                    class="btn btn-primary btn-xs block w-full min-w-0 truncate"
-                    class:btn-active={study.bookId === book.id}
-                    class:opacity-40={!book.available}
-                    onclick={() => selectBook(book.id)}
-                  >
-                    {book.name}
-                  </button>
-                {/each}
-              </div>
-            </section>
-          </div>
-        </div>
-      {/if}
-    {:else}
-      <p class="menu-title px-0">{pendingBook?.name ?? "Chapter"}</p>
-      <div class="grid max-h-64 grid-cols-6 gap-1 overflow-y-auto">
-        {#each chapterOptions as chapterNumber (chapterNumber)}
-          <button
-            type="button"
-            class="btn btn-xs"
-            class:btn-primary={pendingBookId === study.bookId && study.chapter === chapterNumber}
-            onclick={() => selectChapter(chapterNumber)}
-          >
-            {chapterNumber}
-          </button>
-        {/each}
-      </div>
-    {/if}
+    <BookChapterPickerPanel bind:step onDone={closeFallback} />
   </div>
 {/if}

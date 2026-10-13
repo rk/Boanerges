@@ -1,6 +1,7 @@
 <script lang="ts">
   import ColumnHeader from "../layout/ColumnHeader.svelte";
   import { DictionaryService } from "../../mygo";
+  import { study } from "../../lib/study.svelte.ts";
 
   let { slotIndex = 0 }: { slotIndex?: number; columnType?: string } = $props();
 
@@ -14,6 +15,15 @@
     const resp = (await DictionaryService.suggest(query, 10)) as { suggestions?: string[] };
     suggestions = resp.suggestions ?? [];
   }
+
+  $effect(() => {
+    const pending = study.dictionaryQuery;
+    if (!pending) {
+      return;
+    }
+    study.dictionaryQuery = null;
+    void lookup(pending);
+  });
 
   async function lookup(word: string) {
     if (word.trim().length < 2) {

@@ -37,7 +37,7 @@
   }
 </script>
 
-<div class="flex h-[calc(100vh-3rem)] min-h-0" data-testid="column-layout">
+<div class="flex h-full min-h-0" data-testid="column-layout">
   <section class="min-w-0 flex-1 border-r border-base-300">
     <BibleColumn translationId={study.translationId} primary bind:scrollRef={primaryScroll} onscroll={onPrimaryScroll} />
   </section>

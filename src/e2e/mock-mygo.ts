@@ -233,6 +233,14 @@ export function installMygoMock(mode: string = "1"): void {
     "AppChrome.PrintToPDF": () => "/tmp/boanerges-study.pdf",
     "AppChrome.StudyPrintHTML": () => "<html><body><h1>Genesis 1</h1></body></html>",
     "AppChrome.WriteStudyPrintFile": () => "/tmp/boanerges-study-print.html",
+    "AppChrome.OpenBookChapterFlyout": () => undefined,
+    "AppChrome.CloseBookChapterFlyout": () => undefined,
+    "AppChrome.OpenVerseActionsFlyout": () => undefined,
+    "AppChrome.CloseVerseActionsFlyout": () => undefined,
+    "AppChrome.PerformVerseAction": (action: unknown, bookId: unknown, chapter: unknown, verse: unknown, word: unknown) => {
+      const payload = { action, bookId, chapter, verse, word };
+      listeners.get("verseMenuAction")?.forEach((fn) => fn(payload));
+    },
     "AppChrome.SyncMenuState": () => undefined,
     "AppChrome.OpenDevTools": () => undefined,
     "AppChrome.OpenFeedback": () => undefined,

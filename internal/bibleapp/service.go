@@ -135,6 +135,9 @@ func (s *BibleService) CrossReferences(book string, chapter, verse int) (crossRe
 	defer mgr.Close()
 
 	svc := crossrefs.New(mgr.DB())
+	if !svc.IsImported() {
+		return crossRefsResponse{}, fmt.Errorf("cross-references bundle is not imported")
+	}
 	refs, err := svc.ForVerse(book, chapter, verse)
 	if err != nil {
 		return crossRefsResponse{}, err

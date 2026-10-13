@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"log"
 	"path/filepath"
 	"sync"
 
@@ -99,7 +100,7 @@ func (s *Service) RunASV(userDB, resourcesDir string) error {
 	crossPath := filepath.Join(root, "cross-references", "cross_references.txt")
 	if err := bundled.ImportCrossReferences(userDB, crossPath); err != nil {
 		// ponytail: bundled extras may be absent in partial dev trees; ASV is required.
-		_ = err
+		log.Printf("cross-references import: %v", err)
 	}
 	websterPath := filepath.Join(root, "websters1828", "dictionary.json")
 	if err := bundled.ImportWebster1828(userDB, websterPath); err != nil {
