@@ -102,9 +102,8 @@ func (s *Service) RunASV(userDB, resourcesDir string) error {
 		// ponytail: bundled extras may be absent in partial dev trees; ASV is required.
 		log.Printf("cross-references import: %v", err)
 	}
-	websterPath := filepath.Join(root, "websters1828", "dictionary.json")
-	if err := bundled.ImportWebster1828(userDB, websterPath); err != nil {
-		_ = err
+	if err := bundled.EnsureWebster1828(userDB, resourcesDir); err != nil {
+		log.Printf("webster dictionary import: %v", err)
 	}
 	s.setStatus(progress.StepReady, "ready", "")
 

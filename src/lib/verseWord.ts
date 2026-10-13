@@ -1,15 +1,17 @@
+import { normalizeDictionaryWord } from "./normalizeDictionaryWord";
+
 /** First dictionary word from selection or verse plain text. */
 export function wordFromVerseContext(event: MouseEvent, verseTextHtml: string): string {
-  const selected = window.getSelection()?.toString().trim();
-  if (selected && /[A-Za-z]/.test(selected)) {
-    const m = selected.match(/[A-Za-z][A-Za-z'-]*/);
-    if (m) {
-      return m[0].toLowerCase();
+  const selected = window.getSelection()?.toString();
+  if (selected) {
+    const word = normalizeDictionaryWord(selected);
+    if (word.length >= 2) {
+      return word.toLowerCase();
     }
   }
   const plain = verseTextHtml.replace(/<[^>]+>/g, " ");
   const m = plain.match(/[A-Za-z][A-Za-z'-]{1,}/);
-  return m ? m[0].toLowerCase() : "";
+  return m ? normalizeDictionaryWord(m[0]).toLowerCase() : "";
 }
 
 export function clampMenuPosition(x: number, y: number, menuWidth = 208, menuHeight = 200): { x: number; y: number } {

@@ -1,4 +1,5 @@
 import { Service, StudyData, type StudySettings } from "../mygo";
+import { normalizeDictionaryWord } from "./normalizeDictionaryWord";
 import { formatScriptureReference } from "./scriptureReference";
 import {
   columnTargetSlot,
@@ -201,11 +202,11 @@ export function openCrossReferencesForVerse(bookId: string, chapter: number, ver
 }
 
 export function openDictionaryForWord(word: string): void {
-  const trimmed = word.trim();
-  if (trimmed.length < 2) {
+  const normalized = normalizeDictionaryWord(word);
+  if (normalized.length < 2) {
     return;
   }
-  study.dictionaryQuery = trimmed;
+  study.dictionaryQuery = normalized;
   openColumn("dictionary");
 }
 

@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"boanerges/internal/bible/bootstrap"
+	"boanerges/internal/bible/bundled"
 	"boanerges/internal/bible/crossrefs"
 	"boanerges/internal/bible/read"
 	"boanerges/internal/bible/schema"
@@ -185,12 +186,15 @@ type importingResponse struct {
 
 // Suggest returns dictionary prefix matches.
 func (s *DictionaryService) Suggest(query string, limit int) (any, error) {
+	if err := s.ensureDictionary(); err != nil {
+		return nil, err
+	}
 	svc, err := s.openDict()
 	if err != nil {
 		return nil, err
 	}
 	if !svc.IsImported() {
-		return importingResponse{Status: "importing", Message: "Dictionary is still being set up."}, errImporting
+		return importingResponse{Status: "importing", Message: "Dictionary bundle is not installed."}, nil
 	}
 
 	return suggestResponse{Suggestions: svc.Suggest(query, limit)}, nil
@@ -198,18 +202,37 @@ func (s *DictionaryService) Suggest(query string, limit int) (any, error) {
 
 // Lookup returns dictionary entry for a word.
 func (s *DictionaryService) Lookup(word string) (any, error) {
+	if err := s.ensureDictionary(); err != nil {
+		return nil, err
+	}
 	svc, err := s.openDict()
 	if err != nil {
 		return nil, err
 	}
 	if !svc.IsImported() {
-		return importingResponse{Status: "importing", Message: "Dictionary is still being set up."}, errImporting
+		return importingResponse{Status: "importing", Message: "Dictionary bundle is not installed."}, nil
 	}
 
 	return svc.Lookup(word), nil
 }
 
-var errImporting = errors.New("importing")
+func (s *DictionaryService) ensureDictionary() error {
+	mgr, err := schema.Open(s.dbPath)
+	if err != nil {
+		return err
+	}
+	imported := dictionary.New(mgr.DB()).IsImported()
+	_ = mgr.Close()
+	if imported {
+		return nil
+	}
+
+	resDir, err := mygo.App.Path(mygo.PathResources)
+	if err != nil {
+		return err
+	}
+	return bundled.EnsureWebster1828(s.dbPath, resDir)
+}
 
 func (s *DictionaryService) openDict() (*dictionary.Service, error) {
 	mgr, err := schema.Open(s.dbPath)

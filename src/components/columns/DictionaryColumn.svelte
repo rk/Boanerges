@@ -1,18 +1,24 @@
 <script lang="ts">
   import ColumnHeader from "../layout/ColumnHeader.svelte";
   import { DictionaryService } from "../../mygo";
+  import { parseDictionaryLookup, type DictionaryLookupResult } from "../../lib/dictionaryResponse";
+  import { normalizeDictionaryWord } from "../../lib/normalizeDictionaryWord";
   import { study } from "../../lib/study.svelte.ts";
 
   let { slotIndex = 0 }: { slotIndex?: number; columnType?: string } = $props();
 
   let query = $state("");
   let suggestions = $state<string[]>([]);
-  let result = $state<{ found: boolean; word: string; variants?: { definitions: string[]; partOfSpeechExpanded: string }[]; message?: string } | null>(null);
+  let result = $state<DictionaryLookupResult | null>(null);
   let loading = $state(false);
   let error = $state("");
 
   async function suggest() {
-    const resp = (await DictionaryService.suggest(query, 10)) as { suggestions?: string[] };
+    const resp = (await DictionaryService.suggest(query, 10)) as { suggestions?: string[]; status?: string };
+    if (resp.status === "importing") {
+      suggestions = [];
+      return;
+    }
     suggestions = resp.suggestions ?? [];
   }
 
@@ -25,8 +31,9 @@
     void lookup(pending);
   });
 
-  async function lookup(word: string) {
-    if (word.trim().length < 2) {
+  async function lookup(raw: string) {
+    const word = normalizeDictionaryWord(raw);
+    if (word.length < 2) {
       result = null;
       error = "";
       return;
@@ -35,7 +42,7 @@
     loading = true;
     error = "";
     try {
-      result = (await DictionaryService.lookup(word)) as typeof result;
+      result = parseDictionaryLookup(await DictionaryService.lookup(word), word);
     } catch (err: unknown) {
       result = null;
       error = err instanceof Error ? err.message : "Lookup failed";
@@ -77,8 +84,8 @@
           {/each}
         </ul>
       {/each}
-    {:else if result}
-      <p>{result.message}</p>
+    {:else if result?.message}
+      <p class="opacity-70">{result.message}</p>
     {/if}
   </article>
 </div>
