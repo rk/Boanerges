@@ -71,3 +71,45 @@ func (s *AppChrome) PrintToPDF(filename string) (string, error) {
 func (s *AppChrome) StudyPrintHTML(study settings.StudySettings, readability settings.ReadabilitySettings, includeUserWork bool) (string, error) {
 	return studyprint.BuildStudyHTML(s.dbPath, study, readability, includeUserWork)
 }
+
+// WriteStudyPrintFile saves printable HTML under user data and returns the path.
+func (s *AppChrome) WriteStudyPrintFile(study settings.StudySettings, readability settings.ReadabilitySettings, includeUserWork bool, filename string) (string, error) {
+	html, err := studyprint.BuildStudyHTML(s.dbPath, study, readability, includeUserWork)
+	if err != nil {
+		return "", err
+	}
+	if filename == "" {
+		filename = "study-print.html"
+	}
+	dir, err := mygo.App.Path(mygo.PathUserData)
+	if err != nil {
+		return "", err
+	}
+	dest := filepath.Join(dir, filename)
+	if err := os.WriteFile(dest, []byte(html), 0o644); err != nil {
+		return "", err
+	}
+
+	return dest, nil
+}
+
+// SyncMenuState updates native menu radio/checkbox items.
+func (s *AppChrome) SyncMenuState(columnCount int, scrollSync bool) {
+	SyncMenuState(columnCount, scrollSync)
+}
+
+// OpenDevTools toggles the main window developer tools.
+func (s *AppChrome) OpenDevTools() {
+	s.mu.Lock()
+	win := s.win
+	s.mu.Unlock()
+	if win == nil {
+		return
+	}
+	win.Page().OpenDevTools()
+}
+
+// OpenFeedback opens the feedback mailto link in the system handler.
+func (s *AppChrome) OpenFeedback() {
+	_ = mygo.Shell.OpenExternal(feedbackMailto)
+}

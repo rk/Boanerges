@@ -1,4 +1,10 @@
 import { Service, type StudySettings } from "../mygo";
+import {
+  columnTargetSlot,
+  firstNonBibleSlot,
+  normalizeColumns,
+} from "./studyLayout";
+import { columnDescriptor } from "./columns/catalog";
 
 export type ColumnType =
   | "bible-secondary"
@@ -30,8 +36,9 @@ let persistTimer: ReturnType<typeof setTimeout> | null = null;
 
 export function hydrateStudy(settings: StudySettings): void {
   if (hydrated) return;
-  study.columnCount = (settings.columnCount as 1 | 2 | 3) || 1;
-  study.columns = (settings.columns ?? []) as ColumnType[];
+  const columnCount = (settings.columnCount as 1 | 2 | 3) || 1;
+  study.columnCount = columnCount;
+  study.columns = normalizeColumns(columnCount, (settings.columns ?? []) as ColumnType[]);
   study.bookId = settings.bookId || "gen";
   study.chapter = settings.chapter || 1;
   study.translationId = settings.translationId || "asv";
@@ -43,9 +50,11 @@ export function hydrateStudy(settings: StudySettings): void {
 }
 
 function payload(): StudySettings {
+  const columns = normalizeColumns(study.columnCount, study.columns);
+  study.columns = columns;
   return {
     columnCount: study.columnCount,
-    columns: study.columns,
+    columns,
     bookId: study.bookId,
     chapter: study.chapter,
     translationId: study.translationId,
@@ -65,20 +74,57 @@ export function schedulePersistStudy(): void {
 
 export function setColumnCount(count: 1 | 2 | 3): void {
   study.columnCount = count;
-  if (study.columns.length > count - 1) {
-    study.columns = study.columns.slice(0, count - 1);
+  study.columns = normalizeColumns(count, study.columns);
+  schedulePersistStudy();
+}
+
+export function setScrollSync(enabled: boolean): void {
+  study.scrollSync = enabled;
+}
+
+export function setColumnContent(slotIndex: number, type: ColumnType): void {
+  const columns = normalizeColumns(study.columnCount, [...study.columns]);
+  columns[slotIndex] = type;
+  study.columns = columns;
+  schedulePersistStudy();
+}
+
+function resolveSlotIndex(type: ColumnType): number {
+  const descriptor = columnDescriptor(type);
+  if (descriptor.pickSlot === "firstNonBible") {
+    const slot = firstNonBibleSlot(study.columns);
+    if (slot !== null) {
+      return slot;
+    }
+  }
+  return columnTargetSlot(type, study.columnCount, study.columns);
+}
+
+/** Open or focus a study column (menu actions). */
+export function openColumn(type: ColumnType): void {
+  if (type === "search" && study.columns.includes("search")) {
+    return;
+  }
+  if (study.columnCount === 1) {
+    setColumnCount(2);
+  }
+  const slotIndex = resolveSlotIndex(type);
+  if (study.columns[slotIndex] !== type) {
+    setColumnContent(slotIndex, type);
+  }
+}
+
+export function setSecondaryTranslation(slotIndex: number, translationId: string): void {
+  if (slotIndex === 0) {
+    study.translationBId = translationId;
+  } else {
+    study.translationCId = translationId;
   }
   schedulePersistStudy();
 }
 
 export function toggleColumn(type: ColumnType): void {
-  const idx = study.columns.indexOf(type);
-  if (idx >= 0) {
-    study.columns = study.columns.filter((c) => c !== type);
-  } else if (study.columns.length < study.columnCount - 1) {
-    study.columns = [...study.columns, type];
-  }
-  schedulePersistStudy();
+  openColumn(type);
 }
 
 export function setBook(bookId: string): void {

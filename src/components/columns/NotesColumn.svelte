@@ -1,6 +1,9 @@
 <script lang="ts">
+  import ColumnHeader from "../layout/ColumnHeader.svelte";
   import { StudyData } from "../../mygo";
   import { schedulePersistStudy, study } from "../../lib/study.svelte.ts";
+
+  let { slotIndex = 0 }: { slotIndex?: number; columnType?: string } = $props();
 
   let content = $state("");
   let timer: ReturnType<typeof setTimeout> | null = null;
@@ -21,7 +24,7 @@
 </script>
 
 <div class="flex h-full flex-col">
-  <div class="border-b border-base-300 px-3 py-2 text-sm font-medium">Notes</div>
+  <ColumnHeader contentType="notes" {slotIndex} showViewSelector />
   <textarea
     class="textarea textarea-ghost h-full resize-none rounded-none p-4"
     data-testid="notes-editor"

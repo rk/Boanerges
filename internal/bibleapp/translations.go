@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"boanerges/internal/bible/bootstrap"
+	"boanerges/internal/bible/bundled"
 	"boanerges/internal/bible/catalog"
 	bibleimport "boanerges/internal/bible/import"
 	"boanerges/internal/bible/import/swordfmt"
@@ -58,7 +59,8 @@ func (s *TranslationService) setup() error {
 			return
 		}
 
-		s.catalog, s.err = catalog.Load(filepath.Join(resDir, "translations.json"))
+		extras := bundled.ResourcesRoot(resDir)
+		s.catalog, s.err = catalog.Load(filepath.Join(extras, "translations.json"))
 		if s.err != nil {
 			return
 		}
@@ -66,7 +68,7 @@ func (s *TranslationService) setup() error {
 		s.store = translations.NewStore(s.mgr)
 		s.registry = registry.New(s.store)
 
-		bundledSword := filepath.Join(resDir, "sword")
+		bundledSword := filepath.Join(extras, "sword")
 		localSword := filepath.Join(dataDir, "sword")
 		roots := swordpath.Roots(bundledSword, localSword)
 
@@ -168,4 +170,14 @@ func (s *TranslationService) InstallStatus(module string) (map[string]any, error
 	}
 
 	return s.installer.InstallStatus(module)
+}
+
+// ResumePendingInstalls re-queues stuck or interrupted catalog installs after app launch.
+func (s *TranslationService) ResumePendingInstalls() error {
+	if err := s.setup(); err != nil {
+		return err
+	}
+	s.installer.ResumePending()
+
+	return nil
 }

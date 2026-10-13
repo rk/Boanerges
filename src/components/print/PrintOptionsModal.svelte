@@ -10,10 +10,12 @@
   let dialog = $state<HTMLDialogElement | null>(null);
   let busy = $state(false);
   let error = $state<string | null>(null);
+  let savedPath = $state<string | null>(null);
 
   $effect(() => {
     if (open) {
       error = null;
+      savedPath = null;
       dialog?.showModal();
     } else {
       dialog?.close();
@@ -34,21 +36,33 @@
     };
   }
 
+  function readabilityPayload() {
+    return {
+      fontSize: readability.fontSize,
+      lineHeight: readability.lineHeight,
+      theme: readability.theme,
+      fontFamily: readability.fontFamily,
+      justifyText: readability.justifyText,
+    };
+  }
+
+  async function saveHtml(includeUserWork: boolean): Promise<void> {
+    busy = true;
+    error = null;
+    try {
+      savedPath = await AppChrome.writeStudyPrintFile(studyPayload(), readabilityPayload(), includeUserWork, "study-print.html");
+    } catch (err) {
+      error = err instanceof Error ? err.message : String(err);
+    } finally {
+      busy = false;
+    }
+  }
+
   async function printStudy(includeUserWork: boolean): Promise<void> {
     busy = true;
     error = null;
     try {
-      const html = await AppChrome.studyPrintHTML(
-        studyPayload(),
-        {
-          fontSize: readability.fontSize,
-          lineHeight: readability.lineHeight,
-          theme: readability.theme,
-          fontFamily: readability.fontFamily,
-          justifyText: readability.justifyText,
-        },
-        includeUserWork,
-      );
+      const html = await AppChrome.studyPrintHTML(studyPayload(), readabilityPayload(), includeUserWork);
       const printWindow = window.open("", "_blank", "noopener,noreferrer");
       if (!printWindow) {
         throw new Error("Could not open print window.");
@@ -76,6 +90,9 @@
     </p>
     {#if error}
       <p class="text-error text-sm mt-2">{error}</p>
+    {/if}
+    {#if savedPath}
+      <p class="text-success text-sm mt-2">Saved to {savedPath}</p>
     {/if}
     <div class="mt-4 flex flex-col gap-3">
       <button
@@ -105,7 +122,10 @@
         </span>
       </button>
     </div>
-    <div class="modal-action">
+    <div class="modal-action flex-wrap gap-2">
+      <button type="button" class="btn btn-ghost btn-sm" disabled={busy} data-testid="print-save-html" onclick={() => saveHtml(true)}>
+        Save HTML…
+      </button>
       <button type="button" class="btn btn-ghost" disabled={busy} onclick={() => (open = false)}>Cancel</button>
     </div>
   </div>

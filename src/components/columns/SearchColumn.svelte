@@ -1,33 +1,59 @@
 <script lang="ts">
+  import ColumnHeader from "../layout/ColumnHeader.svelte";
   import { BibleService } from "../../mygo";
-  import { study } from "../../lib/study.svelte.ts";
+  import { schedulePersistStudy, study } from "../../lib/study.svelte.ts";
+
+  let { slotIndex = 0 }: { slotIndex?: number; columnType?: string } = $props();
 
   let query = $state("");
   let results = $state<{ bookId: string; chapter: number; verse: number; snippet: string }[]>([]);
   let offset = $state(0);
   let hasMore = $state(false);
+  let searching = $state(false);
   const pageSize = 20;
+  let debounce: ReturnType<typeof setTimeout> | null = null;
 
   async function runSearch(reset = true) {
     if (query.trim().length < 2) {
       results = [];
       hasMore = false;
+      searching = false;
       return;
     }
+    searching = true;
     if (reset) offset = 0;
     const resp = await BibleService.search(query, study.translationId, pageSize, offset);
     results = reset ? resp.results : [...results, ...resp.results];
     hasMore = resp.hasMore;
+    searching = false;
   }
+
+  $effect(() => {
+    const q = query;
+    if (debounce) clearTimeout(debounce);
+    debounce = setTimeout(() => {
+      void runSearch(true);
+    }, 300);
+    return () => {
+      if (debounce) clearTimeout(debounce);
+    };
+  });
 
   async function loadMore() {
     offset += pageSize;
     await runSearch(false);
   }
+
+  function goToHit(hit: { bookId: string; chapter: number; verse: number }) {
+    study.bookId = hit.bookId;
+    study.chapter = hit.chapter;
+    study.selectedVerse = hit.verse;
+    schedulePersistStudy();
+  }
 </script>
 
 <div class="flex h-full flex-col" data-testid="search-column">
-  <div class="border-b border-base-300 p-3">
+  <ColumnHeader contentType="search" {slotIndex} showViewSelector>
     <input
       class="input input-bordered input-sm w-full"
       placeholder="Search…"
@@ -35,20 +61,14 @@
       bind:value={query}
       onkeydown={(e) => e.key === "Enter" && runSearch()}
     />
-  </div>
+  </ColumnHeader>
+  {#if searching && results.length === 0}
+    <p class="p-3 text-sm opacity-60">Searching…</p>
+  {/if}
   <ul class="menu flex-1 overflow-y-auto p-2">
     {#each results as hit}
       <li>
-        <button
-          type="button"
-          class="text-left whitespace-normal"
-          data-testid="search-hit"
-          onclick={() => {
-            study.bookId = hit.bookId;
-            study.chapter = hit.chapter;
-            study.selectedVerse = hit.verse;
-          }}
-        >
+        <button type="button" class="text-left whitespace-normal" data-testid="search-hit" onclick={() => goToHit(hit)}>
           {@html hit.snippet}
         </button>
       </li>

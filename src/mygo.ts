@@ -226,6 +226,10 @@ export const TranslationService = {
   installed(): Promise<InstalledResponse> {
     return call("TranslationService.Installed");
   },
+  /** ResumePendingInstalls re-queues stuck or interrupted catalog installs after app launch. */
+  resumePendingInstalls(): Promise<void> {
+    return call("TranslationService.ResumePendingInstalls");
+  },
   /** Uninstall removes an installed translation. */
   uninstall(module: string): Promise<void> {
     return call("TranslationService.Uninstall", module);
@@ -274,6 +278,14 @@ export const StudyData = {
 
 /** AppChrome exposes desktop print for the main window. */
 export const AppChrome = {
+  /** OpenDevTools toggles the main window developer tools. */
+  openDevTools(): Promise<void> {
+    return call("AppChrome.OpenDevTools");
+  },
+  /** OpenFeedback opens the feedback mailto link in the system handler. */
+  openFeedback(): Promise<void> {
+    return call("AppChrome.OpenFeedback");
+  },
   print(): Promise<void> {
     return call("AppChrome.Print");
   },
@@ -287,6 +299,14 @@ export const AppChrome = {
   /** StudyPrintHTML builds printable HTML for the current study layout (primary bible + optional notes). */
   studyPrintHTML(study: StudySettings, readability: ReadabilitySettings, includeUserWork: boolean): Promise<string> {
     return call("AppChrome.StudyPrintHTML", study, readability, includeUserWork);
+  },
+  /** SyncMenuState updates native menu radio/checkbox items. */
+  syncMenuState(columnCount: number, scrollSync: boolean): Promise<void> {
+    return call("AppChrome.SyncMenuState", columnCount, scrollSync);
+  },
+  /** WriteStudyPrintFile saves printable HTML under user data and returns the path. */
+  writeStudyPrintFile(study: StudySettings, readability: ReadabilitySettings, includeUserWork: boolean, filename: string): Promise<string> {
+    return call("AppChrome.WriteStudyPrintFile", study, readability, includeUserWork, filename);
   },
 } as const;
 

@@ -1,9 +1,14 @@
 <script lang="ts">
+  import ColumnHeader from "../layout/ColumnHeader.svelte";
   import { DictionaryService } from "../../mygo";
+
+  let { slotIndex = 0 }: { slotIndex?: number; columnType?: string } = $props();
 
   let query = $state("");
   let suggestions = $state<string[]>([]);
   let result = $state<{ found: boolean; word: string; variants?: { definitions: string[]; partOfSpeechExpanded: string }[]; message?: string } | null>(null);
+  let loading = $state(false);
+  let error = $state("");
 
   async function suggest() {
     const resp = (await DictionaryService.suggest(query, 10)) as { suggestions?: string[] };
@@ -11,13 +16,27 @@
   }
 
   async function lookup(word: string) {
+    if (word.trim().length < 2) {
+      result = null;
+      error = "";
+      return;
+    }
     query = word;
-    result = (await DictionaryService.lookup(word)) as typeof result;
+    loading = true;
+    error = "";
+    try {
+      result = (await DictionaryService.lookup(word)) as typeof result;
+    } catch (err: unknown) {
+      result = null;
+      error = err instanceof Error ? err.message : "Lookup failed";
+    } finally {
+      loading = false;
+    }
   }
 </script>
 
 <div class="flex h-full flex-col">
-  <div class="border-b border-base-300 p-3">
+  <ColumnHeader contentType="dictionary" {slotIndex} showViewSelector>
     <input
       class="input input-bordered input-sm w-full"
       data-testid="dictionary-input"
@@ -25,7 +44,7 @@
       oninput={suggest}
       onkeydown={(e) => e.key === "Enter" && lookup(query)}
     />
-  </div>
+  </ColumnHeader>
   {#if suggestions.length}
     <div class="flex flex-wrap gap-1 p-2">
       {#each suggestions as word}
@@ -34,7 +53,11 @@
     </div>
   {/if}
   <article class="flex-1 overflow-y-auto p-4 text-sm">
-    {#if result?.found}
+    {#if loading}
+      <p class="opacity-60">Looking up…</p>
+    {:else if error}
+      <p class="text-error">{error}</p>
+    {:else if result?.found}
       <h3 class="font-semibold">{result.word}</h3>
       {#each result.variants ?? [] as variant}
         <p class="mt-2 opacity-70">{variant.partOfSpeechExpanded}</p>

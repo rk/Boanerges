@@ -1,6 +1,7 @@
 <script lang="ts">
   import { syncScrollFromSource } from "../../lib/scrollSync.ts";
   import { study } from "../../lib/study.svelte.ts";
+  import { secondaryTranslationForSlot } from "../../lib/studyLayout";
   import BibleColumn from "../columns/BibleColumn.svelte";
   import ComparisonColumn from "../columns/ComparisonColumn.svelte";
   import CrossReferencesColumn from "../columns/CrossReferencesColumn.svelte";
@@ -23,16 +24,16 @@
 
   let primaryScroll = $state<HTMLElement | null>(null);
   let secondaryScroll = $state<HTMLElement | null>(null);
-  let comparisonScrolls = $state<[HTMLElement | null, HTMLElement | null]>([null, null]);
 
   function onPrimaryScroll() {
     if (!study.scrollSync || !primaryScroll) return;
     const targets: HTMLElement[] = [];
     if (secondaryScroll) targets.push(secondaryScroll);
-    for (const el of comparisonScrolls) {
-      if (el) targets.push(el);
-    }
     syncScrollFromSource(primaryScroll, targets);
+  }
+
+  function secondaryTranslationId(slotIndex: number): string {
+    return secondaryTranslationForSlot(slotIndex, study.translationBId, study.translationCId);
   }
 </script>
 
@@ -45,16 +46,16 @@
     <section class="min-w-0 flex-1 border-r border-base-300 last:border-r-0">
       {#if column === "bible-secondary"}
         <BibleColumn
-          translationId={study.translationBId}
+          translationId={secondaryTranslationId(i)}
           slotIndex={i}
           columnType={column}
           bind:scrollRef={secondaryScroll}
           onscroll={onPrimaryScroll}
         />
       {:else if column === "comparison"}
-        <ComparisonColumn bind:scrollRefs={comparisonScrolls} onscroll={onPrimaryScroll} />
+        <ComparisonColumn slotIndex={i} />
       {:else}
-        <Component translationId={study.translationId} slotIndex={i} columnType={column} />
+        <Component slotIndex={i} columnType={column} />
       {/if}
     </section>
   {/each}

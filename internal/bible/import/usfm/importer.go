@@ -37,6 +37,7 @@ type importState struct {
 	verse         int
 	verseText     string
 	maxChapter    int
+	chapterRows   []schema.VerseRow
 }
 
 func (i *Importer) ImportFromZip(abbrev, zipPath string) error {
@@ -89,7 +90,7 @@ func (i *Importer) ImportFromZip(abbrev, zipPath string) error {
 	}
 
 	for _, file := range files {
-		if err := i.importFromFile(a, file, false); err != nil {
+		if err := i.importFromFile(a, file); err != nil {
 			return err
 		}
 	}
@@ -115,19 +116,18 @@ func (i *Importer) ImportFromFile(abbrev, path string, clearTables bool) error {
 		}
 	}
 
-	return i.importFromFile(a, path, clearTables)
+	return i.importFromFile(a, path)
 }
 
-func (i *Importer) importFromFile(abbrev, path string, _ bool) error {
+func (i *Importer) importFromFile(abbrev, path string) error {
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("read usfm: %w", err)
 	}
 
 	booksTable, _ := i.schema.BooksTable(abbrev)
-	versesTable, _ := i.schema.VersesTable(abbrev)
 
-	return i.importContent(string(content), booksTable, versesTable)
+	return i.importContent(abbrev, string(content), booksTable)
 }
 
 func (i *Importer) Format() catalog.ImportFormat {
@@ -143,7 +143,7 @@ var (
 	usfmPlainRe   = regexp.MustCompile(`\\[a-z0-9*]+(\s+|$)`)
 )
 
-func (i *Importer) importContent(content, booksTable, versesTable string) error {
+func (i *Importer) importContent(abbrev, content, booksTable string) error {
 	state := importState{}
 	lines := strings.Split(content, "\n")
 
@@ -154,7 +154,7 @@ func (i *Importer) importContent(content, booksTable, versesTable string) error 
 		}
 
 		if m := idMarker.FindStringSubmatch(line); len(m) == 2 {
-			if err := i.flushBook(&state, booksTable, versesTable); err != nil {
+			if err := i.flushBook(&state, abbrev, booksTable); err != nil {
 				return err
 			}
 			osis, ok := bible.NormalizeBookID(m[1])
@@ -184,7 +184,10 @@ func (i *Importer) importContent(content, booksTable, versesTable string) error 
 			if err := i.ensureBook(&state, booksTable); err != nil {
 				return err
 			}
-			if err := i.flushVerse(&state, versesTable); err != nil {
+			if err := i.flushVerse(&state); err != nil {
+				return err
+			}
+			if err := i.flushChapter(&state, abbrev); err != nil {
 				return err
 			}
 			state.chapter = atoi(m[1])
@@ -201,7 +204,7 @@ func (i *Importer) importContent(content, booksTable, versesTable string) error 
 		}
 
 		if m := verseMarker.FindStringSubmatch(line); len(m) == 3 {
-			if err := i.flushVerse(&state, versesTable); err != nil {
+			if err := i.flushVerse(&state); err != nil {
 				return err
 			}
 			state.verse = atoi(m[1])
@@ -223,14 +226,14 @@ func (i *Importer) importContent(content, booksTable, versesTable string) error 
 		state.verseText = strings.TrimSpace(state.verseText + " " + line)
 	}
 
-	return i.flushBook(&state, booksTable, versesTable)
+	return i.flushBook(&state, abbrev, booksTable)
 }
 
 func (s *importState) bookDBIdValid() bool {
 	return s.bookDBID.Valid
 }
 
-func (i *Importer) flushVerse(state *importState, versesTable string) error {
+func (i *Importer) flushVerse(state *importState) error {
 	if !state.bookDBID.Valid || state.chapter < 1 || state.verse < 1 || strings.TrimSpace(state.verseText) == "" {
 		return nil
 	}
@@ -241,15 +244,31 @@ func (i *Importer) flushVerse(state *importState, versesTable string) error {
 		plain = i.formatter.ToPlainText(text)
 	}
 
-	_, err := i.schema.DB().Exec(fmt.Sprintf(`
-		INSERT INTO %s (book_id, chapter, verse, text, plain_text) VALUES (?, ?, ?, ?, ?)`,
-		versesTable), state.bookDBID.Int64, state.chapter, state.verse, text, plain)
+	state.chapterRows = append(state.chapterRows, schema.VerseRow{
+		BookID: state.bookDBID.Int64, Chapter: state.chapter, Verse: state.verse,
+		Text: text, PlainText: plain,
+	})
 
-	return err
+	return nil
 }
 
-func (i *Importer) flushBook(state *importState, booksTable, versesTable string) error {
-	if err := i.flushVerse(state, versesTable); err != nil {
+func (i *Importer) flushChapter(state *importState, abbrev string) error {
+	if len(state.chapterRows) == 0 {
+		return nil
+	}
+	if err := i.schema.InsertVerses(abbrev, state.chapterRows); err != nil {
+		return err
+	}
+	state.chapterRows = state.chapterRows[:0]
+
+	return nil
+}
+
+func (i *Importer) flushBook(state *importState, abbrev, booksTable string) error {
+	if err := i.flushVerse(state); err != nil {
+		return err
+	}
+	if err := i.flushChapter(state, abbrev); err != nil {
 		return err
 	}
 	if state.bookDBID.Valid {
@@ -262,6 +281,7 @@ func (i *Importer) flushBook(state *importState, booksTable, versesTable string)
 	state.verse = 0
 	state.verseText = ""
 	state.maxChapter = 0
+	state.chapterRows = nil
 
 	return nil
 }

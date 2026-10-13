@@ -29,9 +29,12 @@ func ListBooks(db *sql.DB, mgr *schema.Manager, abbrev string) ([]Book, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := mgr.EnsureBooksHasContentColumn(a); err != nil {
+		return nil, err
+	}
 
 	rows, err := db.Query(fmt.Sprintf(
-		`SELECT name, osis_id, testament, chapters FROM %s ORDER BY id`, table))
+		`SELECT name, osis_id, testament, chapters FROM %s WHERE has_content = 1 ORDER BY id`, table))
 	if err != nil {
 		return nil, err
 	}

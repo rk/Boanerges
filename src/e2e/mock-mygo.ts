@@ -232,6 +232,10 @@ export function installMygoMock(mode: string = "1"): void {
     "AppChrome.Print": () => undefined,
     "AppChrome.PrintToPDF": () => "/tmp/boanerges-study.pdf",
     "AppChrome.StudyPrintHTML": () => "<html><body><h1>Genesis 1</h1></body></html>",
+    "AppChrome.WriteStudyPrintFile": () => "/tmp/boanerges-study-print.html",
+    "AppChrome.SyncMenuState": () => undefined,
+    "AppChrome.OpenDevTools": () => undefined,
+    "AppChrome.OpenFeedback": () => undefined,
   };
 
   globalThis.mygo = {

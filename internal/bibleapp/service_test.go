@@ -116,6 +116,26 @@ func TestCrossReferencesAfterImport(t *testing.T) {
 	}
 }
 
+func TestBooksUnknownTranslation(t *testing.T) {
+	db := filepath.Join(t.TempDir(), "bible.sqlite")
+	seedASV(t, db)
+	svc := bibleapp.NewBibleService(db, bootstrap.NewService())
+	_, err := svc.Books("no-such-module")
+	if err == nil {
+		t.Fatal("expected error for unknown translation")
+	}
+}
+
+func TestChapterOutOfRange(t *testing.T) {
+	db := filepath.Join(t.TempDir(), "bible.sqlite")
+	seedASV(t, db)
+	svc := bibleapp.NewBibleService(db, bootstrap.NewService())
+	_, err := svc.Chapter("asv", "gen", 999)
+	if err == nil {
+		t.Fatal("expected error for invalid chapter")
+	}
+}
+
 func TestDictionaryGrace(t *testing.T) {
 	root := filepath.Join("..", "..")
 	db := filepath.Join(t.TempDir(), "bible.sqlite")

@@ -103,6 +103,36 @@ func (s *Store) ListReady() ([]Record, error) {
 	return out, rows.Err()
 }
 
+// ListIncomplete returns non-bundled translations not yet ready (for resume on startup).
+func (s *Store) ListIncomplete() ([]Record, error) {
+	rows, err := s.mgr.DB().Query(`
+		SELECT id, abbrev, name, COALESCE(format,''), COALESCE(about,''),
+			install_status, COALESCE(install_step,''), COALESCE(install_error,''), bundled
+		FROM translations
+		WHERE bundled = 0 AND install_status != ?
+		ORDER BY id`, StatusReady)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []Record
+	for rows.Next() {
+		var rec Record
+		var bundled int
+		if err := rows.Scan(
+			&rec.ID, &rec.Abbrev, &rec.Name, &rec.Format, &rec.About,
+			&rec.InstallStatus, &rec.InstallStep, &rec.InstallError, &bundled,
+		); err != nil {
+			return nil, err
+		}
+		rec.Bundled = bundled != 0
+		out = append(out, rec)
+	}
+
+	return out, rows.Err()
+}
+
 type CreateParams struct {
 	Abbrev   string
 	Name     string

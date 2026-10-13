@@ -64,3 +64,29 @@ func TestLegacyVerseListIndexLayout(t *testing.T) {
 		t.Fatalf("index = %+v err=%v", idx, err)
 	}
 }
+
+func TestVerseListRejectsInvalidEntry(t *testing.T) {
+	svc := studydata.NewServiceForTest(t.TempDir())
+	_, err := svc.VerseListSave("Bad", []studydata.VerseListEntry{
+		{BookID: "INVALID", Chapter: 1, Verse: 1},
+	}, "")
+	if err == nil {
+		t.Fatal("expected invalid book id error")
+	}
+}
+
+func TestVerseListDelete(t *testing.T) {
+	root := t.TempDir()
+	svc := studydata.NewServiceForTest(root)
+	list, err := svc.VerseListSave("Gone", []studydata.VerseListEntry{{BookID: "gen", Chapter: 1, Verse: 1}}, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.VerseListDelete(list.ID); err != nil {
+		t.Fatal(err)
+	}
+	idx, err := svc.VerseListIndex()
+	if err != nil || len(idx) != 0 {
+		t.Fatalf("index after delete = %+v err=%v", idx, err)
+	}
+}

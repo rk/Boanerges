@@ -1,8 +1,11 @@
 <script lang="ts">
-  import { BibleService, type Chapter } from "../../mygo";
+  import { TranslationService } from "../../mygo";
+  import type { Chapter } from "../../mygo";
+  import { BibleService } from "../../mygo";
+  import ColumnHeader from "../layout/ColumnHeader.svelte";
   import VerseLine from "../reader/VerseLine.svelte";
   import { readerStyle } from "../../lib/readability.svelte.ts";
-  import { study } from "../../lib/study.svelte.ts";
+  import { setSecondaryTranslation, study } from "../../lib/study.svelte.ts";
 
   let {
     translationId,
@@ -21,6 +24,15 @@
 
   let chapter = $state<Chapter | null>(null);
   let loading = $state(true);
+  let translations = $state<{ id: string; abbrev: string }[]>([]);
+
+  $effect(() => {
+    if (!primary) {
+      void TranslationService.installed().then((resp) => {
+        translations = resp.translations.map((t) => ({ id: t.id, abbrev: t.abbrev }));
+      });
+    }
+  });
 
   $effect(() => {
     loading = true;
@@ -29,12 +41,29 @@
       loading = false;
     });
   });
+
+  function onSecondaryTranslationChange(e: Event) {
+    setSecondaryTranslation(slotIndex, (e.currentTarget as HTMLSelectElement).value);
+  }
 </script>
 
 <div class="flex h-full flex-col">
-  <div class="border-b border-base-300 px-3 py-2 text-sm font-medium">
-    {primary ? "Primary" : `Translation ${slotIndex + 1}`} · {translationId.toUpperCase()}
-  </div>
+  {#if primary}
+    <div class="border-b border-base-300 px-3 py-2 text-sm font-medium">Primary · {translationId.toUpperCase()}</div>
+  {:else}
+    <ColumnHeader contentType="bible-secondary" slotIndex={slotIndex} showViewSelector>
+      <select
+        class="select select-bordered select-xs w-full max-w-full"
+        data-testid="secondary-translation-select"
+        value={translationId}
+        onchange={onSecondaryTranslationChange}
+      >
+        {#each translations as t (t.id)}
+          <option value={t.id}>{t.abbrev}</option>
+        {/each}
+      </select>
+    </ColumnHeader>
+  {/if}
   <article
     bind:this={scrollRef}
     class="prose max-w-none flex-1 overflow-y-auto p-4"

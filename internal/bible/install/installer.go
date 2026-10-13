@@ -2,6 +2,7 @@ package install
 
 import (
 	"strings"
+	"sync"
 
 	"boanerges/internal/bible/catalog"
 	"boanerges/internal/bible/registry"
@@ -15,6 +16,10 @@ type Installer struct {
 	registry *registry.Registry
 	schema   *schema.Manager
 	pipeline *Pipeline
+
+	mu      sync.Mutex
+	running map[int64]struct{}
+	runMu   sync.Mutex // one import at a time (single writer on bible.sqlite)
 }
 
 func NewInstaller(
@@ -30,6 +35,7 @@ func NewInstaller(
 		registry: reg,
 		schema:   mgr,
 		pipeline: pipeline,
+		running:  make(map[int64]struct{}),
 	}
 }
 
@@ -58,10 +64,6 @@ func (i *Installer) Install(moduleKey string) (*translations.Record, error) {
 		return nil, conflict("The " + entry.Short + " translation is already installed.")
 	}
 
-	if existing != nil && existing.InstallStatus != translations.StatusFailed && existing.InstallStatus != translations.StatusPending {
-		return nil, conflict("The " + entry.Short + " translation is already being installed.")
-	}
-
 	var rec *translations.Record
 	if existing == nil {
 		format := entry.MarkupFormat
@@ -75,22 +77,56 @@ func (i *Installer) Install(moduleKey string) (*translations.Record, error) {
 			About:   entry.About,
 			Bundled: false,
 		})
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		rec = existing
 		_ = i.store.UpdateCatalogMeta(rec.ID, entry.Name, entry.MarkupFormat, entry.About)
-	}
-
-	if err != nil {
-		return nil, err
+		if rec.InstallStatus == translations.StatusFailed {
+			_ = i.store.UpdateProgress(rec.ID, translations.StatusPending, "queued", nil)
+		}
 	}
 
 	_ = i.store.UpdateProgress(rec.ID, translations.StatusPending, "queued", nil)
-
-	go func(id int64) {
-		_ = i.pipeline.Run(id)
-	}(rec.ID)
+	i.enqueue(rec.ID)
 
 	return i.store.FindByID(rec.ID)
+}
+
+// ResumePending re-queues incomplete catalog installs (e.g. stuck on indexing after restart).
+func (i *Installer) ResumePending() {
+	recs, err := i.store.ListIncomplete()
+	if err != nil {
+		return
+	}
+	for _, rec := range recs {
+		if i.registry.IsBundled(rec.Abbrev) {
+			continue
+		}
+		i.enqueue(rec.ID)
+	}
+}
+
+func (i *Installer) enqueue(translationID int64) {
+	i.mu.Lock()
+	if _, active := i.running[translationID]; active {
+		i.mu.Unlock()
+		return
+	}
+	i.running[translationID] = struct{}{}
+	i.mu.Unlock()
+
+	go func(id int64) {
+		defer func() {
+			i.mu.Lock()
+			delete(i.running, id)
+			i.mu.Unlock()
+		}()
+		i.runMu.Lock()
+		defer i.runMu.Unlock()
+		_ = i.pipeline.Run(id)
+	}(translationID)
 }
 
 func (i *Installer) Uninstall(moduleKey string) error {

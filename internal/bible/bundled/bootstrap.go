@@ -6,9 +6,10 @@ import (
 
 // Bootstrap copies bundled ASV into userDB if not already present.
 func Bootstrap(userDB, resourcesDir string) error {
+	root := ResourcesRoot(resourcesDir)
 	return ImportASV(
 		userDB,
-		filepath.Join(resourcesDir, SQLiteFile),
-		filepath.Join(resourcesDir, ConfFile),
+		filepath.Join(root, SQLiteFile),
+		filepath.Join(root, ConfFile),
 	)
 }

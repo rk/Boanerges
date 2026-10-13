@@ -1,55 +1,79 @@
 <script lang="ts">
-  import { BibleService, type Chapter } from "../../mygo";
-  import VerseLine from "../reader/VerseLine.svelte";
-  import { readerStyle } from "../../lib/readability.svelte.ts";
+  import Bookmark from "@lucide/svelte/icons/bookmark";
+  import ColumnHeader from "../layout/ColumnHeader.svelte";
+  import FormattedVerseText from "../reader/FormattedVerseText.svelte";
+  import { bible, fetchBooksForTranslations } from "../../lib/bible.svelte.ts";
+  import { comparison, scheduleComparisonLookup } from "../../lib/comparison.svelte.ts";
+  import { parseScriptureReference } from "../../lib/scriptureReference";
   import { study } from "../../lib/study.svelte.ts";
+  import { activeBibleTranslationIds } from "../../lib/studyLayout";
 
-  let {
-    scrollRefs = $bindable<[HTMLElement | null, HTMLElement | null]>([null, null]),
-    onscroll,
-  }: {
-    scrollRefs?: [HTMLElement | null, HTMLElement | null];
-    onscroll?: () => void;
-  } = $props();
+  let { slotIndex = 0 }: { slotIndex?: number; scrollRefs?: [HTMLElement | null, HTMLElement | null]; onscroll?: () => void } =
+    $props();
 
-  let left = $state<Chapter | null>(null);
-  let right = $state<Chapter | null>(null);
-  let leftEl = $state<HTMLElement | null>(null);
-  let rightEl = $state<HTMLElement | null>(null);
+  let referenceInput = $state("");
+
+  const parsedReference = $derived(parseScriptureReference(referenceInput, bible.books));
+  const referenceError = $derived(
+    referenceInput.trim() !== "" && parsedReference === null ? "Enter a reference like Mark 1:1" : null,
+  );
 
   $effect(() => {
-    scrollRefs = [leftEl, rightEl];
+    void fetchBooksForTranslations(activeBibleTranslationIds(study));
   });
 
   $effect(() => {
-    void Promise.all([
-      BibleService.chapter(study.translationBId, study.bookId, study.chapter),
-      BibleService.chapter(study.translationCId, study.bookId, study.chapter),
-    ]).then(([a, b]) => {
-      left = a.chapter;
-      right = b.chapter;
-    });
+    if (comparison.activeReference !== null) {
+      referenceInput = comparison.activeReference;
+      comparison.activeReference = null;
+    }
+  });
+
+  $effect(() => {
+    scheduleComparisonLookup(referenceInput, bible.books);
   });
 </script>
 
-<div class="flex h-full flex-col" data-testid="comparison-column">
-  <div class="border-b border-base-300 px-3 py-2 text-sm font-medium">Comparison</div>
-  <div class="grid flex-1 min-h-0 grid-cols-2 divide-x divide-base-300 overflow-hidden">
-    <article bind:this={leftEl} class="overflow-y-auto p-3 text-sm" style={readerStyle()} data-testid="comparison-pane" onscroll={onscroll}>
-      <h3 class="mb-2 font-semibold">{study.translationBId.toUpperCase()}</h3>
-      {#if left}
-        {#each left.verses as verse (verse.number)}
-          <VerseLine {verse} />
+<div class="flex h-full min-h-0 min-w-0 flex-col" data-testid="comparison-column">
+  <ColumnHeader contentType="comparison" {slotIndex} showViewSelector>
+    <label class="input input-bordered input-sm min-w-0 flex-1">
+      <Bookmark size={14} aria-hidden="true" />
+      <input
+        type="search"
+        class="grow py-2"
+        placeholder="Mark 1:1"
+        data-testid="comparison-reference"
+        bind:value={referenceInput}
+        aria-label="Verse reference for comparison"
+      />
+    </label>
+  </ColumnHeader>
+
+  <div class="min-h-0 flex-1 overflow-y-auto px-2 py-2">
+    {#if referenceError}
+      <p class="text-error px-2 py-4 text-sm">{referenceError}</p>
+    {:else if comparison.loading}
+      <div class="flex justify-center py-8">
+        <span class="loading loading-spinner loading-md text-primary"></span>
+      </div>
+    {:else if referenceInput.trim() === ""}
+      <p class="px-2 py-4 text-sm opacity-60">Enter a verse reference to compare across translations.</p>
+    {:else if comparison.rows.length === 0}
+      <p class="px-2 py-4 text-sm opacity-60">No installed translations found.</p>
+    {:else}
+      <ul class="divide-y divide-base-300">
+        {#each comparison.rows as row (row.translationId)}
+          <li class="px-2 py-3" data-testid="comparison-row">
+            <div class="mb-1 flex items-center gap-2">
+              <span class="font-medium">{row.name}</span>
+              <span class="badge badge-ghost badge-sm">{row.abbrev}</span>
+            </div>
+            <p class="text-sm">
+              <FormattedVerseText text={row.text} />
+            </p>
+          </li>
         {/each}
-      {/if}
-    </article>
-    <article bind:this={rightEl} class="overflow-y-auto p-3 text-sm" style={readerStyle()} data-testid="comparison-pane" onscroll={onscroll}>
-      <h3 class="mb-2 font-semibold">{study.translationCId.toUpperCase()}</h3>
-      {#if right}
-        {#each right.verses as verse (verse.number)}
-          <VerseLine {verse} />
-        {/each}
-      {/if}
-    </article>
+      </ul>
+    {/if}
   </div>
 </div>

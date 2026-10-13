@@ -3,6 +3,7 @@ package schema
 import (
 	"database/sql"
 	"fmt"
+	"net/url"
 	"regexp"
 	"strings"
 
@@ -19,12 +20,22 @@ type Manager struct {
 }
 
 func Open(path string) (*Manager, error) {
-	db, err := sql.Open("sqlite", path)
+	dsn := sqliteDSN(path)
+	db, err := sql.Open("sqlite", dsn)
 	if err != nil {
 		return nil, err
 	}
+	db.SetMaxOpenConns(1)
 
 	return &Manager{db: db}, nil
+}
+
+func sqliteDSN(path string) string {
+	if path == ":memory:" {
+		return path
+	}
+	// ponytail: WAL + busy_timeout — many short-lived readers during background import.
+	return fmt.Sprintf("file:%s?_pragma=busy_timeout(10000)&_pragma=journal_mode(WAL)", url.PathEscape(path))
 }
 
 func (m *Manager) Close() error {
@@ -96,9 +107,14 @@ func (m *Manager) CreateTables(abbrev string) error {
 		name TEXT NOT NULL,
 		osis_id TEXT NOT NULL,
 		testament TEXT NOT NULL,
-		chapters INTEGER NOT NULL
+		chapters INTEGER NOT NULL,
+		has_content INTEGER NOT NULL DEFAULT 1
 	)`, books))
 	if err != nil {
+		return err
+	}
+
+	if err := m.EnsureBooksHasContentColumn(a); err != nil {
 		return err
 	}
 
@@ -150,11 +166,7 @@ func (m *Manager) RebuildFtsIndex(abbrev string, formatter *markup.Formatter) er
 	}
 	fts := a + "_verses_fts"
 
-	if formatter != nil {
-		if err := m.backfillPlainText(a, formatter); err != nil {
-			return err
-		}
-	}
+	// ponytail: skip row-by-row plain_text backfill on FTS build — use COALESCE below; import sets plain_text.
 
 	if exists, err := m.TableExists(fts); err != nil {
 		return err
@@ -168,7 +180,11 @@ func (m *Manager) RebuildFtsIndex(abbrev string, formatter *markup.Formatter) er
 		return err
 	}
 
-	_, err = m.db.Exec(fmt.Sprintf("INSERT INTO %s(%s) VALUES('rebuild')", fts, fts))
+	verses := a + "_verses"
+	_, err = m.db.Exec(fmt.Sprintf(`
+		INSERT INTO %s (rowid, plain_text, book_id, chapter, verse)
+		SELECT id, COALESCE(NULLIF(plain_text, ''), text), book_id, chapter, verse FROM %s`,
+		fts, verses))
 
 	return err
 }
@@ -190,29 +206,6 @@ func (m *Manager) DropTables(abbrev string) error {
 	}
 
 	return nil
-}
-
-func (m *Manager) backfillPlainText(abbrev string, formatter *markup.Formatter) error {
-	verses := abbrev + "_verses"
-	rows, err := m.db.Query(fmt.Sprintf("SELECT id, text FROM %s ORDER BY id", verses))
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var id int64
-		var text string
-		if err := rows.Scan(&id, &text); err != nil {
-			return err
-		}
-		plain := formatter.ToPlainText(text)
-		if _, err := m.db.Exec(fmt.Sprintf("UPDATE %s SET plain_text=? WHERE id=?", verses), plain, id); err != nil {
-			return err
-		}
-	}
-
-	return rows.Err()
 }
 
 // SupportsFTS5 reports whether this SQLite build can create fts5 virtual tables.

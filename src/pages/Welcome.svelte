@@ -1,5 +1,5 @@
 <script lang="ts">
-  let { progress }: { progress: { step: string; percent: number } } = $props();
+  let { progress }: { progress: { step: string; percent: number; error?: string } } = $props();
 </script>
 
 <div class="flex min-h-dvh flex-col items-center justify-center gap-6 p-8" data-testid="welcome-screen">
@@ -15,5 +15,8 @@
     <p class="text-base-content/60 mt-2 text-center text-sm capitalize">
       {progress.step.replaceAll("_", " ")}
     </p>
+    {#if progress.error}
+      <p class="text-error mt-2 text-center text-sm">{progress.error}</p>
+    {/if}
   </div>
 </div>

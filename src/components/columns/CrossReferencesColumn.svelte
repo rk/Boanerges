@@ -1,22 +1,48 @@
 <script lang="ts">
+  import ColumnHeader from "../layout/ColumnHeader.svelte";
   import { BibleService } from "../../mygo";
   import { setLocation, study } from "../../lib/study.svelte.ts";
 
-  let refs = $state<{ rank: number; bookId: string; bookName: string; chapter: number; verse: number; endVerse: number | null }[]>([]);
+  let { slotIndex = 0 }: { slotIndex?: number; columnType?: string } = $props();
+
+  let refs = $state<
+    { rank: number; bookId: string; bookName: string; chapter: number; verse: number; endVerse: number | null }[]
+  >([]);
+  let loading = $state(false);
+  let error = $state("");
 
   $effect(() => {
-    void BibleService.crossReferences(study.bookId, study.chapter, study.selectedVerse).then((resp) => {
-      refs = resp.references ?? [];
-    });
+    const bookId = study.bookId;
+    const chapter = study.chapter;
+    const verse = study.selectedVerse;
+    loading = true;
+    error = "";
+    void BibleService.crossReferences(bookId, chapter, verse)
+      .then((resp) => {
+        refs = resp.references ?? [];
+      })
+      .catch((err: unknown) => {
+        refs = [];
+        error = err instanceof Error ? err.message : "Could not load cross references";
+      })
+      .finally(() => {
+        loading = false;
+      });
   });
 </script>
 
 <div class="flex h-full flex-col">
-  <div class="border-b border-base-300 px-3 py-2 text-sm font-medium">Cross references · v{study.selectedVerse}</div>
+  <ColumnHeader contentType="cross-references" {slotIndex} showViewSelector />
+  {#if loading && refs.length === 0}
+    <p class="p-3 text-sm opacity-60">Loading…</p>
+  {:else if error}
+    <p class="p-3 text-sm text-error">{error}</p>
+  {/if}
   <ul class="menu flex-1 overflow-y-auto p-2">
-    {#each refs as ref}
+    {#each refs as ref (ref.rank)}
       <li>
         <button type="button" onclick={() => setLocation(ref.bookId, ref.chapter)}>
+          <span class="badge badge-ghost badge-xs mr-2">{ref.rank}</span>
           {ref.bookName} {ref.chapter}:{ref.verse}{#if ref.endVerse && ref.endVerse !== ref.verse}–{ref.endVerse}{/if}
         </button>
       </li>

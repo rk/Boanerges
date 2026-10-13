@@ -42,7 +42,8 @@ test("columns and comparison", async ({ page }) => {
   await page.evaluate(() => window.__dispatchStudyMenu?.("view.columns.2"));
   await page.evaluate(() => window.__dispatchStudyMenu?.("study.comparison"));
   await expect(page.getByTestId("comparison-column")).toBeVisible();
-  await expect(page.getByTestId("comparison-pane")).toHaveCount(2);
+  await page.getByTestId("comparison-reference").fill("Genesis 1:1");
+  await expect(page.getByTestId("comparison-row").first()).toBeVisible({ timeout: 5000 });
 });
 
 test("settings persist readability", async ({ page }) => {

@@ -3,6 +3,7 @@ package install
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -80,8 +81,11 @@ func (p *Pipeline) Run(translationID int64) error {
 		}
 	}()
 
-	try := func(fn func() error) error {
-		if err := fn(); err != nil {
+	try := func(step string, fn func() error) error {
+		start := time.Now()
+		err := fn()
+		log.Printf("translation install %s: %s in %s", rec.Abbrev, step, time.Since(start).Round(time.Millisecond))
+		if err != nil {
 			_ = p.store.MarkFailed(translationID, err.Error())
 			p.emit(rec.Abbrev, translations.StatusFailed, "failed", err.Error())
 
@@ -91,20 +95,41 @@ func (p *Pipeline) Run(translationID int64) error {
 		return nil
 	}
 
-	if err := try(func() error { return p.download(rec, entry, &downloaded) }); err != nil {
+	resume := p.importLooksComplete(rec.Abbrev)
+	if resume {
+		log.Printf("translation install %s: resume (verses already in DB)", rec.Abbrev)
+	} else {
+		if err := try("download", func() error { return p.download(rec, entry, &downloaded) }); err != nil {
+			return err
+		}
+		if err := try("create_schema", func() error { return p.createSchema(rec.Abbrev) }); err != nil {
+			return err
+		}
+		if err := try("import_verses", func() error { return p.importVerses(rec, entry, downloaded) }); err != nil {
+			return err
+		}
+		if err := try("verify", func() error { return p.verify(rec, entry) }); err != nil {
+			return err
+		}
+	}
+
+	if err := try("index_coverage", func() error { return p.schema.IndexBookCoverage(rec.Abbrev) }); err != nil {
 		return err
 	}
-	if err := try(func() error { return p.createSchema(rec.Abbrev) }); err != nil {
+	if err := try("backfill_plain_text", func() error {
+		return p.schema.BackfillPlainTextIfEmpty(rec.Abbrev, p.formatter)
+	}); err != nil {
 		return err
 	}
-	if err := try(func() error { return p.importVerses(rec, entry, downloaded) }); err != nil {
+
+	ftsOk, err := p.schema.FtsPopulated(rec.Abbrev)
+	if err != nil {
 		return err
 	}
-	if err := try(func() error { return p.verify(rec, entry) }); err != nil {
-		return err
-	}
-	if err := try(func() error { return p.buildFTS(rec.Abbrev) }); err != nil {
-		return err
+	if !ftsOk {
+		if err := try("build_fts", func() error { return p.buildFTS(rec.Abbrev) }); err != nil {
+			return err
+		}
 	}
 
 	if err := p.store.MarkReady(translationID); err != nil {
@@ -113,6 +138,15 @@ func (p *Pipeline) Run(translationID int64) error {
 	p.emit(rec.Abbrev, translations.StatusReady, "ready", "")
 
 	return nil
+}
+
+func (p *Pipeline) importLooksComplete(abbrev string) bool {
+	n, err := p.schema.VerseCount(abbrev)
+	if err != nil || n < 1000 {
+		return false
+	}
+
+	return p.hasVerse(abbrev, "gen", 1, 1) || p.hasVerse(abbrev, "mat", 1, 1)
 }
 
 func (p *Pipeline) download(rec *translations.Record, entry catalog.Entry, downloaded *string) error {

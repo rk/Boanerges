@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"boanerges/internal/bible/markup"
 	"boanerges/internal/bible/schema"
 	"boanerges/sword"
 )
@@ -51,18 +52,20 @@ func ImportASV(dbPath, bundledSQLite, confPath string) error {
 	}
 	defer db.Exec(`DETACH DATABASE bundled`)
 
-	for _, table := range []string{"asv_books", "asv_verses"} {
-		if _, err := db.Exec(fmt.Sprintf(
-			`INSERT INTO main.%s SELECT * FROM bundled.%s`, table, table,
-		)); err != nil {
-			return err
-		}
-	}
-
-	if err := mgr.CreateFtsTable("asv"); err != nil {
+	if _, err := db.Exec(`
+		INSERT INTO main.asv_books (id, name, osis_id, testament, chapters)
+		SELECT id, name, osis_id, testament, chapters FROM bundled.asv_books`); err != nil {
 		return err
 	}
-	if _, err := db.Exec(`INSERT INTO main.asv_verses_fts(asv_verses_fts) VALUES('rebuild')`); err != nil {
+	if _, err := db.Exec(`
+		INSERT INTO main.asv_verses SELECT * FROM bundled.asv_verses`); err != nil {
+		return err
+	}
+	if err := mgr.IndexBookCoverage("asv"); err != nil {
+		return err
+	}
+
+	if err := mgr.RebuildFtsIndex("asv", markup.DefaultFormatter()); err != nil {
 		return err
 	}
 

@@ -58,4 +58,4 @@ CI runs `go test ./...` and `bun run typecheck`; run `bun run test:e2e` locally 
 
 ## Legacy reference tree
 
-The untracked `legacy/` directory on disk (see `.gitignore`) is kept for spec comparison until MyGO issues **#23–#32** are closed with e2e confidence. Do not commit `legacy/` to git.
+The untracked `legacy/` directory on disk (see `.gitignore`) is optional local reference only (restore from git history before `6bb99d8` if needed). Do not commit `legacy/` to git.

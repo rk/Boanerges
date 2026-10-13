@@ -85,8 +85,9 @@ func (s *Service) SetWindow(win *mygo.Window) {
 func (s *Service) RunASV(userDB, resourcesDir string) error {
 	s.setStatus(progress.StepQueued, "pending", "")
 
-	bundledSQLite := filepath.Join(resourcesDir, bundled.SQLiteFile)
-	confPath := filepath.Join(resourcesDir, bundled.ConfFile)
+	root := bundled.ResourcesRoot(resourcesDir)
+	bundledSQLite := filepath.Join(root, bundled.SQLiteFile)
+	confPath := filepath.Join(root, bundled.ConfFile)
 
 	s.setStatus(progress.StepCreatingSchema, "creating_schema", "")
 	if err := bundled.ImportASV(userDB, bundledSQLite, confPath); err != nil {
@@ -95,6 +96,15 @@ func (s *Service) RunASV(userDB, resourcesDir string) error {
 	}
 
 	s.setStatus(progress.StepIndexing, "indexing", "")
+	crossPath := filepath.Join(root, "cross-references", "cross_references.txt")
+	if err := bundled.ImportCrossReferences(userDB, crossPath); err != nil {
+		// ponytail: bundled extras may be absent in partial dev trees; ASV is required.
+		_ = err
+	}
+	websterPath := filepath.Join(root, "websters1828", "dictionary.json")
+	if err := bundled.ImportWebster1828(userDB, websterPath); err != nil {
+		_ = err
+	}
 	s.setStatus(progress.StepReady, "ready", "")
 
 	return nil

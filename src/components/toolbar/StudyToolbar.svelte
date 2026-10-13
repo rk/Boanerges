@@ -1,13 +1,17 @@
 <script lang="ts">
   import { TranslationService } from "../../mygo";
   import { bible, fetchBooksForTranslations } from "../../lib/bible.svelte.ts";
-  import { schedulePersistStudy, setLocation, study } from "../../lib/study.svelte.ts";
+  import ScrollSyncToggle from "../reader/ScrollSyncToggle.svelte";
+  import { schedulePersistStudy, setColumnCount, setLocation, study } from "../../lib/study.svelte.ts";
+  import { activeBibleTranslationIds, bibleColumnCount } from "../../lib/studyLayout";
   import BookChapterPicker from "./BookChapterPicker.svelte";
+
+  const showScrollSync = $derived(bibleColumnCount(study) >= 2);
 
   let translations = $state<{ id: string; abbrev: string }[]>([]);
 
   $effect(() => {
-    void fetchBooksForTranslations([study.translationId]);
+    void fetchBooksForTranslations(activeBibleTranslationIds(study));
   });
 
   $effect(() => {
@@ -73,6 +77,28 @@
     </button>
   </div>
 
+  <div class="divider divider-horizontal mx-0 hidden h-full md:flex"></div>
+
+  <div class="join hidden md:flex" data-testid="column-count">
+    {#each [1, 2, 3] as count (count)}
+      <button
+        type="button"
+        class="btn btn-sm join-item"
+        class:btn-active={study.columnCount === count}
+        aria-pressed={study.columnCount === count}
+        data-testid="column-count-{count}"
+        onclick={() => setColumnCount(count as 1 | 2 | 3)}
+      >
+        {count}
+      </button>
+    {/each}
+  </div>
+
   <div class="flex-1"></div>
+
+  {#if showScrollSync}
+    <ScrollSyncToggle />
+  {/if}
+
   <button type="button" class="btn btn-sm btn-ghost" onclick={() => (study.settingsOpen = !study.settingsOpen)}>Settings</button>
 </header>

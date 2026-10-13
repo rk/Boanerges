@@ -104,10 +104,9 @@ func (i *Importer) Import(abbrev, moduleKey string, onProgress func(done, total 
 	}
 
 	booksTable, _ := i.schema.BooksTable(a)
-	versesTable, _ := i.schema.VersesTable(a)
 
 	db := i.schema.DB()
-	if _, err := db.Exec(fmt.Sprintf("DELETE FROM %s", versesTable)); err != nil {
+	if _, err := db.Exec(fmt.Sprintf("DELETE FROM %s", a+"_verses")); err != nil {
 		return err
 	}
 	if _, err := db.Exec(fmt.Sprintf("DELETE FROM %s", booksTable)); err != nil {
@@ -129,17 +128,19 @@ func (i *Importer) Import(abbrev, moduleKey string, onProgress func(done, total 
 
 		for ch := 1; ch <= book.MaxChapter; ch++ {
 			verseCount := book.Verses[ch-1]
+			rows := make([]schema.VerseRow, 0, verseCount)
 			for v := 1; v <= verseCount; v++ {
 				text, err := mod.GetVerse(book.Abbrev, ch, v)
 				if err != nil {
 					text = ""
 				}
 				plain := i.formatter.ToPlainText(text)
-				if _, err := db.Exec(fmt.Sprintf(`
-					INSERT INTO %s (book_id, chapter, verse, text, plain_text) VALUES (?, ?, ?, ?, ?)`,
-					versesTable), bookID, ch, v, text, plain); err != nil {
-					return err
-				}
+				rows = append(rows, schema.VerseRow{
+					BookID: bookID, Chapter: ch, Verse: v, Text: text, PlainText: plain,
+				})
+			}
+			if err := i.schema.InsertVerses(a, rows); err != nil {
+				return err
 			}
 		}
 

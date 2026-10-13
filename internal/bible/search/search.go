@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html"
 	"regexp"
+	"sort"
 	"strings"
 
 	"boanerges/internal/bible"
@@ -60,9 +61,66 @@ func Search(db *sql.DB, mgr *schema.Manager, store *translations.Store, query st
 		for _, r := range recs {
 			abbrevs = append(abbrevs, r.Abbrev)
 		}
+		sort.Strings(abbrevs)
 	}
 
-	var results []Result
+	if len(abbrevs) == 1 {
+		return searchOne(db, mgr, abbrevs[0], query, limit, offset)
+	}
+
+	return searchMany(db, mgr, abbrevs, query, limit, offset)
+}
+
+func searchOne(db *sql.DB, mgr *schema.Manager, abbrev, query string, limit, offset int) (Response, error) {
+	fts, err := mgr.FtsTable(abbrev)
+	if err != nil {
+		return Response{}, err
+	}
+	if exists, err := mgr.TableExists(fts); err != nil || !exists {
+		return Response{Results: nil, Total: 0, HasMore: false}, nil
+	}
+
+	var total int
+	if err := db.QueryRow(fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE %s MATCH ?`, fts, fts), query).Scan(&total); err != nil {
+		return Response{}, err
+	}
+
+	books, err := mgr.BooksTable(abbrev)
+	if err != nil {
+		return Response{}, err
+	}
+
+	rows, err := db.Query(fmt.Sprintf(`
+		SELECT b.osis_id, fts.chapter, fts.verse, snippet(%s, 0, '<mark>', '</mark>', '…', 32) AS snippet
+		FROM %s fts
+		JOIN %s b ON b.id = fts.book_id
+		WHERE %s MATCH ?
+		ORDER BY rank
+		LIMIT ? OFFSET ?`, fts, fts, books, fts), query, limit+1, offset)
+	if err != nil {
+		return Response{}, err
+	}
+	defer rows.Close()
+
+	results, err := scanResults(abbrev, rows)
+	if err != nil {
+		return Response{}, err
+	}
+
+	hasMore := len(results) > limit
+	page := results
+	if hasMore {
+		page = results[:limit]
+	}
+
+	return Response{Results: page, Total: total, HasMore: hasMore || offset+len(page) < total}, nil
+}
+
+func searchMany(db *sql.DB, mgr *schema.Manager, abbrevs []string, query string, limit, offset int) (Response, error) {
+	need := offset + limit + 1
+	var merged []Result
+	total := 0
+
 	for _, abbrev := range abbrevs {
 		fts, err := mgr.FtsTable(abbrev)
 		if err != nil {
@@ -72,58 +130,68 @@ func Search(db *sql.DB, mgr *schema.Manager, store *translations.Store, query st
 			continue
 		}
 
-		rows, err := db.Query(fmt.Sprintf(`
-			SELECT book_id, chapter, verse, snippet(%s, 0, '<mark>', '</mark>', '…', 32) AS snippet
-			FROM %s WHERE %s MATCH ? LIMIT ? OFFSET ?`, fts, fts, fts), query, limit+1, offset)
+		var n int
+		if err := db.QueryRow(fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE %s MATCH ?`, fts, fts), query).Scan(&n); err != nil {
+			continue
+		}
+		total += n
+
+		books, err := mgr.BooksTable(abbrev)
 		if err != nil {
 			continue
 		}
-		for rows.Next() {
-			var bookID int64
-			var chapter, verse int
-			var snippet string
-			if err := rows.Scan(&bookID, &chapter, &verse, &snippet); err != nil {
-				rows.Close()
-				return Response{}, err
-			}
-			osis, err := bookOsis(db, mgr, abbrev, bookID)
-			if err != nil {
-				continue
-			}
-			canon, _ := bible.NormalizeBookID(osis)
-			if canon == "" {
-				canon = osis
-			}
-			results = append(results, Result{
-				BookID: canon, Chapter: chapter, Verse: verse,
-				Snippet: stripMark(html.UnescapeString(snippet)), Translation: abbrev,
-			})
+
+		rows, err := db.Query(fmt.Sprintf(`
+			SELECT b.osis_id, fts.chapter, fts.verse, snippet(%s, 0, '<mark>', '</mark>', '…', 32) AS snippet
+			FROM %s fts
+			JOIN %s b ON b.id = fts.book_id
+			WHERE %s MATCH ?
+			ORDER BY rank
+			LIMIT ?`, fts, fts, books, fts), query, need)
+		if err != nil {
+			continue
 		}
+		part, err := scanResults(abbrev, rows)
 		rows.Close()
+		if err != nil {
+			return Response{}, err
+		}
+		merged = append(merged, part...)
 	}
 
-	hasMore := len(results) > limit
-	page := results
-	if hasMore {
-		page = results[:limit]
+	end := offset + limit
+	hasMore := len(merged) > end
+	if offset > len(merged) {
+		return Response{Results: nil, Total: total, HasMore: total > offset}, nil
 	}
-	total := offset + len(page)
-	if hasMore {
-		total++
+	page := merged[offset:]
+	if len(page) > limit {
+		page = page[:limit]
 	}
 
-	return Response{Results: page, Total: total, HasMore: hasMore}, nil
+	return Response{Results: page, Total: total, HasMore: hasMore || offset+len(page) < total}, nil
 }
 
-func bookOsis(db *sql.DB, mgr *schema.Manager, abbrev string, bookID int64) (string, error) {
-	table, err := mgr.BooksTable(abbrev)
-	if err != nil {
-		return "", err
+func scanResults(abbrev string, rows *sql.Rows) ([]Result, error) {
+	var results []Result
+	for rows.Next() {
+		var osis string
+		var chapter, verse int
+		var snippet string
+		if err := rows.Scan(&osis, &chapter, &verse, &snippet); err != nil {
+			return nil, err
+		}
+		canon, _ := bible.NormalizeBookID(osis)
+		if canon == "" {
+			canon = osis
+		}
+		results = append(results, Result{
+			BookID: canon, Chapter: chapter, Verse: verse,
+			Snippet: stripMark(html.UnescapeString(snippet)), Translation: abbrev,
+		})
 	}
-	var osis string
-	err = db.QueryRow(fmt.Sprintf(`SELECT osis_id FROM %s WHERE id = ?`, table), bookID).Scan(&osis)
 
-	return osis, err
+	return results, rows.Err()
 }
 
 func stripMark(s string) string {

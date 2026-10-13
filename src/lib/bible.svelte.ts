@@ -1,9 +1,10 @@
 import { SvelteMap } from "svelte/reactivity";
-import { BibleService, type Book } from "../mygo";
+import { BibleService, TranslationService, type Book, type Chapter, type Config } from "../mygo";
 
 export const bible = $state({
   books: [] as Book[],
   booksLoading: false,
+  translations: [] as Config[],
 });
 
 const booksByTranslation = new SvelteMap<string, Book[]>();
@@ -11,6 +12,16 @@ const booksInflight = new SvelteMap<string, Promise<Book[]>>();
 
 export function getBooksForTranslation(translationId: string): Book[] | undefined {
   return booksByTranslation.get(translationId);
+}
+
+export async function refreshInstalledTranslations(): Promise<void> {
+  const resp = await TranslationService.installed();
+  bible.translations = resp.translations;
+}
+
+export async function fetchChapter(translationId: string, bookId: string, chapter: number): Promise<Chapter> {
+  const resp = await BibleService.chapter(translationId, bookId, chapter);
+  return resp.chapter;
 }
 
 export async function fetchBooksForTranslations(translationIds: string[]): Promise<void> {

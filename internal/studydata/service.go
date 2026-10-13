@@ -149,6 +149,14 @@ func (s *Service) VerseListSave(title string, entries []VerseListEntry, id strin
 	if strings.TrimSpace(title) == "" {
 		return VerseList{}, fmt.Errorf("title required")
 	}
+	for _, entry := range entries {
+		if !bookIDPattern.MatchString(entry.BookID) {
+			return VerseList{}, fmt.Errorf("invalid book id")
+		}
+		if entry.Chapter <= 0 || entry.Verse <= 0 {
+			return VerseList{}, fmt.Errorf("invalid reference")
+		}
+	}
 	if id == "" {
 		id = fmt.Sprintf("%d", time.Now().UnixNano())
 	}
