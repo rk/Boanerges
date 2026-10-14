@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "mygo dev",
+    "dev": "bun scripts/free-dev-port.ts && mygo dev",
     "build": "mygo build",
     "generate": "mygo generate",
     "dev:web": "vite",

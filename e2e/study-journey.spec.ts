@@ -81,14 +81,6 @@ test("notes persist per chapter", async ({ page }) => {
 });
 
 test("print dialog opens", async ({ page }) => {
-  await page.evaluate(() => {
-    window.open = () =>
-      ({
-        document: { open: () => {}, write: () => {}, close: () => {} },
-        focus: () => {},
-        print: () => {},
-      }) as Window;
-  });
   await page.evaluate(() => window.__dispatchStudyMenu?.("study.print"));
   await expect(page.getByTestId("print-options")).toBeVisible();
   await page.getByTestId("print-include-work").click();

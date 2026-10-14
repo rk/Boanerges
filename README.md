@@ -11,6 +11,10 @@ bun install
 bun run dev
 ```
 
+`bun run dev` runs MyGo, which starts Vite on port **5173** (`dev:web`). If you see **Port 5173 is already in use**, a stale Vite or old **Boanerges Dev** session is still running — quit the dev app or run `bun scripts/free-dev-port.ts`, then try again.
+
+Optional two-terminal workflow: `bun run dev:web` in one terminal, `bunx mygo dev -skip-dev-command` in another (after Vite is up).
+
 After changing bound Go APIs:
 
 ```bash

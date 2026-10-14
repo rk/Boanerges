@@ -336,6 +336,13 @@ export const AppChrome = {
   print(): Promise<void> {
     return call("AppChrome.Print");
   },
+  /**
+   * PrintStudy opens the system print dialog for the current study layout (legacy NativePHP System::print parity).
+   * Known broken — see TODO.md (Study print). Prefer a MyGo Page().Print() / PrintToPDF() design per official docs.
+   */
+  printStudy(study: StudySettings, readability: ReadabilitySettings, includeUserWork: boolean): Promise<void> {
+    return call("AppChrome.PrintStudy", study, readability, includeUserWork);
+  },
   /** PrintToPDF writes a PDF export to the user downloads folder (ponytail: fixed path). */
   printToPDF(filename: string): Promise<string> {
     return call("AppChrome.PrintToPDF", filename);

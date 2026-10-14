@@ -1,56 +1,24 @@
 <script lang="ts">
   import FileText from "@lucide/svelte/icons/file-text";
   import NotebookPen from "@lucide/svelte/icons/notebook-pen";
-  import { AppChrome } from "../../mygo";
-  import { study } from "../../lib/study.svelte.ts";
-  import { readability } from "../../lib/readability.svelte.ts";
-  import type { StudySettings } from "../../mygo";
+  import { printStudy, saveStudyPrintHtml, type PrintMode } from "../../lib/printStudy";
+  import { syncDialog } from "../../lib/syncDialog";
 
   let { open = $bindable(false) }: { open?: boolean } = $props();
-  let dialog = $state<HTMLDialogElement | null>(null);
   let busy = $state(false);
   let error = $state<string | null>(null);
   let savedPath = $state<string | null>(null);
 
-  $effect(() => {
-    if (open) {
-      error = null;
-      savedPath = null;
-      dialog?.showModal();
-    } else {
-      dialog?.close();
-    }
-  });
-
-  function studyPayload(): StudySettings {
-    return {
-      columnCount: study.columnCount,
-      columns: study.columns,
-      bookId: study.bookId,
-      chapter: study.chapter,
-      translationId: study.translationId,
-      translationBId: study.translationBId,
-      translationCId: study.translationCId,
-      verseListShowContent: study.verseListShowContent,
-      verseListActiveId: study.verseListActiveId,
-    };
-  }
-
-  function readabilityPayload() {
-    return {
-      fontSize: readability.fontSize,
-      lineHeight: readability.lineHeight,
-      theme: readability.theme,
-      fontFamily: readability.fontFamily,
-      justifyText: readability.justifyText,
-    };
+  function onPresent(): void {
+    error = null;
+    savedPath = null;
   }
 
   async function saveHtml(includeUserWork: boolean): Promise<void> {
     busy = true;
     error = null;
     try {
-      savedPath = await AppChrome.writeStudyPrintFile(studyPayload(), readabilityPayload(), includeUserWork, "study-print.html");
+      savedPath = await saveStudyPrintHtml(includeUserWork);
     } catch (err) {
       error = err instanceof Error ? err.message : String(err);
     } finally {
@@ -58,21 +26,11 @@
     }
   }
 
-  async function printStudy(includeUserWork: boolean): Promise<void> {
+  async function runPrint(mode: PrintMode): Promise<void> {
     busy = true;
     error = null;
     try {
-      const html = await AppChrome.studyPrintHTML(studyPayload(), readabilityPayload(), includeUserWork);
-      const printWindow = window.open("", "_blank", "noopener,noreferrer");
-      if (!printWindow) {
-        throw new Error("Could not open print window.");
-      }
-      printWindow.document.open();
-      printWindow.document.write(html);
-      printWindow.document.close();
-      printWindow.focus();
-      printWindow.print();
-      dialog?.close();
+      await printStudy(mode);
       open = false;
     } catch (err) {
       error = err instanceof Error ? err.message : String(err);
@@ -80,9 +38,18 @@
       busy = false;
     }
   }
+
+  function onDialogClose(): void {
+    open = false;
+  }
 </script>
 
-<dialog bind:this={dialog} class="modal" data-testid="print-options" onclose={() => (open = false)}>
+<dialog
+  use:syncDialog={{ open, onPresent }}
+  class="modal"
+  data-testid="print-options"
+  onclose={onDialogClose}
+>
   <div class="modal-box max-w-md">
     <h3 class="font-bold text-lg">Print chapter</h3>
     <p class="text-sm opacity-70 mt-1">
@@ -100,7 +67,7 @@
         class="btn justify-start gap-3"
         disabled={busy}
         data-testid="print-include-work"
-        onclick={() => printStudy(true)}
+        onclick={() => runPrint("include-user-work")}
       >
         <NotebookPen size={18} aria-hidden="true" />
         <span class="text-left">
@@ -113,7 +80,7 @@
         class="btn btn-outline justify-start gap-3"
         disabled={busy}
         data-testid="print-blank-writing"
-        onclick={() => printStudy(false)}
+        onclick={() => runPrint("blank-writing")}
       >
         <FileText size={18} aria-hidden="true" />
         <span class="text-left">
