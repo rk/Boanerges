@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { syncScrollFromSource } from "../../lib/scrollSync.ts";
+  import { syncLinkedScrollPanes } from "../../lib/scrollSync.ts";
   import { study } from "../../lib/study.svelte.ts";
   import { secondaryTranslationForSlot } from "../../lib/studyLayout";
   import BibleColumn from "../columns/BibleColumn.svelte";
@@ -23,13 +23,47 @@
   } as const;
 
   let primaryScroll = $state<HTMLElement | null>(null);
-  let secondaryScroll = $state<HTMLElement | null>(null);
+  let slotScrollRefs = $state<Record<number, HTMLElement | null>>({});
+  let syncingScroll = false;
 
-  function onPrimaryScroll() {
-    if (!study.scrollSync || !primaryScroll) return;
-    const targets: HTMLElement[] = [];
-    if (secondaryScroll) targets.push(secondaryScroll);
-    syncScrollFromSource(primaryScroll, targets);
+  function setSlotScrollRef(index: number, el: HTMLElement | null) {
+    if (slotScrollRefs[index] === el) {
+      return;
+    }
+    slotScrollRefs = { ...slotScrollRefs, [index]: el };
+  }
+
+  function bibleScrollPanes(): HTMLElement[] {
+    const panes: HTMLElement[] = [];
+    if (primaryScroll) {
+      panes.push(primaryScroll);
+    }
+    const secondaryColumns = study.columns.slice(0, Math.max(0, study.columnCount - 1));
+    for (let i = 0; i < secondaryColumns.length; i++) {
+      if (secondaryColumns[i] === "bible-secondary") {
+        const el = slotScrollRefs[i];
+        if (el) {
+          panes.push(el);
+        }
+      }
+    }
+    return panes;
+  }
+
+  function onLinkedScroll(source: HTMLElement) {
+    if (!study.scrollSync || syncingScroll) {
+      return;
+    }
+    const panes = bibleScrollPanes();
+    if (panes.length < 2) {
+      return;
+    }
+    syncingScroll = true;
+    try {
+      syncLinkedScrollPanes(source, panes);
+    } finally {
+      syncingScroll = false;
+    }
   }
 
   function secondaryTranslationId(slotIndex: number): string {
@@ -39,7 +73,7 @@
 
 <div class="flex h-full min-h-0" data-testid="column-layout">
   <section class="min-w-0 flex-1 border-r border-base-300">
-    <BibleColumn translationId={study.translationId} primary bind:scrollRef={primaryScroll} onscroll={onPrimaryScroll} />
+    <BibleColumn translationId={study.translationId} primary bind:scrollRef={primaryScroll} onscroll={onLinkedScroll} />
   </section>
   {#each study.columns.slice(0, study.columnCount - 1) as column, i}
     {@const Component = slotComponents[column as keyof typeof slotComponents] ?? NotesColumn}
@@ -49,8 +83,8 @@
           translationId={secondaryTranslationId(i)}
           slotIndex={i}
           columnType={column}
-          bind:scrollRef={secondaryScroll}
-          onscroll={onPrimaryScroll}
+          onScrollElement={(el) => setSlotScrollRef(i, el)}
+          onscroll={onLinkedScroll}
         />
       {:else if column === "comparison"}
         <ComparisonColumn slotIndex={i} />

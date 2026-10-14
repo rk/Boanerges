@@ -1,4 +1,5 @@
 import { Service, StudyData, type StudySettings } from "../mygo";
+import { comparison } from "./comparison.svelte";
 import { normalizeDictionaryWord } from "./normalizeDictionaryWord";
 import { formatScriptureReference } from "./scriptureReference";
 import {
@@ -200,6 +201,11 @@ export function openCrossReferencesForVerse(bookId: string, chapter: number, ver
   study.crossRefsTarget = { bookId, chapter, verse };
   study.crossRefsTick += 1;
   openColumn("cross-references");
+}
+
+export function openComparisonForVerse(bookId: string, chapter: number, verse: number): void {
+  comparison.activeReference = formatScriptureReference(bookId, chapter, verse);
+  openColumn("comparison");
 }
 
 export function openDictionaryForWord(word: string): void {

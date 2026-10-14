@@ -6,6 +6,7 @@
   import {
     addVerseToList,
     copyVerseReference,
+    openComparisonForVerse,
     openCrossReferencesForVerse,
     openDictionaryForWord,
     setActiveVerse,
@@ -114,6 +115,15 @@
     style="top: {menuY}px; left: {menuX}px;"
     role="menu"
   >
+    <li>
+      <button
+        type="button"
+        role="menuitem"
+        onclick={() => run(() => openComparisonForVerse(bookId, chapter, verse.number))}
+      >
+        Compare
+      </button>
+    </li>
     <li>
       <button
         type="button"

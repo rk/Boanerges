@@ -21,8 +21,8 @@ func NewReadabilityStore(repo *Repository) *ReadabilityStore {
 
 func (s *ReadabilityStore) Defaults() ReadabilitySettings {
 	return ReadabilitySettings{
-		FontSize:    18,
-		LineHeight:  1.7,
+		FontSize:    16,
+		LineHeight:  1.2,
 		Theme:       "auto",
 		FontFamily:  "serif",
 		JustifyText: true,
@@ -67,8 +67,8 @@ func readabilityToMap(s ReadabilitySettings) map[string]any {
 
 func mapToReadability(m map[string]any) ReadabilitySettings {
 	d := ReadabilitySettings{
-		FontSize:    18,
-		LineHeight:  1.7,
+		FontSize:    16,
+		LineHeight:  1.2,
 		Theme:       "auto",
 		FontFamily:  "serif",
 		JustifyText: true,

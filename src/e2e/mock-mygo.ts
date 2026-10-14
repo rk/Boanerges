@@ -23,8 +23,8 @@ const genesisChapter: ChapterResponse = {
 
 const store = {
   readability: {
-    fontSize: 18,
-    lineHeight: 1.6,
+    fontSize: 16,
+    lineHeight: 1.2,
     theme: "light",
     fontFamily: "serif",
     justifyText: false,
@@ -143,8 +143,8 @@ export function installMygoMock(mode: string = "1"): void {
     },
     "Service.UpdateReadability": (settings: unknown): ReadabilitySettings => {
       const s = settings as ReadabilitySettings;
-      if (s.fontSize < 14) {
-        throw Object.assign(new Error("fontSize must be at least 14"), { name: "CallError" });
+      if (s.fontSize < 12) {
+        throw Object.assign(new Error("fontSize must be at least 12"), { name: "CallError" });
       }
       store.readability = { ...s };
       sessionStorage.setItem("e2e.readability", JSON.stringify(store.readability));
@@ -278,7 +278,7 @@ export function installMygoMock(mode: string = "1"): void {
   };
 
   window.__e2eReset = () => {
-    store.readability.fontSize = 18;
+    store.readability.fontSize = 16;
     store.study.columnCount = 1;
     store.study.columns = [];
     store.study.bookId = "gen";

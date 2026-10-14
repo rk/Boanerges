@@ -11,10 +11,7 @@ import (
 )
 
 func renderDocument(study settings.StudySettings, readability settings.ReadabilitySettings, columns []printColumn) string {
-	font := `Georgia, "Times New Roman", serif`
-	if readability.FontFamily == "sans-serif" {
-		font = "system-ui, sans-serif"
-	}
+	font := settings.ReaderFontStack(readability.FontFamily)
 	landscape := study.ColumnCount > 1
 	lineStepPx := float64(readability.FontSize) * readability.LineHeight
 	ruleSVG := url.QueryEscape(fmt.Sprintf(

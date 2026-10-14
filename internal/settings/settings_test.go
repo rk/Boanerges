@@ -30,7 +30,7 @@ func TestReadabilityDefaults(t *testing.T) {
 	repo := testRepo(t)
 	got := NewReadabilityStore(repo).Get()
 
-	if got.FontSize != 18 || got.Theme != "auto" || got.FontFamily != "serif" {
+	if got.FontSize != 16 || got.LineHeight != 1.2 || got.Theme != "auto" || got.FontFamily != "serif" {
 		t.Fatalf("defaults = %+v", got)
 	}
 }
@@ -86,8 +86,8 @@ func TestReadabilityValidation(t *testing.T) {
 	}
 
 	_, err = svc.UpdateReadability(ReadabilitySettings{
-		FontSize:    18,
-		LineHeight:  1.7,
+		FontSize:    16,
+		LineHeight:  1.2,
 		Theme:       "sepia",
 		FontFamily:  "serif",
 		JustifyText: true,
@@ -102,8 +102,8 @@ func TestReadabilityAcceptsDaisyUIThemes(t *testing.T) {
 
 	for _, theme := range []string{"nord", "dracula", "caramellatte", "auto"} {
 		got, err := svc.UpdateReadability(ReadabilitySettings{
-			FontSize:    18,
-			LineHeight:  1.7,
+			FontSize:    16,
+			LineHeight:  1.2,
 			Theme:       theme,
 			FontFamily:  "serif",
 			JustifyText: true,

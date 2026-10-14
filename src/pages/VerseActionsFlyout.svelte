@@ -14,6 +14,9 @@
 
 <ul class="menu bg-base-100 rounded-box h-full w-full p-2" role="menu">
   <li>
+    <button type="button" role="menuitem" onclick={() => run("comparison")}>Compare</button>
+  </li>
+  <li>
     <button type="button" role="menuitem" onclick={() => run("cross-references")}>Cross-references</button>
   </li>
   <li>

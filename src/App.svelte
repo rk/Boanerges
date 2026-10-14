@@ -6,6 +6,7 @@
     applyStudySettings,
     copyVerseReference,
     hydrateStudy,
+    openComparisonForVerse,
     openCrossReferencesForVerse,
     openDictionaryForWord,
     setColumnCount,
@@ -113,6 +114,10 @@
       const { action, bookId, chapter, verse, word } = payload;
       const ch = Number(chapter);
       const v = Number(verse);
+      if (action === "comparison") {
+        openComparisonForVerse(String(bookId), ch, v);
+        return;
+      }
       if (action === "cross-references") {
         openCrossReferencesForVerse(String(bookId), ch, v);
         return;

@@ -13,6 +13,7 @@
     primary = false,
     slotIndex = 0,
     scrollRef = $bindable<HTMLElement | null>(null),
+    onScrollElement,
     onscroll,
   }: {
     translationId: string;
@@ -20,8 +21,17 @@
     slotIndex?: number;
     columnType?: string;
     scrollRef?: HTMLElement | null;
-    onscroll?: () => void;
+    onScrollElement?: (el: HTMLElement | null) => void;
+    onscroll?: (source: HTMLElement) => void;
   } = $props();
+
+  let scrollEl = $state<HTMLElement | null>(null);
+
+  $effect(() => {
+    scrollRef = scrollEl;
+    onScrollElement?.(scrollEl);
+    return () => onScrollElement?.(null);
+  });
 
   let chapter = $state<Chapter | null>(null);
   let chapterLoc = $state<{ bookId: string; chapter: number } | null>(null);
@@ -104,11 +114,11 @@
     </ColumnHeader>
   {/if}
   <article
-    bind:this={scrollRef}
+    bind:this={scrollEl}
     class="prose max-w-none min-h-0 flex-1 overflow-y-auto p-4"
     style={readerStyle()}
     data-testid={primary ? "bible-reader-primary" : "bible-reader-secondary"}
-    onscroll={onscroll}
+    onscroll={(e) => onscroll?.(e.currentTarget as HTMLElement)}
   >
     {#if loading}
       <p>Loading…</p>

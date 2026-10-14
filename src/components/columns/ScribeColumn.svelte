@@ -87,73 +87,83 @@
 
 <div class="flex h-full min-h-0 min-w-0 flex-col" style={readerStyle()}>
   <ColumnHeader contentType="scribe" {slotIndex} showViewSelector>
-    {#if currentChapter}
-      <span class="text-sm opacity-80">{currentChapter.book} {currentChapter.chapter}</span>
-    {/if}
-    {#if scribe.saveStatus === "saving"}
-      <LoaderCircle size={14} class="text-base-content/60 shrink-0 animate-spin" aria-label="Saving" />
-    {:else if scribe.saveStatus === "saved"}
-      <CircleCheck size={14} class="text-success shrink-0" aria-label="Saved" />
-    {/if}
-    <div
-      class="dropdown dropdown-end ml-auto"
-      class:dropdown-open={actionsMenuOpen}
-      class:z-50={actionsMenuOpen}
-    >
-      <button
-        bind:this={actionsTriggerEl}
-        type="button"
-        class="btn btn-ghost btn-sm btn-square"
-        aria-label="Scribe actions"
-        aria-expanded={actionsMenuOpen}
-        aria-haspopup="menu"
-        disabled={actionsDisabled}
-        onclick={toggleActionsMenu}
-      >
-        <EllipsisVertical size={16} aria-hidden="true" />
-      </button>
-      <ul
-        bind:this={actionsPanelEl}
-        class="dropdown-content menu bg-base-100 rounded-box z-50 w-56 border border-base-300 p-1 shadow-lg"
-        role="menu"
-      >
-        <li role="none">
+    <div class="flex min-w-0 flex-1 items-center gap-2">
+      {#if currentChapter}
+        <span class="truncate text-sm opacity-80">{currentChapter.book} {currentChapter.chapter}</span>
+      {/if}
+      <div class="ml-auto flex shrink-0 items-center gap-2">
+        {#if scribe.saveStatus === "saving"}
+          <span class="text-base-content/60 flex items-center gap-1 text-xs">
+            <LoaderCircle size={14} class="animate-spin" aria-hidden="true" />
+            Saving…
+          </span>
+        {:else if scribe.saveStatus === "saved"}
+          <span class="text-success flex items-center gap-1 text-xs">
+            <CircleCheck size={14} aria-hidden="true" />
+            Saved
+          </span>
+        {/if}
+        <div
+          class="dropdown dropdown-end"
+          class:dropdown-open={actionsMenuOpen}
+          class:z-50={actionsMenuOpen}
+        >
           <button
+            bind:this={actionsTriggerEl}
             type="button"
-            role="menuitem"
-            onclick={() => {
-              editor?.setLineBreaksFromPrimary();
-              closeActionsMenu();
-            }}
+            class="btn btn-ghost btn-sm btn-square"
+            aria-label="Scribe actions"
+            aria-expanded={actionsMenuOpen}
+            aria-haspopup="menu"
+            disabled={actionsDisabled}
+            onclick={toggleActionsMenu}
           >
-            Set Line Breaks from Primary
+            <EllipsisVertical size={16} aria-hidden="true" />
           </button>
-        </li>
-        <li role="none">
-          <button
-            type="button"
-            role="menuitem"
-            onclick={() => {
-              editor?.resetLineBreaks();
-              closeActionsMenu();
-            }}
+          <ul
+            bind:this={actionsPanelEl}
+            class="dropdown-content menu bg-base-100 rounded-box z-50 w-56 border border-base-300 p-1 shadow-lg"
+            role="menu"
           >
-            Reset Line Breaks
-          </button>
-        </li>
-        <li role="none">
-          <button
-            type="button"
-            role="menuitem"
-            onclick={() => {
-              editor?.openPreview();
-              closeActionsMenu();
-            }}
-          >
-            Preview
-          </button>
-        </li>
-      </ul>
+            <li role="none">
+              <button
+                type="button"
+                role="menuitem"
+                onclick={() => {
+                  editor?.setLineBreaksFromPrimary();
+                  closeActionsMenu();
+                }}
+              >
+                Set Line Breaks from Primary
+              </button>
+            </li>
+            <li role="none">
+              <button
+                type="button"
+                role="menuitem"
+                onclick={() => {
+                  editor?.resetLineBreaks();
+                  closeActionsMenu();
+                }}
+              >
+                Reset Line Breaks
+              </button>
+            </li>
+            <li role="none">
+              <button
+                type="button"
+                role="menuitem"
+                onclick={() => {
+                  editor?.openPreview();
+                  closeActionsMenu();
+                }}
+              >
+                Preview
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
     </div>
   </ColumnHeader>
 

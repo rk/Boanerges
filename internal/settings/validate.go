@@ -3,11 +3,11 @@ package settings
 import "fmt"
 
 func ValidateReadability(s ReadabilitySettings) error {
-	if s.FontSize < 14 || s.FontSize > 24 {
-		return validationError("fontSize must be between 14 and 24")
+	if s.FontSize < 12 || s.FontSize > 32 {
+		return validationError("fontSize must be between 12 and 32")
 	}
-	if s.LineHeight < 1.4 || s.LineHeight > 2 {
-		return validationError("lineHeight must be between 1.4 and 2")
+	if s.LineHeight < 0.8 || s.LineHeight > 2 {
+		return validationError("lineHeight must be between 0.8 and 2")
 	}
 	if !isReaderTheme(s.Theme) {
 		return validationError("invalid theme")

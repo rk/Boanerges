@@ -8,3 +8,12 @@ export function syncScrollFromSource(source: HTMLElement, targets: HTMLElement[]
     target.scrollTop = ratio * targetMax;
   }
 }
+
+/** Run sync without re-entering when programmatic scrollTop triggers scroll events. */
+export function syncLinkedScrollPanes(source: HTMLElement, panes: HTMLElement[]): void {
+  const targets = panes.filter((el) => el !== source);
+  if (targets.length === 0) {
+    return;
+  }
+  syncScrollFromSource(source, targets);
+}
