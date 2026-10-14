@@ -62,6 +62,11 @@ export interface CrossRefsResponse {
   references: Reference[];
 }
 
+export interface DictionaryStatus {
+  installed: boolean;
+  entries: number;
+}
+
 export interface InstallResponse {
   translation: Config;
 }
@@ -252,6 +257,14 @@ export const DictionaryService = {
   /** Lookup returns dictionary entry for a word. */
   lookup(word: string): Promise<unknown> {
     return call("DictionaryService.Lookup", word);
+  },
+  /** Reinstall clears Webster data and re-imports from bundled JSON or legacy DB. */
+  reinstall(): Promise<void> {
+    return call("DictionaryService.Reinstall");
+  },
+  /** Status reports whether Webster is installed and how many rows are loaded. */
+  status(): Promise<DictionaryStatus> {
+    return call("DictionaryService.Status");
   },
   /** Suggest returns dictionary prefix matches. */
   suggest(query: string, limit: number): Promise<unknown> {

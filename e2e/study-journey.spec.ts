@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
+  await page.evaluate(() => window.__e2eReset?.());
   await expect(page.getByTestId("study-screen")).toBeVisible({ timeout: 15_000 });
 });
 
@@ -69,9 +70,13 @@ test("notes persist per chapter", async ({ page }) => {
   await page.evaluate(() => window.__dispatchStudyMenu?.("study.notes"));
   await expect(page.getByTestId("notes-editor")).toBeVisible();
   await page.getByTestId("notes-editor").fill("e2e note");
-  await page.waitForTimeout(500);
+  await expect
+    .poll(async () => page.evaluate(() => sessionStorage.getItem("e2e.notes.gen:1")))
+    .toBe("e2e note");
   await page.reload();
   await expect(page.getByTestId("study-screen")).toBeVisible({ timeout: 15_000 });
+  await page.evaluate(() => window.__dispatchStudyMenu?.("view.columns.2"));
+  await page.evaluate(() => window.__dispatchStudyMenu?.("study.notes"));
   await expect(page.getByTestId("notes-editor")).toHaveValue("e2e note", { timeout: 10_000 });
 });
 
@@ -140,7 +145,12 @@ test("scribe persists", async ({ page }) => {
   await verse1.click();
   await verse1.fill("scribe e2e line");
   await verse1.blur();
-  await page.waitForTimeout(700);
+  await expect
+    .poll(async () => {
+      const raw = await page.evaluate(() => sessionStorage.getItem("e2e.scribe.gen:1"));
+      return raw?.includes("scribe e2e") ?? false;
+    })
+    .toBe(true);
   await page.reload();
   await expect(page.getByTestId("study-screen")).toBeVisible({ timeout: 15_000 });
   await page.evaluate(() => window.__dispatchStudyMenu?.("view.columns.2"));
@@ -152,6 +162,7 @@ test("verse list add entry", async ({ page }) => {
   await page.evaluate(() => window.__dispatchStudyMenu?.("view.columns.2"));
   await page.evaluate(() => window.__dispatchStudyMenu?.("study.verse-list"));
   await expect(page.getByTestId("verse-list-column")).toBeVisible();
+  await page.getByTestId("bible-reader-primary").locator("[data-verse='1']").click();
   await page.getByRole("button", { name: "Add verse" }).click();
   await expect(page.getByText("gen 1:1")).toBeVisible();
 });

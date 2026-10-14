@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	"boanerges/internal/bible/schema"
 )
@@ -29,10 +28,10 @@ func ImportWebster1828(dbPath, jsonPath string) error {
 		return err
 	}
 
-	var completed sql.NullString
-	if err := mgr.DB().QueryRow(`SELECT completed_at FROM import_meta WHERE key = ?`, websterMetaKey).Scan(&completed); err == nil && completed.Valid {
+	if WebsterInstalled(mgr.DB()) {
 		return nil
 	}
+	clearWebsterImportMeta(mgr.DB())
 
 	raw, err := os.ReadFile(jsonPath)
 	if err != nil {
@@ -88,11 +87,7 @@ func ImportWebster1828(dbPath, jsonPath string) error {
 		}
 	}
 
-	_, err = db.Exec(`INSERT INTO import_meta (key, completed_at) VALUES (?, ?)
-		ON CONFLICT(key) DO UPDATE SET completed_at = excluded.completed_at`,
-		websterMetaKey, time.Now().UTC().Format(time.RFC3339))
-
-	return err
+	return commitWebsterImportMeta(db)
 }
 
 type dictRow struct {

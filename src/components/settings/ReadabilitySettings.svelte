@@ -1,7 +1,10 @@
 <script lang="ts">
+  import { DictionaryService } from "../../mygo";
   import { readability, saveReadability } from "../../lib/readability.svelte.ts";
 
   let error = $state<string | null>(null);
+  let dictionaryMsg = $state<string | null>(null);
+  let dictionaryBusy = $state(false);
 
   async function changed() {
     error = null;
@@ -15,6 +18,32 @@
   async function simulateInvalid() {
     readability.fontSize = 10;
     await changed();
+  }
+
+  async function refreshDictionaryStatus() {
+    try {
+      const st = (await DictionaryService.status()) as { installed?: boolean; entries?: number };
+      if (st.installed && (st.entries ?? 0) > 0) {
+        dictionaryMsg = `Webster loaded (${st.entries?.toLocaleString() ?? "?"} entries).`;
+      } else {
+        dictionaryMsg = `Webster not ready (${st.entries ?? 0} entries). Use Reinstall or look up a word.`;
+      }
+    } catch (err) {
+      dictionaryMsg = err instanceof Error ? err.message : String(err);
+    }
+  }
+
+  async function reinstallDictionary() {
+    dictionaryMsg = null;
+    dictionaryBusy = true;
+    try {
+      await DictionaryService.reinstall();
+      await refreshDictionaryStatus();
+    } catch (err) {
+      dictionaryMsg = err instanceof Error ? err.message : String(err);
+    } finally {
+      dictionaryBusy = false;
+    }
   }
 </script>
 
@@ -44,5 +73,21 @@
   </label>
   {#if import.meta.env.VITE_E2E}
     <button type="button" class="btn btn-xs btn-outline" data-testid="readability-invalid" onclick={simulateInvalid}>Simulate invalid</button>
+  {/if}
+  <div class="divider my-1">Dictionary</div>
+  <button type="button" class="btn btn-xs btn-ghost" data-testid="dictionary-status" onclick={refreshDictionaryStatus}>
+    Check dictionary status
+  </button>
+  <button
+    type="button"
+    class="btn btn-sm btn-outline"
+    data-testid="dictionary-reinstall"
+    disabled={dictionaryBusy}
+    onclick={reinstallDictionary}
+  >
+    {dictionaryBusy ? "Reinstalling…" : "Reinstall Webster dictionary"}
+  </button>
+  {#if dictionaryMsg}
+    <p class="text-sm opacity-80">{dictionaryMsg}</p>
   {/if}
 </div>

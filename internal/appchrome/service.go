@@ -108,7 +108,7 @@ func (s *AppChrome) OpenDevTools() {
 	if win == nil {
 		return
 	}
-	win.Page().OpenDevTools()
+	win.Page().ToggleDevTools()
 }
 
 // OpenFeedback opens the feedback mailto link in the system handler.

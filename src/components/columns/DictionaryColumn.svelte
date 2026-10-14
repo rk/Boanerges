@@ -23,6 +23,7 @@
   }
 
   $effect(() => {
+    study.dictionaryLookupTick;
     const pending = study.dictionaryQuery;
     if (!pending) {
       return;
@@ -31,7 +32,7 @@
     void lookup(pending);
   });
 
-  async function lookup(raw: string) {
+  async function lookup(raw: string, attempt = 0) {
     const word = normalizeDictionaryWord(raw);
     if (word.length < 2) {
       result = null;
@@ -42,13 +43,23 @@
     loading = true;
     error = "";
     try {
-      result = parseDictionaryLookup(await DictionaryService.lookup(word), word);
+      const resp = await DictionaryService.lookup(word);
+      if (
+        resp &&
+        typeof resp === "object" &&
+        (resp as { status?: string }).status === "importing" &&
+        attempt < 8
+      ) {
+        await new Promise((r) => setTimeout(r, 500));
+        await lookup(raw, attempt + 1);
+        return;
+      }
+      result = parseDictionaryLookup(resp, word);
     } catch (err: unknown) {
       result = null;
       error = err instanceof Error ? err.message : "Lookup failed";
-    } finally {
-      loading = false;
     }
+    loading = false;
   }
 </script>
 

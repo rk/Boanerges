@@ -104,6 +104,8 @@ func (s *Service) RunASV(userDB, resourcesDir string) error {
 	}
 	if err := bundled.EnsureWebster1828(userDB, resourcesDir); err != nil {
 		log.Printf("webster dictionary import: %v", err)
+	} else {
+		log.Printf("webster dictionary: ready")
 	}
 	s.setStatus(progress.StepReady, "ready", "")
 

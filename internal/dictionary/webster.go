@@ -25,9 +25,14 @@ func New(db *sql.DB) *Service {
 
 func (s *Service) IsImported() bool {
 	var completed sql.NullString
-	err := s.db.QueryRow(`SELECT completed_at FROM import_meta WHERE key = ?`, MetaKey).Scan(&completed)
-
-	return err == nil && completed.Valid
+	if err := s.db.QueryRow(`SELECT completed_at FROM import_meta WHERE key = ?`, MetaKey).Scan(&completed); err != nil || !completed.Valid {
+		return false
+	}
+	var n int
+	if err := s.db.QueryRow(`SELECT COUNT(*) FROM dictionary_entries`).Scan(&n); err != nil || n == 0 {
+		return false
+	}
+	return true
 }
 
 type Variant struct {

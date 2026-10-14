@@ -35,6 +35,7 @@ export const study = $state({
   crossRefsTarget: null as { bookId: string; chapter: number; verse: number } | null,
   crossRefsTick: 0,
   dictionaryQuery: null as string | null,
+  dictionaryLookupTick: 0,
 });
 
 let hydrated = false;
@@ -207,6 +208,7 @@ export function openDictionaryForWord(word: string): void {
     return;
   }
   study.dictionaryQuery = normalized;
+  study.dictionaryLookupTick += 1;
   openColumn("dictionary");
 }
 

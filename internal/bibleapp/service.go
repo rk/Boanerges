@@ -3,6 +3,7 @@ package bibleapp
 import (
 	"errors"
 	"fmt"
+	"log"
 	"path/filepath"
 
 	"boanerges/internal/bible/bootstrap"
@@ -189,10 +190,13 @@ func (s *DictionaryService) Suggest(query string, limit int) (any, error) {
 	if err := s.ensureDictionary(); err != nil {
 		return nil, err
 	}
-	svc, err := s.openDict()
+	mgr, err := schema.Open(s.dbPath)
 	if err != nil {
 		return nil, err
 	}
+	defer mgr.Close()
+
+	svc := dictionary.New(mgr.DB())
 	if !svc.IsImported() {
 		return importingResponse{Status: "importing", Message: "Dictionary bundle is not installed."}, nil
 	}
@@ -205,10 +209,13 @@ func (s *DictionaryService) Lookup(word string) (any, error) {
 	if err := s.ensureDictionary(); err != nil {
 		return nil, err
 	}
-	svc, err := s.openDict()
+	mgr, err := schema.Open(s.dbPath)
 	if err != nil {
 		return nil, err
 	}
+	defer mgr.Close()
+
+	svc := dictionary.New(mgr.DB())
 	if !svc.IsImported() {
 		return importingResponse{Status: "importing", Message: "Dictionary bundle is not installed."}, nil
 	}
@@ -216,14 +223,47 @@ func (s *DictionaryService) Lookup(word string) (any, error) {
 	return svc.Lookup(word), nil
 }
 
+// Reinstall clears Webster data and re-imports from bundled JSON or legacy DB.
+func (s *DictionaryService) Reinstall() error {
+	if err := bundled.ResetWebster1828(s.dbPath); err != nil {
+		return err
+	}
+	return s.ensureDictionary()
+}
+
+type dictionaryStatus struct {
+	Installed bool `json:"installed"`
+	Entries   int  `json:"entries"`
+}
+
+// Status reports whether Webster is installed and how many rows are loaded.
+func (s *DictionaryService) Status() (dictionaryStatus, error) {
+	mgr, err := schema.Open(s.dbPath)
+	if err != nil {
+		return dictionaryStatus{}, err
+	}
+	defer mgr.Close()
+	if err := mgr.CreateAppSchema(); err != nil {
+		return dictionaryStatus{}, err
+	}
+	var count int
+	if err := mgr.DB().QueryRow(`SELECT COUNT(*) FROM dictionary_entries`).Scan(&count); err != nil {
+		return dictionaryStatus{}, err
+	}
+	return dictionaryStatus{
+		Installed: bundled.WebsterInstalled(mgr.DB()),
+		Entries:   count,
+	}, nil
+}
+
 func (s *DictionaryService) ensureDictionary() error {
 	mgr, err := schema.Open(s.dbPath)
 	if err != nil {
 		return err
 	}
-	imported := dictionary.New(mgr.DB()).IsImported()
+	ready := bundled.WebsterInstalled(mgr.DB())
 	_ = mgr.Close()
-	if imported {
+	if ready {
 		return nil
 	}
 
@@ -231,15 +271,10 @@ func (s *DictionaryService) ensureDictionary() error {
 	if err != nil {
 		return err
 	}
-	return bundled.EnsureWebster1828(s.dbPath, resDir)
-}
-
-func (s *DictionaryService) openDict() (*dictionary.Service, error) {
-	mgr, err := schema.Open(s.dbPath)
-	if err != nil {
-		return nil, err
+	log.Printf("webster: lookup triggered import (db=%s resources=%s)", s.dbPath, resDir)
+	if err := bundled.EnsureWebster1828(s.dbPath, resDir); err != nil {
+		return err
 	}
-	defer mgr.Close()
-
-	return dictionary.New(mgr.DB()), nil
+	return nil
 }
+

@@ -42,6 +42,9 @@ func main() {
 			BackgroundColor: "light-dark(#f6f7f9, #0f1115)",
 			StateKey:        "main",
 			URL:             "/",
+			Page: mygo.PageOptions{
+				DevTools: mygo.DevToolsEnabled,
+			},
 		})
 
 		boot.SetWindow(win)

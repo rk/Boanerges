@@ -199,6 +199,8 @@ export function installMygoMock(mode: string = "1"): void {
       (word as string).toLowerCase() === "love"
         ? { found: true, word: "LOVE", variants: [{ partOfSpeechExpanded: "noun", definitions: ["Strong affection."] }] }
         : { found: false, word, message: "Not found" },
+    "DictionaryService.Reinstall": () => undefined,
+    "DictionaryService.Status": () => ({ installed: true, entries: 113376 }),
     "StudyData.NotesGet": (bookId: unknown, chapter: unknown) => {
       const k = key(bookId as string, chapter as number);
       const persisted = sessionStorage.getItem(`e2e.notes.${k}`);
@@ -279,7 +281,18 @@ export function installMygoMock(mode: string = "1"): void {
     store.readability.fontSize = 18;
     store.study.columnCount = 1;
     store.study.columns = [];
+    store.study.bookId = "gen";
+    store.study.chapter = 1;
+    store.study.verseListActiveId = null;
     store.notes.clear();
+    store.scribe.clear();
+    store.verseLists.clear();
+    for (let i = sessionStorage.length - 1; i >= 0; i--) {
+      const k = sessionStorage.key(i);
+      if (k?.startsWith("e2e.")) {
+        sessionStorage.removeItem(k);
+      }
+    }
   };
 
   window.__dispatchStudyMenu = (id: string) => {

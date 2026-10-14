@@ -8,6 +8,7 @@
     copyVerseReference,
     openCrossReferencesForVerse,
     openDictionaryForWord,
+    setActiveVerse,
     study,
   } from "../../lib/study.svelte.ts";
   import { clampMenuPosition, wordFromVerseContext } from "../../lib/verseWord.ts";
@@ -97,6 +98,9 @@
   <span
     id="verse-{verse.number}"
     class={highlighted ? "rounded-sm bg-primary/15 px-0.5 [box-decoration-break:clone]" : undefined}
+    role={showContextMenu ? "button" : undefined}
+    tabindex={showContextMenu ? -1 : undefined}
+    onclick={() => showContextMenu && setActiveVerse(verse.number)}
   >
     <sup class="text-primary mr-1 text-xs">{verse.number}</sup>
     <FormattedVerseText text={verse.text} />

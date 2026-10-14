@@ -136,6 +136,29 @@ func TestChapterOutOfRange(t *testing.T) {
 	}
 }
 
+func TestDictionaryServiceLookup(t *testing.T) {
+	root := filepath.Join("..", "..")
+	db := filepath.Join(t.TempDir(), "bible.sqlite")
+	seedASV(t, db)
+	jsonPath := filepath.Join(root, "internal", "bible", "bundled", "testdata", "webster-mini.json")
+	if err := bundled.ImportWebster1828(db, jsonPath); err != nil {
+		t.Fatal(err)
+	}
+
+	svc := bibleapp.NewDictionaryService(db)
+	raw, err := svc.Lookup("love")
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, ok := raw.(dictionary.LookupResult)
+	if !ok {
+		t.Fatalf("lookup type = %T", raw)
+	}
+	if !result.Found {
+		t.Fatalf("lookup love = %+v", result)
+	}
+}
+
 func TestDictionaryGrace(t *testing.T) {
 	root := filepath.Join("..", "..")
 	db := filepath.Join(t.TempDir(), "bible.sqlite")
