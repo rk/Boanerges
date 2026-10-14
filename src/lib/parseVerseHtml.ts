@@ -18,6 +18,7 @@ const ALLOWED_SPAN_CLASSES = new Set([
   "small-caps",
   "divine-name",
   "foreign",
+  "trans-change",
 ]);
 
 export function parseVerseHtml(html: string): VerseHtmlNode[] {

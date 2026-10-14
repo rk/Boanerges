@@ -3,7 +3,7 @@
   import type { Chapter } from "../../mygo";
   import { BibleService } from "../../mygo";
   import ColumnHeader from "../layout/ColumnHeader.svelte";
-  import VerseLine from "../reader/VerseLine.svelte";
+  import ParagraphText from "../reader/ParagraphText.svelte";
   import { readerStyle } from "../../lib/readability.svelte.ts";
   import { fetchBooksForTranslations } from "../../lib/bible.svelte.ts";
   import { schedulePersistStudy, setSecondaryTranslation, study } from "../../lib/study.svelte.ts";
@@ -124,14 +124,12 @@
       <p>Loading…</p>
     {:else if chapter}
       <h2 data-testid="chapter-heading">{chapter.book} {chapter.chapter}</h2>
-      {#each chapter.verses as verse (verse.number)}
-        <VerseLine
-          {verse}
-          bookId={chapterLoc?.bookId ?? study.bookId}
-          chapter={chapterLoc?.chapter ?? study.chapter}
-          showContextMenu={primary}
-        />
-      {/each}
+      <ParagraphText
+        verses={chapter.verses}
+        bookId={chapterLoc?.bookId ?? study.bookId}
+        chapter={chapterLoc?.chapter ?? study.chapter}
+        showContextMenu={primary}
+      />
     {/if}
   </article>
 </div>
