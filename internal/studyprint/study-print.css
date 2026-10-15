@@ -1,0 +1,150 @@
+/**
+ * Study print layout — edit freely.
+ *
+ * Go sets @page size/orientation and --study-print-* on .study-print-body
+ * from readability + column count (see styles.go). Defaults below are fallbacks.
+ */
+
+.study-print-body,
+.study-print-body * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.study-print-body {
+  font-family: var(--study-print-font, Georgia, "Times New Roman", serif);
+  font-size: var(--study-print-font-size, 16px);
+  line-height: var(--study-print-line-height, 1.5);
+  text-align: var(--study-print-text-align, left);
+  color: #111;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.columns {
+  display: flex;
+  width: 100%;
+  min-height: calc(100vh - 1in);
+  align-items: stretch;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: calc(100vh - 1in);
+  padding: 0 4mm;
+  border-right: 1px solid #ccc;
+}
+
+.column:last-child {
+  border-right: none;
+}
+
+.column-title {
+  font-weight: 600;
+  font-size: 0.95em;
+  margin-bottom: 0.75em;
+  padding-bottom: 0.35em;
+  border-bottom: 1px solid #ddd;
+  flex-grow: 0;
+}
+
+.column-subtitle {
+  font-size: 0.75em;
+  color: #666;
+  margin-bottom: 0.75em;
+}
+
+.column-bible .reader p,
+.column-scribe-content .reader p {
+  margin-bottom: 0.75em;
+}
+
+.reader sup {
+  font-size: 0.7em;
+  color: #555;
+  margin-right: 0.15em;
+}
+
+.reader .words-of-jesus {
+  color: #c00;
+}
+
+.reader .divine-name {
+  font-variant: small-caps;
+}
+
+.reader .foreign,
+.reader .ot-quote {
+  font-style: italic;
+}
+
+.reader .small-caps {
+  font-variant: small-caps;
+}
+
+.reader .underline {
+  text-decoration: underline;
+}
+
+.reader .trans-change {
+  font-style: italic;
+}
+
+.notes-content {
+  white-space: pre-wrap;
+}
+
+.lined-area {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.lined-block {
+  position: absolute;
+  inset: 0;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  image-rendering: crisp-edges;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent calc(var(--study-print-lined-step, 24px) - 1px),
+    var(--study-print-line-color, #444) calc(var(--study-print-lined-step, 24px) - 1px),
+    var(--study-print-line-color, #444) var(--study-print-lined-step, 24px)
+  );
+  background-size: 100% var(--study-print-lined-step, 24px);
+  background-repeat: repeat-y;
+  background-position: top left;
+}
+
+.column-scribe .lined-area,
+.column-lined-notes .lined-area {
+  margin: 0;
+}
+
+.column-scribe p,
+.column-lined-notes p,
+.column-scribe .reader p,
+.column-lined-notes .reader p {
+  margin: 0;
+}
+
+.message {
+  color: #666;
+  font-size: 0.9em;
+  font-style: italic;
+}
+
+.verse-list-entry {
+  margin-bottom: 0.75em;
+}
+
+.verse-list-entry strong {
+  display: block;
+  margin-bottom: 0.25em;
+}

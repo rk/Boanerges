@@ -232,7 +232,15 @@ export function installMygoMock(mode: string = "1"): void {
       store.verseLists.delete(id as string);
     },
     "AppChrome.Print": () => undefined,
-    "AppChrome.PrintStudy": () => undefined,
+    "AppChrome.OpenStudyPrintPreview": () => {
+      (globalThis as { __printPreviewOpened?: boolean }).__printPreviewOpened = true;
+    },
+    "AppChrome.PrintPreviewDocument": (includeUserWork: unknown) => ({
+      styles: ".columns{display:flex}",
+      body: `<div class="study-print-body"><div class="columns"><p>${includeUserWork ? "with notes" : "blank"}</p></div></div>`,
+    }),
+    "AppChrome.PrintPreviewPrint": () => undefined,
+    "AppChrome.PrintPreviewSavePDF": () => "/tmp/boanerges-study.pdf",
     "AppChrome.PrintToPDF": () => "/tmp/boanerges-study.pdf",
     "AppChrome.StudyPrintHTML": () => "<html><body><h1>Genesis 1</h1></body></html>",
     "AppChrome.WriteStudyPrintFile": () => "/tmp/boanerges-study-print.html",

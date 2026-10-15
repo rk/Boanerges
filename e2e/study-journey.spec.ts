@@ -80,11 +80,11 @@ test("notes persist per chapter", async ({ page }) => {
   await expect(page.getByTestId("notes-editor")).toHaveValue("e2e note", { timeout: 10_000 });
 });
 
-test("print dialog opens", async ({ page }) => {
+test("print preview opens from menu", async ({ page }) => {
   await page.evaluate(() => window.__dispatchStudyMenu?.("study.print"));
-  await expect(page.getByTestId("print-options")).toBeVisible();
-  await page.getByTestId("print-include-work").click();
-  await expect(page.getByTestId("print-options")).toBeHidden();
+  await expect
+    .poll(() => page.evaluate(() => (window as { __printPreviewOpened?: boolean }).__printPreviewOpened === true))
+    .toBe(true);
 });
 
 test("readability validation error", async ({ page }) => {

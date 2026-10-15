@@ -83,6 +83,11 @@ export interface Payload {
   install_status?: string;
 }
 
+export interface PrintDocument {
+  styles: string;
+  body: string;
+}
+
 /** ReadabilitySettings match legacy readability store shape. */
 export interface ReadabilitySettings {
   fontSize: number;
@@ -317,13 +322,17 @@ export const AppChrome = {
   openBookChapterFlyout(anchorX: number, anchorY: number, anchorWidth: number, anchorHeight: number): Promise<void> {
     return call("AppChrome.OpenBookChapterFlyout", anchorX, anchorY, anchorWidth, anchorHeight);
   },
-  /** OpenDevTools toggles the main window developer tools. */
+  /** OpenDevTools toggles the web inspector on the focused window, or the main window. */
   openDevTools(): Promise<void> {
     return call("AppChrome.OpenDevTools");
   },
   /** OpenFeedback opens the feedback mailto link in the system handler. */
   openFeedback(): Promise<void> {
     return call("AppChrome.OpenFeedback");
+  },
+  /** OpenStudyPrintPreview opens (or focuses) the study print preview window. */
+  openStudyPrintPreview(study: StudySettings, readability: ReadabilitySettings): Promise<void> {
+    return call("AppChrome.OpenStudyPrintPreview", study, readability);
   },
   /** OpenVerseActionsFlyout shows verse context actions in a native flyout (not clipped by the webview). */
   openVerseActionsFlyout(anchorX: number, anchorY: number, bookID: string, chapter: number, verse: number, word: string): Promise<void> {
@@ -336,12 +345,17 @@ export const AppChrome = {
   print(): Promise<void> {
     return call("AppChrome.Print");
   },
-  /**
-   * PrintStudy opens the system print dialog for the current study layout (legacy NativePHP System::print parity).
-   * Known broken — see TODO.md (Study print). Prefer a MyGo Page().Print() / PrintToPDF() design per official docs.
-   */
-  printStudy(study: StudySettings, readability: ReadabilitySettings, includeUserWork: boolean): Promise<void> {
-    return call("AppChrome.PrintStudy", study, readability, includeUserWork);
+  /** PrintPreviewDocument returns printable content for the current preview session. */
+  printPreviewDocument(includeUserWork: boolean): Promise<PrintDocument> {
+    return call("AppChrome.PrintPreviewDocument", includeUserWork);
+  },
+  /** PrintPreviewPrint opens the system print dialog for the preview window. */
+  printPreviewPrint(): Promise<void> {
+    return call("AppChrome.PrintPreviewPrint");
+  },
+  /** PrintPreviewSavePDF renders the preview page to PDF and returns the saved path. */
+  printPreviewSavePDF(): Promise<string> {
+    return call("AppChrome.PrintPreviewSavePDF");
   },
   /** PrintToPDF writes a PDF export to the user downloads folder (ponytail: fixed path). */
   printToPDF(filename: string): Promise<string> {
@@ -374,6 +388,8 @@ export const events = {
   studySettingsChanged: event<{}>("studySettingsChanged"),
   /** MenuAction is emitted when the user picks a custom application menu item. */
   studyMenu: event<string>("studyMenu"),
+  /** StudyPrintPreviewRefresh tells the preview page to reload after OpenStudyPrintPreview reuses the window. */
+  studyPrintPreviewRefresh: event<{}>("studyPrintPreviewRefresh"),
   /** VerseMenuAction is emitted on the main window when the verse-actions flyout picks an item. */
   verseMenuAction: event<VerseMenuPayload>("verseMenuAction"),
 } as const;

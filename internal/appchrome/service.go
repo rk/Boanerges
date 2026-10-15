@@ -13,11 +13,14 @@ import (
 
 // AppChrome exposes desktop print for the main window.
 type AppChrome struct {
-	mu          sync.Mutex
-	win         *mygo.Window
-	bookFlyout  *mygo.Window
-	verseFlyout *mygo.Window
-	dbPath      string
+	mu                   sync.Mutex
+	win                  *mygo.Window
+	printPreviewWin      *mygo.Window
+	previewStudy         settings.StudySettings
+	previewReadability   settings.ReadabilitySettings
+	bookFlyout           *mygo.Window
+	verseFlyout          *mygo.Window
+	dbPath               string
 }
 
 func NewAppChrome(dbPath string) *AppChrome {
@@ -100,15 +103,34 @@ func (s *AppChrome) SyncMenuState(columnCount int, scrollSync bool) {
 	SyncMenuState(columnCount, scrollSync)
 }
 
-// OpenDevTools toggles the main window developer tools.
+// OpenDevTools toggles the web inspector on the focused window, or the main window.
 func (s *AppChrome) OpenDevTools() {
-	s.mu.Lock()
-	win := s.win
-	s.mu.Unlock()
-	if win == nil {
+	page := devToolsPage(s)
+	if page == nil {
 		return
 	}
-	win.Page().ToggleDevTools()
+	page.ToggleDevTools()
+}
+
+func devToolsPage(s *AppChrome) *mygo.Page {
+	if focused := mygo.FocusedWindow(); focused != nil {
+		if p := focused.Page(); p != nil {
+			return p
+		}
+	}
+	s.mu.Lock()
+	preview := s.printPreviewWin
+	main := s.win
+	s.mu.Unlock()
+	if preview != nil && !preview.IsDestroyed() {
+		if p := preview.Page(); p != nil {
+			return p
+		}
+	}
+	if main != nil && !main.IsDestroyed() {
+		return main.Page()
+	}
+	return nil
 }
 
 // OpenFeedback opens the feedback mailto link in the system handler.

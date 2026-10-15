@@ -3,8 +3,6 @@ import type { ReadabilitySettings, StudySettings } from "../mygo";
 import { readability } from "./readability.svelte";
 import { study } from "./study.svelte";
 
-export type PrintMode = "include-user-work" | "blank-writing";
-
 function studyPayload(): StudySettings {
   return {
     columnCount: study.columnCount,
@@ -29,12 +27,8 @@ function readabilityPayload(): ReadabilitySettings {
   };
 }
 
-export async function printStudy(mode: PrintMode): Promise<void> {
-  await AppChrome.printStudy(
-    studyPayload(),
-    readabilityPayload(),
-    mode === "include-user-work",
-  );
+export async function openStudyPrintPreview(): Promise<void> {
+  await AppChrome.openStudyPrintPreview(studyPayload(), readabilityPayload());
 }
 
 export async function saveStudyPrintHtml(includeUserWork: boolean): Promise<string> {

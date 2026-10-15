@@ -15,7 +15,8 @@
   } from "./lib/study.svelte.ts";
   import type { ColumnType } from "./lib/study.svelte.ts";
   import TranslationManagerModal from "./components/sidebar/TranslationManagerModal.svelte";
-  import PrintOptionsModal from "./components/print/PrintOptionsModal.svelte";
+  import { openStudyPrintPreview } from "./lib/printStudy";
+  import PrintPreview from "./pages/PrintPreview.svelte";
   import { bindTranslationInstallProgress, openTranslationManager } from "./lib/translations.svelte.ts";
   import Study from "./pages/Study.svelte";
   import Welcome from "./pages/Welcome.svelte";
@@ -24,7 +25,7 @@
 
   const flyoutParam =
     typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("flyout") : null;
-  let printOpen = $state(false);
+  const viewParam = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("view") : null;
 
   let ready = $state(false);
   let studyLoaded = $state(import.meta.env.VITE_E2E === "1");
@@ -62,7 +63,7 @@
       return;
     }
     if (id === "study.print") {
-      printOpen = true;
+      void openStudyPrintPreview();
       return;
     }
     if (id === "view.settings") {
@@ -168,9 +169,10 @@
   <VerseActionsFlyout />
 {:else if flyoutParam === "book-chapter"}
   <BookChapterFlyout />
+{:else if viewParam === "print-preview"}
+  <PrintPreview />
 {:else}
   <TranslationManagerModal />
-  <PrintOptionsModal bind:open={printOpen} />
 
   {#if ready && studyLoaded}
     <Study />
