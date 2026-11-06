@@ -33,6 +33,11 @@
     slotScrollRefs = { ...slotScrollRefs, [index]: el };
   }
 
+  /** Stable ref — inline lambdas in {#each} change every render and retrigger BibleColumn $effect (infinite loop). */
+  function registerSlotScroll(index: number, el: HTMLElement | null) {
+    setSlotScrollRef(index, el);
+  }
+
   function bibleScrollPanes(): HTMLElement[] {
     const panes: HTMLElement[] = [];
     if (primaryScroll) {
@@ -75,7 +80,7 @@
   <section class="min-w-0 flex-1 border-r border-base-300">
     <BibleColumn translationId={study.translationId} primary bind:scrollRef={primaryScroll} onscroll={onLinkedScroll} />
   </section>
-  {#each study.columns.slice(0, study.columnCount - 1) as column, i}
+  {#each study.columns.slice(0, study.columnCount - 1) as column, i (i)}
     {@const Component = slotComponents[column as keyof typeof slotComponents] ?? NotesColumn}
     <section class="min-w-0 flex-1 border-r border-base-300 last:border-r-0">
       {#if column === "bible-secondary"}
@@ -83,7 +88,7 @@
           translationId={secondaryTranslationId(i)}
           slotIndex={i}
           columnType={column}
-          onScrollElement={(el) => setSlotScrollRef(i, el)}
+          {registerSlotScroll}
           onscroll={onLinkedScroll}
         />
       {:else if column === "comparison"}

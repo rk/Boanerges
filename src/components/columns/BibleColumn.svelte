@@ -13,7 +13,7 @@
     primary = false,
     slotIndex = 0,
     scrollRef = $bindable<HTMLElement | null>(null),
-    onScrollElement,
+    registerSlotScroll,
     onscroll,
   }: {
     translationId: string;
@@ -21,17 +21,32 @@
     slotIndex?: number;
     columnType?: string;
     scrollRef?: HTMLElement | null;
-    onScrollElement?: (el: HTMLElement | null) => void;
+    /** Parent-owned stable callback — avoids $effect loop when parent passes fresh inline fns each render. */
+    registerSlotScroll?: (slotIndex: number, el: HTMLElement | null) => void;
     onscroll?: (source: HTMLElement) => void;
   } = $props();
 
   let scrollEl = $state<HTMLElement | null>(null);
 
   $effect(() => {
-    scrollRef = scrollEl;
-    onScrollElement?.(scrollEl);
-    return () => onScrollElement?.(null);
+    if (primary) {
+      scrollRef = scrollEl;
+    }
   });
+
+  /** Mount-only registration — $effect + parent setState caused effect_update_depth_exceeded. */
+  function registerSecondaryScrollPane(node: HTMLElement) {
+    if (!primary) {
+      registerSlotScroll?.(slotIndex, node);
+    }
+    return {
+      destroy() {
+        if (!primary) {
+          registerSlotScroll?.(slotIndex, null);
+        }
+      },
+    };
+  }
 
   let chapter = $state<Chapter | null>(null);
   let chapterLoc = $state<{ bookId: string; chapter: number } | null>(null);
@@ -39,11 +54,9 @@
   let translations = $state<{ id: string; abbrev: string }[]>([]);
 
   $effect(() => {
-    if (!primary) {
-      void TranslationService.installed().then((resp) => {
-        translations = resp.translations.map((t) => ({ id: t.id, abbrev: t.abbrev }));
-      });
-    }
+    void TranslationService.installed().then((resp) => {
+      translations = resp.translations.map((t) => ({ id: t.id, abbrev: t.abbrev }));
+    });
   });
 
   $effect(() => {
@@ -76,13 +89,6 @@
     schedulePersistStudy();
   }
 
-  $effect(() => {
-    if (primary) {
-      void TranslationService.installed().then((resp) => {
-        translations = resp.translations.map((t) => ({ id: t.id, abbrev: t.abbrev }));
-      });
-    }
-  });
 </script>
 
 <div class="flex h-full min-h-0 flex-col">
@@ -115,6 +121,7 @@
   {/if}
   <article
     bind:this={scrollEl}
+    use:registerSecondaryScrollPane
     class="prose max-w-none min-h-0 flex-1 overflow-y-auto p-4"
     style={readerStyle()}
     data-testid={primary ? "bible-reader-primary" : "bible-reader-secondary"}

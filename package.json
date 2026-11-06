@@ -17,7 +17,7 @@
     "mygo-runtime": "^0.8.1"
   },
   "devDependencies": {
-    "@playwright/test": "^1.64.0",
+    "@playwright/test": "^1.65.0",
     "@sveltejs/vite-plugin-svelte": "^7.0.0",
     "@tailwindcss/vite": "^4.1.11",
     "daisyui": "^5.5.23",
