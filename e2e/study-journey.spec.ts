@@ -10,6 +10,26 @@ test("welcome skipped when ASV ready", async ({ page }) => {
   await expect(page.getByTestId("welcome-screen")).toHaveCount(0);
 });
 
+test.describe("study console", () => {
+  test("no effect_update_depth_exceeded when two bible-secondary panes mount", async ({ page }) => {
+    const bad: string[] = [];
+    page.on("pageerror", (err) => {
+      bad.push(err.message);
+    });
+    page.on("console", (msg) => {
+      if (msg.type() === "error") {
+        bad.push(msg.text());
+      }
+    });
+    await page.goto("/");
+    await page.evaluate(() => window.__e2eReset?.());
+    await expect(page.getByTestId("study-screen")).toBeVisible({ timeout: 15_000 });
+    await page.evaluate(() => window.__dispatchStudyMenu?.("view.columns.3"));
+    await expect(page.getByTestId("bible-reader-secondary")).toHaveCount(2, { timeout: 10_000 });
+    expect(bad.some((t) => t.includes("effect_update_depth_exceeded"))).toBe(false);
+  });
+});
+
 test("books → chapter → markup verse", async ({ page }) => {
   await expect(page.getByTestId("chapter-heading")).toHaveText("Genesis 1");
   await expect(page.getByTestId("bible-reader-primary")).toContainText("beginning");

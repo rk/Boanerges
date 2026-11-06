@@ -33,9 +33,42 @@
     slotScrollRefs = { ...slotScrollRefs, [index]: el };
   }
 
+  /** Drop refs for removed secondary slots (columnCount shrink / column swap). */
+  function pruneSlotScrollRefs(secondarySlotCount: number) {
+    let hasStaleKey = false;
+    for (const k of Object.keys(slotScrollRefs)) {
+      if (Number(k) >= secondarySlotCount) {
+        hasStaleKey = true;
+        break;
+      }
+    }
+    if (!hasStaleKey) {
+      return;
+    }
+    const next: Record<number, HTMLElement | null> = {};
+    for (let i = 0; i < secondarySlotCount; i++) {
+      if (Object.prototype.hasOwnProperty.call(slotScrollRefs, i)) {
+        next[i] = slotScrollRefs[i];
+      }
+    }
+    slotScrollRefs = next;
+  }
+
+  $effect(() => {
+    const secondarySlotCount = Math.max(0, study.columnCount - 1);
+    study.columns;
+    pruneSlotScrollRefs(secondarySlotCount);
+  });
+
   /** Stable ref — inline lambdas in {#each} change every render and retrigger BibleColumn $effect (infinite loop). */
   function registerSlotScroll(index: number, el: HTMLElement | null) {
     setSlotScrollRef(index, el);
+  }
+
+  function syncLinkedScrollFromPrimary() {
+    if (primaryScroll) {
+      onLinkedScroll(primaryScroll);
+    }
   }
 
   function bibleScrollPanes(): HTMLElement[] {
@@ -80,7 +113,7 @@
   <section class="min-w-0 flex-1 border-r border-base-300">
     <BibleColumn translationId={study.translationId} primary bind:scrollRef={primaryScroll} onscroll={onLinkedScroll} />
   </section>
-  {#each study.columns.slice(0, study.columnCount - 1) as column, i (i)}
+  {#each study.columns.slice(0, study.columnCount - 1) as column, i (`${i}-${column}`)}
     {@const Component = slotComponents[column as keyof typeof slotComponents] ?? NotesColumn}
     <section class="min-w-0 flex-1 border-r border-base-300 last:border-r-0">
       {#if column === "bible-secondary"}
@@ -89,6 +122,7 @@
           slotIndex={i}
           columnType={column}
           {registerSlotScroll}
+          syncLinkedScrollFromPrimary={syncLinkedScrollFromPrimary}
           onscroll={onLinkedScroll}
         />
       {:else if column === "comparison"}

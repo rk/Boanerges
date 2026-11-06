@@ -1,3 +1,8 @@
+/**
+ * Linked scroll uses scrollTop ratio between panes (ponytail: linear), not verse alignment.
+ * Different translation lengths/layouts yield different pixel ranges — expect approximate sync only.
+ * Security: same-origin DOM only; do not pass user-controlled elements from untrusted documents.
+ */
 /** Sync scroll position from source to targets by scroll ratio (ponytail: linear ratio). */
 export function syncScrollFromSource(source: HTMLElement, targets: HTMLElement[]): void {
   const max = source.scrollHeight - source.clientHeight;

@@ -6,6 +6,7 @@
   import ParagraphText from "../reader/ParagraphText.svelte";
   import { readerStyle } from "../../lib/readability.svelte.ts";
   import { fetchBooksForTranslations } from "../../lib/bible.svelte.ts";
+  import { createLatestGen } from "../../lib/latestAsync.ts";
   import { schedulePersistStudy, setSecondaryTranslation, study } from "../../lib/study.svelte.ts";
 
   let {
@@ -14,6 +15,7 @@
     slotIndex = 0,
     scrollRef = $bindable<HTMLElement | null>(null),
     registerSlotScroll,
+    syncLinkedScrollFromPrimary,
     onscroll,
   }: {
     translationId: string;
@@ -23,6 +25,8 @@
     scrollRef?: HTMLElement | null;
     /** Parent-owned stable callback — avoids $effect loop when parent passes fresh inline fns each render. */
     registerSlotScroll?: (slotIndex: number, el: HTMLElement | null) => void;
+    /** Called after secondary scroll pane registers so primary position can propagate (brief desync window otherwise). */
+    syncLinkedScrollFromPrimary?: () => void;
     onscroll?: (source: HTMLElement) => void;
   } = $props();
 
@@ -38,6 +42,11 @@
   function registerSecondaryScrollPane(node: HTMLElement) {
     if (!primary) {
       registerSlotScroll?.(slotIndex, node);
+      queueMicrotask(() => {
+        if (study.scrollSync) {
+          syncLinkedScrollFromPrimary?.();
+        }
+      });
     }
     return {
       destroy() {
@@ -53,10 +62,16 @@
   let loading = $state(true);
   let translations = $state<{ id: string; abbrev: string }[]>([]);
 
+  const translationsLatest = createLatestGen();
   $effect(() => {
+    const id = translationsLatest.begin();
     void TranslationService.installed().then((resp) => {
+      if (translationsLatest.isStale(id)) {
+        return;
+      }
       translations = resp.translations.map((t) => ({ id: t.id, abbrev: t.abbrev }));
     });
+    return () => translationsLatest.invalidate();
   });
 
   $effect(() => {
