@@ -4,10 +4,12 @@
   import ColumnLayout from "../components/layout/ColumnLayout.svelte";
   import ReadabilitySettings from "../components/settings/ReadabilitySettings.svelte";
   import StudyToolbar from "../components/toolbar/StudyToolbar.svelte";
+  import { refreshInstalledTranslations } from "../lib/bible.svelte.ts";
   import { hydrateReadability } from "../lib/readability.svelte.ts";
   import { hydrateStudy, study } from "../lib/study.svelte.ts";
 
   onMount(() => {
+    void refreshInstalledTranslations();
     void Service.getStudy().then(hydrateStudy);
     void Service.getReadability().then(hydrateReadability);
   });

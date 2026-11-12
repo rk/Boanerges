@@ -1,12 +1,10 @@
 <script lang="ts">
-  import { TranslationService } from "../../mygo";
   import type { Chapter } from "../../mygo";
   import { BibleService } from "../../mygo";
   import ColumnHeader from "../layout/ColumnHeader.svelte";
   import ParagraphText from "../reader/ParagraphText.svelte";
   import { readerStyle } from "../../lib/readability.svelte.ts";
-  import { fetchBooksForTranslations } from "../../lib/bible.svelte.ts";
-  import { createLatestGen } from "../../lib/latestAsync.ts";
+  import { bible, fetchBooksForTranslations } from "../../lib/bible.svelte.ts";
   import { schedulePersistStudy, setSecondaryTranslation, study } from "../../lib/study.svelte.ts";
 
   let {
@@ -60,19 +58,8 @@
   let chapter = $state<Chapter | null>(null);
   let chapterLoc = $state<{ bookId: string; chapter: number } | null>(null);
   let loading = $state(true);
-  let translations = $state<{ id: string; abbrev: string }[]>([]);
 
-  const translationsLatest = createLatestGen();
-  $effect(() => {
-    const id = translationsLatest.begin();
-    void TranslationService.installed().then((resp) => {
-      if (translationsLatest.isStale(id)) {
-        return;
-      }
-      translations = resp.translations.map((t) => ({ id: t.id, abbrev: t.abbrev }));
-    });
-    return () => translationsLatest.invalidate();
-  });
+  const translationOptions = $derived(bible.translations.map((t) => ({ id: t.id, abbrev: t.abbrev })));
 
   $effect(() => {
     const bookId = study.bookId;
@@ -115,7 +102,7 @@
         value={translationId}
         onchange={onPrimaryTranslationChange}
       >
-        {#each translations as t (t.id)}
+        {#each translationOptions as t (t.id)}
           <option value={t.id}>{t.abbrev}</option>
         {/each}
       </select>
@@ -128,7 +115,7 @@
         value={translationId}
         onchange={onSecondaryTranslationChange}
       >
-        {#each translations as t (t.id)}
+        {#each translationOptions as t (t.id)}
           <option value={t.id}>{t.abbrev}</option>
         {/each}
       </select>
@@ -145,7 +132,7 @@
     {#if loading}
       <p>Loading…</p>
     {:else if chapter}
-      <h2 data-testid="chapter-heading">{chapter.book} {chapter.chapter}</h2>
+      <h2 class="chapter-heading" data-testid="chapter-heading">{chapter.book} {chapter.chapter}</h2>
       <ParagraphText
         verses={chapter.verses}
         bookId={chapterLoc?.bookId ?? study.bookId}

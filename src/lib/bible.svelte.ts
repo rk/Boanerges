@@ -5,6 +5,8 @@ export const bible = $state({
   books: [] as Book[],
   booksLoading: false,
   translations: [] as Config[],
+  /** Bumped when TranslationService.installed() is refreshed (install/uninstall). */
+  installedRevision: 0,
 });
 
 const booksByTranslation = new SvelteMap<string, Book[]>();
@@ -17,6 +19,7 @@ export function getBooksForTranslation(translationId: string): Book[] | undefine
 export async function refreshInstalledTranslations(): Promise<void> {
   const resp = await TranslationService.installed();
   bible.translations = resp.translations;
+  bible.installedRevision++;
 }
 
 export async function fetchChapter(translationId: string, bookId: string, chapter: number): Promise<Chapter> {

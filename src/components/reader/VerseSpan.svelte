@@ -34,10 +34,16 @@
 
   const highlighted = $derived(
     showContextMenu &&
-      study.crossRefsTarget !== null &&
-      study.crossRefsTarget.bookId === bookId &&
-      study.crossRefsTarget.chapter === chapter &&
-      study.crossRefsTarget.verse === verse.number,
+      bookId === study.bookId &&
+      chapter === study.chapter &&
+      ((study.crossRefsTarget !== null &&
+        study.crossRefsTarget.bookId === bookId &&
+        study.crossRefsTarget.chapter === chapter &&
+        study.crossRefsTarget.verse === verse.number) ||
+        (study.navFlash !== null &&
+          study.navFlash.bookId === bookId &&
+          study.navFlash.chapter === chapter &&
+          study.navFlash.verse === verse.number)),
   );
 
   async function onContextMenu(event: MouseEvent): Promise<void> {
@@ -102,7 +108,7 @@
   oncontextmenu={onContextMenu}
   onclick={() => showContextMenu && setActiveVerse(verse.number)}
 >
-  <sup class="text-primary mr-0.5 text-xs">{verse.number}</sup><FormattedVerseText text={verse.text} />
+  <sup class="verse-num mr-0.5 text-xs">{verse.number}</sup><FormattedVerseText text={verse.text} />
 </span>
 
 {#if menuOpen}

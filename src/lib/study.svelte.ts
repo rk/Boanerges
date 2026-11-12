@@ -29,9 +29,12 @@ export const study = $state({
   translationCId: "asv",
   verseListShowContent: true,
   verseListActiveId: null as string | null,
+  verseListTick: 0,
   scrollSync: false,
   settingsOpen: false,
   selectedVerse: null as number | null,
+  /** Brief highlight after programmatic navigation (search / cross-refs / verse list). */
+  navFlash: null as { bookId: string; chapter: number; verse: number } | null,
   /** Verse cross-ref panel should load (displayed passage, not stale study location). */
   crossRefsTarget: null as { bookId: string; chapter: number; verse: number } | null,
   crossRefsTick: 0,
@@ -164,17 +167,44 @@ export function setActiveVerse(verse: number): void {
   study.selectedVerse = verse;
 }
 
+function scrollPrimaryToVerse(verse: number, attemptsLeft = 80): void {
+  const el = document.getElementById(`verse-${verse}`);
+  if (el) {
+    el.scrollIntoView({ block: "center", behavior: "smooth" });
+    return;
+  }
+  if (attemptsLeft <= 0) {
+    return;
+  }
+  requestAnimationFrame(() => scrollPrimaryToVerse(verse, attemptsLeft - 1));
+}
+
 export function navigateToVerse(bookId: string, chapter: number, verse: number): void {
   study.bookId = bookId;
   study.chapter = chapter;
   study.selectedVerse = verse;
+  study.navFlash = { bookId, chapter, verse };
   schedulePersistStudy();
-  requestAnimationFrame(() => {
-    document.getElementById(`verse-${verse}`)?.scrollIntoView({ block: "center", behavior: "smooth" });
-  });
+  scrollPrimaryToVerse(verse);
+  const flashAt = { bookId, chapter, verse };
+  setTimeout(() => {
+    if (
+      study.navFlash?.bookId === flashAt.bookId &&
+      study.navFlash?.chapter === flashAt.chapter &&
+      study.navFlash?.verse === flashAt.verse
+    ) {
+      study.navFlash = null;
+    }
+  }, 3500);
+}
+
+export function verseListEntryKey(entry: { bookId: string; chapter: number; verse: number }): string {
+  return `${entry.bookId}:${entry.chapter}:${entry.verse}`;
 }
 
 export async function addVerseToList(bookId: string, chapter: number, verse: number): Promise<void> {
+  openColumn("verse-list");
+
   let activeId = study.verseListActiveId;
   let entries: { bookId: string; chapter: number; verse: number }[] = [];
   let title = "My list";
@@ -183,11 +213,27 @@ export async function addVerseToList(bookId: string, chapter: number, verse: num
     const list = await StudyData.verseListGet(activeId);
     entries = [...list.entries];
     title = list.title;
+  } else {
+    const index = await StudyData.verseListIndex();
+    const existing = index.find((item) => item.title === "My list") ?? index[0];
+    if (existing) {
+      activeId = existing.id;
+      const list = await StudyData.verseListGet(existing.id);
+      entries = [...list.entries];
+      title = list.title;
+    }
+  }
+
+  const key = verseListEntryKey({ bookId, chapter, verse });
+  if (entries.some((e) => verseListEntryKey(e) === key)) {
+    study.verseListTick += 1;
+    return;
   }
 
   entries.push({ bookId, chapter, verse });
   const saved = await StudyData.verseListSave(title, entries, activeId ?? "");
   study.verseListActiveId = saved.id;
+  study.verseListTick += 1;
   schedulePersistStudy();
 }
 

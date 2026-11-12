@@ -1,4 +1,5 @@
 import { events, TranslationService, type CatalogItem, type Payload } from "../mygo";
+import { refreshInstalledTranslations } from "./bible.svelte";
 
 export const translations = $state({
   managerOpen: false,
@@ -99,6 +100,7 @@ export function bindTranslationInstallProgress(): () => void {
         }
       }
       void refreshCatalog();
+      void refreshInstalledTranslations();
     }
   });
   return progressUnsub;
@@ -138,6 +140,7 @@ export async function installTranslation(module: string): Promise<void> {
   try {
     await TranslationService.install(module);
     await refreshCatalog();
+    await refreshInstalledTranslations();
   } catch (err) {
     translations.pendingModules.delete(module);
     translations.liveProgress.delete(module);
@@ -150,6 +153,7 @@ export async function uninstallTranslation(module: string): Promise<void> {
   try {
     await TranslationService.uninstall(module);
     await refreshCatalog();
+    await refreshInstalledTranslations();
   } catch (err) {
     translations.managerError = err instanceof Error ? err.message : String(err);
   }

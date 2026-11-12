@@ -4,6 +4,14 @@
   themes: light --default, dark --prefersdark;
 }
 
+/* Dark: lift primary for verse numbers and small accents on base-100. */
+@plugin "daisyui/theme" {
+  name: "dark";
+  prefersdark: true;
+  --color-primary: oklch(74% 0.12 264);
+  --color-primary-content: oklch(98% 0.01 264);
+}
+
 @theme inline {
   --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-reader: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
@@ -36,6 +44,18 @@ body {
 
 .reader-prose :where(.trans-change) {
   font-style: italic;
+}
+
+.prose :where(.chapter-heading) {
+  font-size: 1.25em;
+  font-weight: 600;
+  line-height: 1.25;
+  margin-top: 0;
+  margin-bottom: 0.75em;
+}
+
+.prose :where(.verse-num) {
+  color: var(--color-primary);
 }
 
 .scribe-document {

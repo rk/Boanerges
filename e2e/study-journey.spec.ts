@@ -176,5 +176,5 @@ test("verse list add entry", async ({ page }) => {
   await expect(page.getByTestId("verse-list-column")).toBeVisible();
   await page.getByTestId("bible-reader-primary").locator("[data-verse='1']").click();
   await page.getByRole("button", { name: "Add verse" }).click();
-  await expect(page.getByText("gen 1:1")).toBeVisible();
+  await expect(page.getByText("Gen 1:1")).toBeVisible();
 });

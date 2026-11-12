@@ -63,14 +63,19 @@
   {#if searching && results.length === 0}
     <p class="p-3 text-sm opacity-60">Searching…</p>
   {/if}
-  <ul class="menu min-h-0 flex-1 overflow-y-auto p-2">
-    {#each results as hit}
-      <li>
-        <button type="button" class="text-left whitespace-normal" data-testid="search-hit" onclick={() => goToHit(hit)}>
-          <span class="text-primary block text-xs font-medium">
+  <ul class="menu menu-vertical w-full min-w-0 flex-1 flex-nowrap overflow-x-hidden overflow-y-auto p-2">
+    {#each results as hit, i (i)}
+      <li class="w-full min-w-0">
+        <button
+          type="button"
+          class="flex w-full min-w-0 max-w-full flex-col items-start gap-1 text-left whitespace-normal"
+          data-testid="search-hit"
+          onclick={() => goToHit(hit)}
+        >
+          <span class="text-primary text-xs font-medium">
             {formatScriptureReference(hit.bookId, hit.chapter, hit.verse)}
           </span>
-          <span>{@html hit.snippet}</span>
+          <span class="block w-full min-w-0 break-words text-sm">{@html hit.snippet}</span>
         </button>
       </li>
     {/each}
