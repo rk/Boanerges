@@ -25,11 +25,14 @@ func SetupApplicationMenu(win *mygo.Window) {
 		{Role: mygo.RoleAppMenu},
 		{
 			Label: "File",
-			Submenu: []*mygo.MenuItem{
-				{Label: "Manage Translations…", ID: "file.manage-translations", Click: emit("file.manage-translations")},
-				mygo.Separator(),
-				{Role: mygo.RoleQuit},
-			},
+			Submenu: append(
+				append([]*mygo.MenuItem{}, agenticFileMenuItems(emit)...),
+				[]*mygo.MenuItem{
+					{Label: "Manage Translations…", ID: "file.manage-translations", Click: emit("file.manage-translations")},
+					mygo.Separator(),
+					{Role: mygo.RoleQuit},
+				}...,
+			),
 		},
 		{Role: mygo.RoleEditMenu},
 		{

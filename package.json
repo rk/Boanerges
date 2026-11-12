@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "bun scripts/free-dev-port.ts && mygo dev",
+    "dev:agentic": "VITE_AGENTIC=1 bun scripts/free-dev-port.ts && env VITE_AGENTIC=1 GOFLAGS=-tags=agentic mygo dev",
     "build": "mygo build",
     "generate": "mygo generate",
     "dev:web": "vite",

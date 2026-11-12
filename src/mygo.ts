@@ -67,12 +67,28 @@ export interface DictionaryStatus {
   entries: number;
 }
 
+export interface DistillCheckpoint {
+  sourceOffsets: Record<string, number>;
+  batch: number;
+}
+
+export interface EntrySummary {
+  headword: string;
+  file: string;
+}
+
 export interface InstallResponse {
   translation: Config;
 }
 
 export interface InstalledResponse {
   translations: Config[];
+}
+
+export interface OllamaHealth {
+  ok: boolean;
+  error?: string;
+  models?: string[];
 }
 
 export interface Payload {
@@ -86,6 +102,22 @@ export interface Payload {
 export interface PrintDocument {
   styles: string;
   body: string;
+}
+
+export type ProjectKind = "dictionary" | "topical";
+
+export interface ProjectManifest {
+  kind: ProjectKind;
+  model: string;
+}
+
+export interface ProjectSummary {
+  folder: string;
+  manifest: ProjectManifest;
+  run: RunState;
+  sourceCount: number;
+  entryCount: number;
+  topicCount: number;
 }
 
 /** ReadabilitySettings match legacy readability store shape. */
@@ -121,6 +153,25 @@ export interface Result {
   translation: string;
 }
 
+export interface RunState {
+  status: RunStatus;
+  job: string;
+  instruction: string;
+  params?: unknown;
+  steps: RunStep[];
+  distill?: DistillCheckpoint;
+  error?: string;
+  updatedAt: string;
+}
+
+export type RunStatus = "idle" | "running" | "paused" | "failed";
+
+export interface RunStep {
+  at: string;
+  role: string;
+  summary: string;
+}
+
 export interface ScribeVerse {
   verse: number;
   text: string;
@@ -138,6 +189,11 @@ export interface StudySettings {
   translationCId: string;
   verseListShowContent: boolean;
   verseListActiveId: string | null;
+}
+
+export interface TopicSummary {
+  slug: string;
+  title: string;
 }
 
 export interface Verse {
@@ -181,6 +237,74 @@ export interface VerseMenuPayload {
 export interface Window {}
 
 // ---- Services ----
+
+/** Agentic exposes Studio APIs to the webview (agentic builds only). */
+export const Agentic = {
+  /** AnalyzeSourceFormats refreshes per-file entry-detection rules (10k sample, parallel subagents). */
+  analyzeSourceFormats(folder: string): Promise<void> {
+    return call("Agentic.AnalyzeSourceFormats", folder);
+  },
+  /** GetRunState returns the current run checkpoint. */
+  getRunState(folder: string): Promise<RunState> {
+    return call("Agentic.GetRunState", folder);
+  },
+  /** InitProject creates layout and manifest for a new or existing folder. */
+  initProject(folder: string, kind: string): Promise<void> {
+    return call("Agentic.InitProject", folder, kind);
+  },
+  /** ListEntries lists dictionary entry summaries. */
+  listEntries(folder: string): Promise<EntrySummary[]> {
+    return call("Agentic.ListEntries", folder);
+  },
+  /** ListSources lists files in sources/. */
+  listSources(folder: string): Promise<string[]> {
+    return call("Agentic.ListSources", folder);
+  },
+  /** ListTopics lists topical summaries. */
+  listTopics(folder: string): Promise<TopicSummary[]> {
+    return call("Agentic.ListTopics", folder);
+  },
+  /** LoadProjectSummary returns manifest, run state, and counts. */
+  loadProjectSummary(folder: string): Promise<ProjectSummary> {
+    return call("Agentic.LoadProjectSummary", folder);
+  },
+  /** PauseRun pauses the active orchestrator. */
+  pauseRun(folder: string): Promise<void> {
+    return call("Agentic.PauseRun", folder);
+  },
+  /** PickProjectFolder opens a native directory picker. */
+  pickProjectFolder(): Promise<string> {
+    return call("Agentic.PickProjectFolder");
+  },
+  /** PingOllama checks the local Ollama server. */
+  pingOllama(): Promise<OllamaHealth> {
+    return call("Agentic.PingOllama");
+  },
+  /** ReadRawRunLog returns the tail of run.raw.log in the project folder (debug). */
+  readRawRunLog(folder: string, maxBytes: number): Promise<string> {
+    return call("Agentic.ReadRawRunLog", folder, maxBytes);
+  },
+  /** ResumeRun resumes a paused orchestrator. */
+  resumeRun(folder: string): Promise<void> {
+    return call("Agentic.ResumeRun", folder);
+  },
+  /** SetProjectModel updates the Ollama model name in project.json. */
+  setProjectModel(folder: string, model: string): Promise<void> {
+    return call("Agentic.SetProjectModel", folder, model);
+  },
+  /** StartDictionaryRun begins distilling entries from sources/. */
+  startDictionaryRun(folder: string, instruction: string): Promise<void> {
+    return call("Agentic.StartDictionaryRun", folder, instruction);
+  },
+  /** StartTopicalFromReference seeds topics from a verse. */
+  startTopicalFromReference(folder: string, bookID: string, chapter: number, verse: number, instruction: string): Promise<void> {
+    return call("Agentic.StartTopicalFromReference", folder, bookID, chapter, verse, instruction);
+  },
+  /** StartTopicalFromTopic researches a named topic across Scripture. */
+  startTopicalFromTopic(folder: string, topic: string, instruction: string): Promise<void> {
+    return call("Agentic.StartTopicalFromTopic", folder, topic, instruction);
+  },
+} as const;
 
 /** Service is bound for the web frontend (`mygo.Bind`). */
 export const Service = {
@@ -316,6 +440,10 @@ export const AppChrome = {
   closeVerseActionsFlyout(): Promise<void> {
     return call("AppChrome.CloseVerseActionsFlyout");
   },
+  /** OpenAgenticStudio opens or focuses the Agentic Studio window. */
+  openAgenticStudio(): Promise<void> {
+    return call("AppChrome.OpenAgenticStudio");
+  },
   /**
    * OpenBookChapterFlyout shows the book/chapter picker in a native flyout (not clipped by the webview).
    * Anchor is in DIPs relative to the main window content area, e.g. from getBoundingClientRect().
@@ -385,6 +513,8 @@ export const AppChrome = {
 export const events = {
   /** TranslationInstallProgress is emitted during translation installs. */
   translationInstallProgress: event<Payload>("translationInstallProgress"),
+  /** RunStateChanged notifies the Studio UI to refresh run logs. */
+  agenticRunStateChanged: event<{}>("agenticRunStateChanged"),
   /** StudySettingsChanged is emitted on the main window when the flyout picker saves location. */
   studySettingsChanged: event<{}>("studySettingsChanged"),
   /** MenuAction is emitted when the user picks a custom application menu item. */

@@ -4,8 +4,9 @@ import (
 	"log"
 	"runtime"
 
-	"boanerges/internal/bible/bootstrap"
 	"boanerges/internal/appchrome"
+	"boanerges/internal/bible/bootstrap"
+	"boanerges/internal/bind"
 	"boanerges/internal/bibleapp"
 	"boanerges/internal/settings"
 	"boanerges/internal/studydata"
@@ -23,11 +24,14 @@ func main() {
 	chrome := appchrome.NewAppChrome(dbPath)
 
 	translations := bibleapp.NewTranslationService(dbPath, boot)
+	bibleSvc := bibleapp.NewBibleService(dbPath, boot)
+	dictSvc := bibleapp.NewDictionaryService(dbPath)
+	bind.Extra(mygo.Bind, bibleSvc, dictSvc)
 	mygo.Bind(
 		settings.NewService(&settings.Repository{}),
-		bibleapp.NewBibleService(dbPath, boot),
+		bibleSvc,
 		translations,
-		bibleapp.NewDictionaryService(dbPath),
+		dictSvc,
 		&studydata.StudyData{},
 		chrome,
 	)

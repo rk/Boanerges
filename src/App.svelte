@@ -23,6 +23,9 @@
   import Welcome from "./pages/Welcome.svelte";
   import BookChapterFlyout from "./pages/BookChapterFlyout.svelte";
   import VerseActionsFlyout from "./pages/VerseActionsFlyout.svelte";
+  import StudioApp from "./studio/StudioApp.svelte";
+
+  const agenticBuild = import.meta.env.VITE_AGENTIC === "1";
 
   const flyoutParam =
     typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("flyout") : null;
@@ -53,6 +56,10 @@
   function handleMenu(id: string) {
     if (id === "file.manage-translations") {
       void openTranslationManager();
+      return;
+    }
+    if (id === "file.agentic-studio" && agenticBuild) {
+      void AppChrome.openAgenticStudio();
       return;
     }
     if (id === "study.feedback") {
@@ -173,6 +180,12 @@
   <BookChapterFlyout />
 {:else if viewParam === "print-preview"}
   <PrintPreview />
+{:else if viewParam === "studio" && agenticBuild}
+  <StudioApp />
+{:else if viewParam === "studio"}
+  <p class="flex h-screen items-center justify-center p-6 text-center opacity-70">
+    Agentic Studio is not included in this build. Use <code class="text-sm">bun run dev:agentic</code>.
+  </p>
 {:else}
   <TranslationManagerModal />
 

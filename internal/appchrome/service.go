@@ -20,6 +20,7 @@ type AppChrome struct {
 	previewReadability   settings.ReadabilitySettings
 	bookFlyout           *mygo.Window
 	verseFlyout          *mygo.Window
+	studioWin            *mygo.Window
 	dbPath               string
 }
 
