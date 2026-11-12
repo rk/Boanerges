@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@lucide/svelte": "^1.55.0",
-    "mygo-runtime": "^0.8.1"
+    "mygo-runtime": "^0.9.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.65.0",
@@ -22,7 +22,7 @@
     "@tailwindcss/vite": "^4.1.11",
     "daisyui": "^5.5.23",
     "happy-dom": "^21.0.1",
-    "mygo-cli": "^0.8.1",
+    "mygo-cli": "^0.9.0",
     "svelte": "^5.16.0",
     "tailwindcss": "^4.3.1",
     "typescript": "^7",
