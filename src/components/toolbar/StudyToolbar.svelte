@@ -22,16 +22,13 @@
   }
 </script>
 
-<header class="navbar bg-base-200 border-b border-base-300 shrink-0 gap-2 px-3">
-  <span class="text-lg font-semibold shrink-0 hidden sm:inline">Boanerges</span>
-  <div class="divider divider-horizontal mx-0 hidden h-full sm:flex"></div>
-
+<header class="navbar bg-base-100 border-b border-base-300/60 min-h-11 shrink-0 gap-2 px-3">
   <BookChapterPicker />
 
   <div class="join">
     <button
       type="button"
-      class="btn btn-sm join-item"
+      class="btn join-item min-h-11"
       data-testid="chapter-prev"
       onclick={prevChapter}
       disabled={study.chapter <= 1}
@@ -41,7 +38,7 @@
     </button>
     <button
       type="button"
-      class="btn btn-sm join-item"
+      class="btn join-item min-h-11"
       data-testid="chapter-next"
       onclick={nextChapter}
       disabled={study.chapter >= maxChapter}
@@ -51,7 +48,7 @@
     </button>
   </div>
 
-  <div class="divider divider-horizontal mx-0 hidden h-full md:flex"></div>
+  <div class="divider divider-horizontal mx-0 hidden h-8 md:flex"></div>
 
   <div class="join hidden md:flex" data-testid="column-count">
     {#each [1, 2, 3] as count (count)}
@@ -74,5 +71,7 @@
     <ScrollSyncToggle />
   {/if}
 
-  <button type="button" class="btn btn-sm btn-ghost" onclick={() => (study.settingsOpen = !study.settingsOpen)}>Settings</button>
+  <button type="button" class="btn btn-sm btn-ghost" onclick={() => (study.settingsOpen = !study.settingsOpen)}>
+    Settings
+  </button>
 </header>

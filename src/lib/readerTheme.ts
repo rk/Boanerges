@@ -1,20 +1,12 @@
-/** Apply daisyUI theme on <html> (light, dark, or system via --prefersdark). */
+import { applyStudyTheme, type StudyAppearance, type StudyThemePole } from "./studyTheme";
+
+/** @deprecated Use applyStudyTheme from studyTheme.ts */
 export function applyReaderTheme(theme: string): () => void {
-  if (typeof document === "undefined") {
-    return () => {};
-  }
+  const appearance: StudyAppearance =
+    theme === "light" || theme === "dark" || theme === "auto" ? theme : "auto";
+  return applyStudyTheme("monastic", appearance);
+}
 
-  const root = document.documentElement;
-  const mode = theme === "light" || theme === "dark" ? theme : "auto";
-
-  if (mode === "auto") {
-    root.removeAttribute("data-theme");
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const onChange = () => root.removeAttribute("data-theme");
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }
-
-  root.setAttribute("data-theme", mode);
-  return () => {};
+export function applyReadabilityTheme(pole: StudyThemePole, appearance: StudyAppearance): () => void {
+  return applyStudyTheme(pole, appearance);
 }

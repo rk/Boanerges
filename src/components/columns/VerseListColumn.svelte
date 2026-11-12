@@ -199,11 +199,21 @@
             }}
           />
         </div>
-        <button type="button" class="btn btn-xs" onclick={addCurrentVerse} disabled={study.selectedVerse === null}>
+        <button
+          type="button"
+          class="btn btn-sm btn-outline"
+          onclick={addCurrentVerse}
+          disabled={study.selectedVerse === null}
+        >
           Add verse
         </button>
         {#if active}
-          <button type="button" class="btn btn-xs btn-ghost" data-testid="verse-list-delete" onclick={deleteActiveList}>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline"
+            data-testid="verse-list-delete"
+            onclick={deleteActiveList}
+          >
             Delete
           </button>
         {/if}

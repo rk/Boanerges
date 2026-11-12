@@ -33,7 +33,7 @@ export function scheduleNotesSave(bookId: string, chapter: number, content: stri
           if (generation === saveGeneration) {
             notes.saveStatus = "idle";
           }
-        }, 1500);
+        }, 2000);
       })
       .catch(() => {
         if (generation === saveGeneration) {

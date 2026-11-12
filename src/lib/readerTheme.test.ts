@@ -1,17 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { applyReaderTheme } from "./readerTheme";
+import { applyReadabilityTheme } from "./readerTheme";
 
-describe("applyReaderTheme", () => {
-  it("sets light and dark on html", () => {
-    applyReaderTheme("light")();
-    expect(document.documentElement.getAttribute("data-theme")).toBe("light");
-    applyReaderTheme("dark")();
-    expect(document.documentElement.getAttribute("data-theme")).toBe("dark");
+describe("applyReadabilityTheme", () => {
+  it("sets composed study theme on documentElement", () => {
+    applyReadabilityTheme("monastic", "light")();
+    expect(document.documentElement.getAttribute("data-theme")).toBe("study-monastic-light");
+    applyReadabilityTheme("modern", "dark")();
+    expect(document.documentElement.getAttribute("data-theme")).toBe("study-modern-dark");
   });
 
-  it("removes data-theme for auto", () => {
-    document.documentElement.setAttribute("data-theme", "dark");
-    applyReaderTheme("auto")();
-    expect(document.documentElement.hasAttribute("data-theme")).toBe(false);
+  it("auto uses light or dark from matchMedia", () => {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    applyReadabilityTheme("monastic", "auto")();
+    const expected = mq.matches ? "study-monastic-dark" : "study-monastic-light";
+    expect(document.documentElement.getAttribute("data-theme")).toBe(expected);
   });
 });

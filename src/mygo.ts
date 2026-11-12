@@ -93,6 +93,7 @@ export interface ReadabilitySettings {
   fontSize: number;
   lineHeight: number;
   theme: string;
+  themePole: string;
   fontFamily: string;
   justifyText: boolean;
 }

@@ -30,7 +30,7 @@ func TestReadabilityDefaults(t *testing.T) {
 	repo := testRepo(t)
 	got := NewReadabilityStore(repo).Get()
 
-	if got.FontSize != 16 || got.LineHeight != 1.2 || got.Theme != "auto" || got.FontFamily != "serif" {
+	if got.FontSize != 17 || got.LineHeight != 1.6 || got.Theme != "auto" || got.ThemePole != "monastic" || got.FontFamily != "serif" {
 		t.Fatalf("defaults = %+v", got)
 	}
 }
@@ -43,18 +43,19 @@ func TestReadabilityUpdate(t *testing.T) {
 		FontSize:    20,
 		LineHeight:  1.8,
 		Theme:       "dark",
+		ThemePole:   "modern",
 		FontFamily:  "sans-serif",
 		JustifyText: true,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if updated.FontSize != 20 || updated.Theme != "dark" {
+	if updated.FontSize != 20 || updated.Theme != "dark" || updated.ThemePole != "modern" {
 		t.Fatalf("updated = %+v", updated)
 	}
 
 	got := store.Get()
-	if got.FontSize != 20 || got.Theme != "dark" || got.FontFamily != "sans-serif" {
+	if got.FontSize != 20 || got.Theme != "dark" || got.FontFamily != "sans-serif" || got.ThemePole != "modern" {
 		t.Fatalf("persisted = %+v", got)
 	}
 }
@@ -66,7 +67,7 @@ func TestReadabilitySepiaMigratesOnRead(t *testing.T) {
 	})
 
 	got := NewReadabilityStore(repo).Get()
-	if got.Theme != "caramellatte" {
+	if got.Theme != "light" {
 		t.Fatalf("theme = %q", got.Theme)
 	}
 }
@@ -78,6 +79,7 @@ func TestReadabilityValidation(t *testing.T) {
 		FontSize:    10,
 		LineHeight:  1.8,
 		Theme:       "dark",
+		ThemePole:   "monastic",
 		FontFamily:  "sans-serif",
 		JustifyText: true,
 	})
@@ -89,6 +91,7 @@ func TestReadabilityValidation(t *testing.T) {
 		FontSize:    16,
 		LineHeight:  1.2,
 		Theme:       "sepia",
+		ThemePole:   "monastic",
 		FontFamily:  "serif",
 		JustifyText: true,
 	})
@@ -97,23 +100,15 @@ func TestReadabilityValidation(t *testing.T) {
 	}
 }
 
-func TestReadabilityAcceptsDaisyUIThemes(t *testing.T) {
-	svc := NewService(testRepo(t))
+func TestReadabilityLegacyThemeMigratesOnRead(t *testing.T) {
+	repo := testRepo(t)
+	writeRawSettings(t, repo.Dir, map[string]any{
+		"readability": map[string]any{"theme": "nord"},
+	})
 
-	for _, theme := range []string{"nord", "dracula", "caramellatte", "auto"} {
-		got, err := svc.UpdateReadability(ReadabilitySettings{
-			FontSize:    16,
-			LineHeight:  1.2,
-			Theme:       theme,
-			FontFamily:  "serif",
-			JustifyText: true,
-		})
-		if err != nil {
-			t.Fatalf("theme %q: %v", theme, err)
-		}
-		if got.Theme != theme {
-			t.Fatalf("theme %q got %q", theme, got.Theme)
-		}
+	got := NewReadabilityStore(repo).Get()
+	if got.Theme != "light" {
+		t.Fatalf("theme = %q", got.Theme)
 	}
 }
 

@@ -1,5 +1,6 @@
 <script lang="ts">
   import ColumnHeader from "../layout/ColumnHeader.svelte";
+  import StudyListRow from "../ui/StudyListRow.svelte";
   import { BibleService } from "../../mygo";
   import { formatScriptureReference } from "../../lib/scriptureReference";
   import { navigateToVerse, study } from "../../lib/study.svelte.ts";
@@ -63,23 +64,20 @@
   {#if searching && results.length === 0}
     <p class="p-3 text-sm opacity-60">Searching…</p>
   {/if}
-  <ul class="menu menu-vertical w-full min-w-0 flex-1 flex-nowrap overflow-x-hidden overflow-y-auto p-2">
+  <div class="flex min-h-0 flex-1 flex-col overflow-y-auto p-2" role="list">
     {#each results as hit, i (i)}
-      <li class="w-full min-w-0">
-        <button
-          type="button"
-          class="flex w-full min-w-0 max-w-full flex-col items-start gap-1 text-left whitespace-normal"
-          data-testid="search-hit"
-          onclick={() => goToHit(hit)}
-        >
-          <span class="text-primary text-xs font-medium">
+      <StudyListRow testId="search-hit" onclick={() => goToHit(hit)}>
+        {#snippet lead()}
+          <span class="text-base-content/80 text-xs font-medium">
             {formatScriptureReference(hit.bookId, hit.chapter, hit.verse)}
           </span>
-          <span class="block w-full min-w-0 break-words text-sm">{@html hit.snippet}</span>
-        </button>
-      </li>
+        {/snippet}
+        {#snippet body()}
+          <span class="block w-full min-w-0 break-words">{@html hit.snippet}</span>
+        {/snippet}
+      </StudyListRow>
     {/each}
-  </ul>
+  </div>
   {#if hasMore}
     <div class="border-t border-base-300 shrink-0 p-2">
       <button type="button" class="btn btn-sm btn-block" data-testid="search-load-more" onclick={loadMore}>Load more</button>

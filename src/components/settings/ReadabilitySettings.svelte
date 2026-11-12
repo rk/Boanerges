@@ -104,14 +104,34 @@
       {/each}
     </div>
   </fieldset>
-  <label class="form-control">
-    <span class="label-text">Theme</span>
-    <select class="select select-bordered" bind:value={readability.theme} onchange={changed}>
-      <option value="auto">Auto</option>
-      <option value="light">Light</option>
-      <option value="dark">Dark</option>
-    </select>
-  </label>
+  <fieldset class="fieldset">
+    <legend class="fieldset-legend">Style</legend>
+    <label class="form-control">
+      <span class="label-text">Theme</span>
+      <select
+        class="select select-bordered select-sm w-full"
+        data-testid="theme-pole"
+        bind:value={readability.themePole}
+        onchange={changed}
+      >
+        <option value="monastic">Monastic</option>
+        <option value="modern">Modern</option>
+      </select>
+    </label>
+    <label class="form-control">
+      <span class="label-text">Appearance</span>
+      <select
+        class="select select-bordered select-sm w-full"
+        data-testid="theme-appearance"
+        bind:value={readability.theme}
+        onchange={changed}
+      >
+        <option value="auto">System</option>
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+      </select>
+    </label>
+  </fieldset>
   <label class="label cursor-pointer justify-start gap-3">
     <input type="checkbox" class="checkbox" bind:checked={readability.justifyText} onchange={changed} />
     <span class="label-text">Justify text</span>

@@ -9,8 +9,11 @@ func ValidateReadability(s ReadabilitySettings) error {
 	if s.LineHeight < 0.8 || s.LineHeight > 2 {
 		return validationError("lineHeight must be between 0.8 and 2")
 	}
-	if !isReaderTheme(s.Theme) {
+	if !isAppearanceTheme(s.Theme) {
 		return validationError("invalid theme")
+	}
+	if !isThemePole(s.ThemePole) {
+		return validationError("invalid themePole")
 	}
 	if s.FontFamily != "sans-serif" && s.FontFamily != "serif" {
 		return validationError("invalid fontFamily")

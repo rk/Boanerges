@@ -22,6 +22,7 @@ function readabilityPayload(): ReadabilitySettings {
     fontSize: readability.fontSize,
     lineHeight: readability.lineHeight,
     theme: readability.theme,
+    themePole: readability.themePole,
     fontFamily: readability.fontFamily,
     justifyText: readability.justifyText,
   };

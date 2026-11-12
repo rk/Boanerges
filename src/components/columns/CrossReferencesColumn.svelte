@@ -84,7 +84,7 @@
         role="listitem"
         onclick={() => navigateToVerse(ref.bookId, ref.chapter, ref.verse)}
       >
-        <span class="badge badge-ghost badge-xs mr-2 shrink-0">{ref.rank}</span>
+        <span class="badge badge-neutral badge-xs mr-2 shrink-0">{ref.rank}</span>
         {ref.bookName} {ref.chapter}:{ref.verse}{#if ref.endVerse !== null && ref.endVerse !== ref.verse}–{ref.endVerse}{/if}
       </button>
     {/each}

@@ -137,7 +137,7 @@
   {:else}
     {#key documentKey}
       <div
-        class="scribe-document prose max-w-none"
+        class="scribe-document reader-measure prose max-w-none"
         role="region"
         aria-label="Scribe draft"
         data-testid="scribe-editor"

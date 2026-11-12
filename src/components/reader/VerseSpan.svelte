@@ -102,7 +102,7 @@
 <span
   id="verse-{verse.number}"
   data-verse={verse.number}
-  class={highlighted ? "rounded-sm bg-primary/15 px-0.5 [box-decoration-break:clone]" : undefined}
+  class={highlighted ? "rounded-sm bg-primary/10 px-0.5 [box-decoration-break:clone]" : undefined}
   role={showContextMenu ? "button" : undefined}
   tabindex={showContextMenu ? -1 : undefined}
   oncontextmenu={onContextMenu}

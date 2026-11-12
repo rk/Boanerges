@@ -26,6 +26,7 @@ const store = {
     fontSize: 16,
     lineHeight: 1.2,
     theme: "light",
+    themePole: "monastic",
     fontFamily: "serif",
     justifyText: false,
   } as ReadabilitySettings,

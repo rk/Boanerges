@@ -17,6 +17,7 @@
   import TranslationManagerModal from "./components/sidebar/TranslationManagerModal.svelte";
   import { openStudyPrintPreview } from "./lib/printStudy";
   import PrintPreview from "./pages/PrintPreview.svelte";
+  import { hydrateReadability } from "./lib/readability.svelte.ts";
   import { bindTranslationInstallProgress, openTranslationManager } from "./lib/translations.svelte.ts";
   import Study from "./pages/Study.svelte";
   import Welcome from "./pages/Welcome.svelte";
@@ -100,6 +101,7 @@
   });
 
   onMount(() => {
+    void Service.getReadability().then(hydrateReadability);
     if (import.meta.env.VITE_E2E === "1") {
       window.__openTranslationManager = () => openTranslationManager();
     }

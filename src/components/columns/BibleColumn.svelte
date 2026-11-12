@@ -97,7 +97,7 @@
   {#if primary}
     <ColumnHeader contentType="primary-bible">
       <select
-        class="select select-bordered select-xs w-full max-w-full"
+        class="select select-bordered select-sm w-full max-w-full"
         data-testid="translation-select"
         value={translationId}
         onchange={onPrimaryTranslationChange}
@@ -110,7 +110,7 @@
   {:else}
     <ColumnHeader contentType="bible-secondary" slotIndex={slotIndex} showViewSelector>
       <select
-        class="select select-bordered select-xs w-full max-w-full"
+        class="select select-bordered select-sm w-full max-w-full"
         data-testid="secondary-translation-select"
         value={translationId}
         onchange={onSecondaryTranslationChange}
@@ -132,13 +132,15 @@
     {#if loading}
       <p>Loading…</p>
     {:else if chapter}
-      <h2 class="chapter-heading" data-testid="chapter-heading">{chapter.book} {chapter.chapter}</h2>
-      <ParagraphText
-        verses={chapter.verses}
-        bookId={chapterLoc?.bookId ?? study.bookId}
-        chapter={chapterLoc?.chapter ?? study.chapter}
-        showContextMenu={primary}
-      />
+      <div class="reader-measure">
+        <h2 class="chapter-heading" data-testid="chapter-heading">{chapter.book} {chapter.chapter}</h2>
+        <ParagraphText
+          verses={chapter.verses}
+          bookId={chapterLoc?.bookId ?? study.bookId}
+          chapter={chapterLoc?.chapter ?? study.chapter}
+          showContextMenu={primary}
+        />
+      </div>
     {/if}
   </article>
 </div>

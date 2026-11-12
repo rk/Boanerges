@@ -7,6 +7,7 @@ type ReadabilitySettings struct {
 	FontSize    int     `json:"fontSize"`
 	LineHeight  float64 `json:"lineHeight"`
 	Theme       string  `json:"theme"`
+	ThemePole   string  `json:"themePole"`
 	FontFamily  string  `json:"fontFamily"`
 	JustifyText bool    `json:"justifyText"`
 }
@@ -21,9 +22,10 @@ func NewReadabilityStore(repo *Repository) *ReadabilityStore {
 
 func (s *ReadabilityStore) Defaults() ReadabilitySettings {
 	return ReadabilitySettings{
-		FontSize:    16,
-		LineHeight:  1.2,
-		Theme:       "auto",
+		FontSize:    17,
+		LineHeight:  1.6,
+		Theme:       ThemeAuto,
+		ThemePole:   PoleMonastic,
 		FontFamily:  "serif",
 		JustifyText: true,
 	}
@@ -32,10 +34,8 @@ func (s *ReadabilityStore) Defaults() ReadabilitySettings {
 func (s *ReadabilityStore) Get() ReadabilitySettings {
 	raw := s.repo.Get(readabilityKey, readabilityDefaultsMap())
 	out := mapToReadability(raw)
-	if out.Theme == "sepia" {
-		out.Theme = "caramellatte"
-	}
-
+	out.Theme = migrateLegacyTheme(out.Theme)
+	out.ThemePole = normalizeThemePole(out.ThemePole)
 	return out
 }
 
@@ -60,6 +60,7 @@ func readabilityToMap(s ReadabilitySettings) map[string]any {
 		"fontSize":    s.FontSize,
 		"lineHeight":  s.LineHeight,
 		"theme":       s.Theme,
+		"themePole":   s.ThemePole,
 		"fontFamily":  s.FontFamily,
 		"justifyText": s.JustifyText,
 	}
@@ -67,9 +68,10 @@ func readabilityToMap(s ReadabilitySettings) map[string]any {
 
 func mapToReadability(m map[string]any) ReadabilitySettings {
 	d := ReadabilitySettings{
-		FontSize:    16,
-		LineHeight:  1.2,
-		Theme:       "auto",
+		FontSize:    17,
+		LineHeight:  1.6,
+		Theme:       ThemeAuto,
+		ThemePole:   PoleMonastic,
 		FontFamily:  "serif",
 		JustifyText: true,
 	}
@@ -79,6 +81,7 @@ func mapToReadability(m map[string]any) ReadabilitySettings {
 		d.LineHeight = v
 	}
 	d.Theme = asString(m, "theme", d.Theme)
+	d.ThemePole = asString(m, "themePole", d.ThemePole)
 	d.FontFamily = asString(m, "fontFamily", d.FontFamily)
 	d.JustifyText = asBool(m, "justifyText", d.JustifyText)
 

@@ -109,13 +109,13 @@
   }
 </script>
 
-<div class="flex h-full min-h-0" data-testid="column-layout">
-  <section class="min-w-0 flex-1 border-r border-base-300">
+<div class="flex h-full min-h-0 gap-2 p-2" data-testid="column-layout">
+  <section class="bg-base-100 flex min-h-0 min-w-0 flex-[1.35] flex-col overflow-hidden rounded-box shadow-sm">
     <BibleColumn translationId={study.translationId} primary bind:scrollRef={primaryScroll} onscroll={onLinkedScroll} />
   </section>
   {#each study.columns.slice(0, study.columnCount - 1) as column, i (`${i}-${column}`)}
     {@const Component = slotComponents[column as keyof typeof slotComponents] ?? NotesColumn}
-    <section class="min-w-0 flex-1 border-r border-base-300 last:border-r-0">
+    <section class="bg-base-100 flex min-h-0 min-w-0 flex-1 basis-72 flex-col overflow-hidden rounded-box shadow-sm">
       {#if column === "bible-secondary"}
         <BibleColumn
           translationId={secondaryTranslationId(i)}

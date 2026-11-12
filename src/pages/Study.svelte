@@ -15,18 +15,31 @@
   });
 </script>
 
-<div class="flex h-screen flex-col bg-base-100 text-base-content" data-testid="study-screen">
+<div class="flex h-screen flex-col bg-base-200 text-base-content study-workspace" data-testid="study-screen">
   <StudyToolbar />
   <div class="relative min-h-0 flex-1">
     <ColumnLayout />
-    {#if study.settingsOpen}
-      <aside class="absolute right-0 top-0 z-10 h-full w-80 border-l border-base-300 bg-base-100 shadow-lg">
-        <div class="flex items-center justify-between border-b border-base-300 px-4 py-2">
-          <h2 class="font-semibold">Readability</h2>
-          <button type="button" class="btn btn-xs btn-ghost" onclick={() => (study.settingsOpen = false)}>Close</button>
-        </div>
+  </div>
+</div>
+
+<div class="drawer drawer-end z-20">
+  <input id="study-settings-drawer" type="checkbox" class="drawer-toggle" bind:checked={study.settingsOpen} />
+  <div class="drawer-content"></div>
+  <div class="drawer-side">
+    <label
+      for="study-settings-drawer"
+      class="drawer-overlay"
+      aria-label="Close settings"
+      onclick={() => (study.settingsOpen = false)}
+    ></label>
+    <aside class="bg-base-100 flex h-full w-80 max-w-[90vw] flex-col border-l border-base-300">
+      <div class="flex items-center justify-between border-b border-base-300 px-4 py-3">
+        <h2 class="text-sm font-semibold">Readability</h2>
+        <label for="study-settings-drawer" class="btn btn-sm btn-ghost">Close</label>
+      </div>
+      <div class="min-h-0 flex-1 overflow-y-auto">
         <ReadabilitySettings />
-      </aside>
-    {/if}
+      </div>
+    </aside>
   </div>
 </div>
