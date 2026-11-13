@@ -14,32 +14,26 @@ import (
 )
 
 type toolEnv struct {
-	root   string
-	model  string
-	bible  *bibleapp.BibleService
-	dict   *bibleapp.DictionaryService
-	runner *runHandle
+	root             string
+	model            string
+	job              string
+	instruction      string
+	translation      string
+	bible            *bibleapp.BibleService
+	dict             *bibleapp.DictionaryService
+	runner           *runHandle
+	nextSubagentThread int
 }
 
-func (e *toolEnv) searchBible(ctx context.Context, query, translation string, limit int) (any, error) {
-	if limit <= 0 || limit > 50 {
-		limit = 20
-	}
-	if translation == "" {
-		translation = "asv"
-	}
-	return e.bible.Search(query, translation, limit, 0)
+func (e *toolEnv) systemPrompt() string {
+	return buildSystemPrompt(e.job, e.root)
 }
 
 func (e *toolEnv) getChapter(ctx context.Context, translation, bookID string, chapter int) (any, error) {
 	if translation == "" {
-		translation = "asv"
+		translation = e.defaultTranslation()
 	}
 	return e.bible.Chapter(translation, bookID, chapter)
-}
-
-func (e *toolEnv) crossRefs(ctx context.Context, bookID string, chapter, verse int) (any, error) {
-	return e.bible.CrossReferences(bookID, chapter, verse)
 }
 
 func (e *toolEnv) lookupWebster(ctx context.Context, word string) (any, error) {
@@ -89,10 +83,25 @@ func (e *toolEnv) readSource(name string, offset, limit, overlap int) (map[strin
 }
 
 type sourceChunkArgs struct {
-	Name    string `json:"name"`
-	Offset  int    `json:"offset"`
-	Limit   int    `json:"limit"`
-	Overlap int    `json:"overlap"`
+	Name       string `json:"name"`
+	SourceFile string `json:"sourceFile"`
+	File       string `json:"file"`
+	Filename   string `json:"filename"`
+	Offset     int    `json:"offset"`
+	Limit      int    `json:"limit"`
+	Overlap    int    `json:"overlap"`
+}
+
+func (a *sourceChunkArgs) resolveName() (string, error) {
+	name := strings.TrimSpace(firstNonEmpty(a.Name, a.SourceFile, a.File, a.Filename))
+	if name == "" {
+		return "", fmt.Errorf("read_source needs args.name (basename), e.g. chambers-1-of-4-A-D.txt")
+	}
+	name = strings.TrimPrefix(name, "sources/")
+	if i := strings.LastIndex(name, "/"); i >= 0 {
+		name = name[i+1:]
+	}
+	return name, nil
 }
 
 func (e *toolEnv) readSourceBridge(chunks []sourceChunkArgs) (any, error) {
@@ -102,7 +111,11 @@ func (e *toolEnv) readSourceBridge(chunks []sourceChunkArgs) (any, error) {
 	parts := make([]map[string]any, 0, len(chunks))
 	var combined strings.Builder
 	for i, c := range chunks {
-		part, err := e.readSource(c.Name, c.Offset, c.Limit, c.Overlap)
+		name, err := c.resolveName()
+		if err != nil {
+			return nil, err
+		}
+		part, err := e.readSource(name, c.Offset, c.Limit, c.Overlap)
 		if err != nil {
 			return nil, err
 		}
@@ -132,6 +145,9 @@ func (e *toolEnv) upsertEntryTool(raw json.RawMessage, toolLine string) (map[str
 	_, entriesDir, _ := projectDirs(e.root)
 	written := make([]string, 0, len(entries))
 	for _, entry := range entries {
+		if err := validateDictEntry(entry, e.instruction); err != nil {
+			return nil, err
+		}
 		slug := slugify(entry.Headword)
 		if slug == "" {
 			return nil, fmt.Errorf("invalid headword %q", entry.Headword)
@@ -159,18 +175,34 @@ func (e *toolEnv) upsertTopicTool(raw json.RawMessage) error {
 // executeToolCall runs one tool invocation from model JSON (simplified contract).
 func (e *toolEnv) executeToolCall(ctx context.Context, name string, args json.RawMessage, toolLine string) (string, error) {
 	name = normalizeToolName(name)
+	if err := toolAllowedOrError(e.job, name); err != nil {
+		return "", err
+	}
 	switch name {
-	case "search_bible":
-		var a struct {
-			Query        string `json:"query"`
-			Translation  string `json:"translation"`
-			Limit        int    `json:"limit"`
-		}
+	case "search", "search_bible":
+		var a searchArgs
 		if err := json.Unmarshal(args, &a); err != nil {
 			return "", err
 		}
-		out, err := e.searchBible(ctx, a.Query, a.Translation, a.Limit)
+		if err := a.validate(); err != nil {
+			return "", err
+		}
+		out, err := e.keywordSearch(a.Query, a.Translation, a.pageSize(), a.Offset)
 		return marshalToolResult(out, err)
+	case "read_reference":
+		var a readReferenceArgs
+		if err := json.Unmarshal(args, &a); err != nil {
+			return "", err
+		}
+		start, end, err := a.verseRange()
+		if err != nil {
+			return "", err
+		}
+		text, err := e.readReferencePlain(a.Translation, a.BookID, a.Chapter, start, end)
+		if err != nil {
+			return "", err
+		}
+		return text, nil
 	case "get_chapter":
 		var a struct {
 			Translation string `json:"translation"`
@@ -191,7 +223,7 @@ func (e *toolEnv) executeToolCall(ctx context.Context, name string, args json.Ra
 		if err := json.Unmarshal(args, &a); err != nil {
 			return "", err
 		}
-		out, err := e.crossRefs(ctx, a.BookID, a.Chapter, a.Verse)
+		out, err := e.crossRefsArray(a.BookID, a.Chapter, a.Verse)
 		return marshalToolResult(out, err)
 	case "lookup_webster":
 		var a struct {
@@ -213,7 +245,11 @@ func (e *toolEnv) executeToolCall(ctx context.Context, name string, args json.Ra
 		if err := json.Unmarshal(args, &a); err != nil {
 			return "", err
 		}
-		out, err := e.readSource(a.Name, a.Offset, a.Limit, a.Overlap)
+		name, err := a.resolveName()
+		if err != nil {
+			return "", err
+		}
+		out, err := e.readSource(name, a.Offset, a.Limit, a.Overlap)
 		result, err := marshalToolResult(out, err)
 		if err == nil {
 			_ = RunStateChanged.Broadcast(struct{}{})
@@ -255,10 +291,19 @@ func (e *toolEnv) executeToolCall(ctx context.Context, name string, args json.Ra
 		_ = RunStateChanged.Broadcast(struct{}{})
 		return marshalToolResult(out, nil)
 	case "upsert_topic":
-		if err := e.upsertTopicTool(args); err != nil {
+		var doc TopicDoc
+		if err := json.Unmarshal(args, &doc); err != nil {
 			return "", err
 		}
-		return "ok", nil
+		if err := upsertTopic(e.root, doc); err != nil {
+			return "", err
+		}
+		slug := strings.TrimSpace(doc.Slug)
+		if slug == "" {
+			slug = slugify(doc.Title)
+		}
+		_ = RunStateChanged.Broadcast(struct{}{})
+		return marshalToolResult(map[string]any{"written": slug + ".json", "title": doc.Title}, nil)
 	case "run_subagent":
 		var a struct {
 			Instruction string `json:"instruction"`
@@ -269,8 +314,13 @@ func (e *toolEnv) executeToolCall(ctx context.Context, name string, args json.Ra
 		if a.Instruction == "" {
 			return "", fmt.Errorf("instruction required")
 		}
-		summary, err := e.runSubagent(ctx, a.Instruction)
-		return marshalToolResult(map[string]string{"summary": summary}, err)
+		e.nextSubagentThread++
+		thread := e.nextSubagentThread
+		out, err := e.runSubagent(ctx, thread, a.Instruction)
+		if err != nil {
+			_ = appendRawRunLog(e.root, fmt.Sprintf("subagent:%d", thread), "error: "+err.Error())
+		}
+		return marshalToolResult(out, err)
 	default:
 		return "", fmt.Errorf("unknown tool %q", name)
 	}
@@ -287,20 +337,15 @@ func marshalToolResult(out any, err error) (string, error) {
 	return string(data), nil
 }
 
-const toolsPrompt = `You are an assistant building Boanerges study data from public-domain sources.
+const dictionaryToolsPrompt = `You are building Boanerges DICTIONARY entries from public-domain sources (sources/ and entries/ only).
 Your entire reply MUST be one JSON object (no markdown, no explanation).
-Tool call shape:
-{"tool":"<name>","args":{...}}
-To write a dictionary entry you MUST call:
-{"tool":"upsert_entry","args":{"headword":"...","modern":"...","senses":[{"gloss":"...","sourceFile":"...","sourceSpan":"..."}]}}
-Listing headwords in summary or prose does NOT save files — only upsert_entry does.
-Tool names: search_bible, get_chapter, cross_references, lookup_webster, list_sources, list_source_guides, read_source, read_source_bridge, read_entry, list_entries, list_topics, upsert_entry, upsert_topic, run_subagent (heavy tasks only: use sparingly; format guides are precomputed).
-When done with a unit of work, respond with:
-{"done":true,"summary":"..."}
-Reuse existing entries/topics when headwords or titles match. Cite source spans for dictionary senses. Group topical refs with labels like "Ex. Of".
-list_sources returns name and sizeBytes per file.
-upsert_entry example: {"tool":"upsert_entry","args":{"headword":"Able","modern":"...","senses":[{"gloss":"...","sourceFile":"file.txt","sourceSpan":"100-200"}]}}
-Fields must be inside args (headword required). Prose without a tool call does not write files.`
+Tool call shape: {"tool":"<name>","args":{...}}
+Dictionary tools ONLY: list_sources, list_source_guides, read_source, read_source_bridge, read_entry, list_entries, upsert_entry, lookup_webster, run_subagent.
+upsert_entry: {"tool":"upsert_entry","args":{"headword":"Aaron","modern":"...","senses":[{"gloss":"...","sourceFile":"file.txt","sourceSpan":"1200-1280"}]}}
+read_source: {"tool":"read_source","args":{"name":"basename.txt","offset":0,"limit":8000}} — use args.name, not sourceFile.
+Never put job instructions into headword/modern. {"done":false,...} is ignored.
+When done: {"done":true,"summary":"..."}
+list_sources returns name and sizeBytes. Prose does not write files.`
 
 func parseModelLine(line string) (tool string, args json.RawMessage, done bool, summary string, err error) {
 	return parseToolTurn(line)

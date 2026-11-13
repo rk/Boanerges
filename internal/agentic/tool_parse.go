@@ -9,12 +9,16 @@ import (
 )
 
 var toolAliases = map[string]string{
-	"upsert":       "upsert_entry",
-	"write_entry":  "upsert_entry",
-	"add_entry":    "upsert_entry",
-	"save_entry":   "upsert_entry",
-	"read":         "read_source",
-	"list_sources": "list_sources",
+	"upsert":          "upsert_entry",
+	"write_entry":     "upsert_entry",
+	"add_entry":       "upsert_entry",
+	"save_entry":      "upsert_entry",
+	"read":            "read_source",
+	"list_sources":    "list_sources",
+	"search_bible":    "search",
+	"keyword_search":  "search",
+	"readreference":   "read_reference",
+	"get_reference":   "read_reference",
 }
 
 func normalizeToolName(name string) string {

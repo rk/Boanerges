@@ -172,15 +172,26 @@ func ensureSourceGuides(ctx context.Context, root, model string) error {
 	return nil
 }
 
+const maxGuideSnippet = 450
+const maxGuidesPromptBytes = 2_500
+
 func formatGuidesPromptBlock(root string) string {
 	doc, err := loadSourceGuides(root)
 	if err != nil || len(doc.Guides) == 0 {
 		return ""
 	}
 	var b strings.Builder
-	b.WriteString("\nSOURCE FORMAT GUIDES (per-file; use when splitting headwords):\n")
+	b.WriteString("\nSOURCE FORMAT GUIDES (compact; call list_source_guides for full text):\n")
 	for _, g := range doc.Guides {
-		b.WriteString(fmt.Sprintf("\n## %s\n%s\n", g.File, g.Rules))
+		rules := g.Rules
+		if len(rules) > maxGuideSnippet {
+			rules = rules[:maxGuideSnippet] + "…"
+		}
+		b.WriteString(fmt.Sprintf("- %s: %s\n", g.File, rules))
+		if b.Len() > maxGuidesPromptBytes {
+			b.WriteString("…(more in list_source_guides)\n")
+			break
+		}
 	}
 	return b.String()
 }

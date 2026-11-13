@@ -109,6 +109,8 @@ export type ProjectKind = "dictionary" | "topical";
 export interface ProjectManifest {
   kind: ProjectKind;
   model: string;
+  /** primary Bible translation, default asv */
+  translation?: string;
 }
 
 export interface ProjectSummary {

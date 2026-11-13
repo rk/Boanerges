@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	defaultReadLimit   = 12_000
+	defaultReadLimit   = 8_000
 	maxReadLimit       = 32_000
 	minUpsertsPerChunk = 4
 	maxBridgeChunks    = 2
@@ -145,9 +145,6 @@ func buildDistillContinuePrompt(root, instruction string) (string, error) {
 		}
 	}
 	b.WriteString(slowestSourceHint(infos, r.Distill.SourceOffsets))
-	if block := formatGuidesPromptBlock(root); block != "" {
-		b.WriteString(block)
-	}
 	b.WriteString("\nWorkflow per chunk: list_source_guides + list_sources + list_entries → read_source (or read_source_bridge) → at least ")
 	b.WriteString(fmt.Sprint(minUpsertsPerChunk))
 	b.WriteString(" upsert_entry calls → next chunk (advance each source at its own pace).\n")

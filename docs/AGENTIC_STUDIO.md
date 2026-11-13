@@ -24,7 +24,7 @@ Default `go build` and `bun run build:web` omit the `agentic` tag and `VITE_AGEN
 
 | Path | Purpose |
 |------|---------|
-| `project.json` | `kind` (`dictionary` \| `topical`), `model` |
+| `project.json` | `kind` (`dictionary` \| `topical`), `model` — each kind exposes different orchestrator tools (topical has no source/entry APIs) |
 | `run.json` | Checkpoint: status, steps, instruction |
 | `run.raw.log` | Full model replies and tool I/O (debug) |
 | `sources/` | Public-domain source files (dictionary) |

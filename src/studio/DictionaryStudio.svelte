@@ -16,7 +16,7 @@
   let sources = $state<string[]>([]);
   let entries = $state<EntrySummary[]>([]);
   let instruction = $state(
-    "Distill every headword from every source file into modern English entries. Use separate offsets per source; catch up slower files when needed. Each read_source chunk must yield at least 4 upsert_entry calls. Use overlap or read_source_bridge when a definition spans chunks or sources. read_entry + merge draft entries when both sources define the same headword.",
+    "Work through every source file to completion. read_source with args.name (basename only), limit 8000. Extract real dictionary headwords from the chunk text only — never from these instructions. At least 4 upsert_entry per chunk before the next read.",
   );
   let model = $state("llama3.2");
   let ollamaReady = $state(false);

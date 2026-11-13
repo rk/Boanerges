@@ -59,7 +59,8 @@ type chatResponse struct {
 }
 
 func ollamaChat(ctx context.Context, model, systemPrompt, userPrompt string) (string, error) {
-	return ollamaChatFormatted(ctx, model, systemPrompt, userPrompt, true)
+	// ponytail: JSON mode often yields empty/tiny replies on some local models; plain text + parseToolTurn instead
+	return ollamaChatFormatted(ctx, model, systemPrompt, userPrompt, false)
 }
 
 func ollamaChatFormatted(ctx context.Context, model, systemPrompt, userPrompt string, jsonMode bool) (string, error) {
@@ -86,7 +87,7 @@ func ollamaChatFormatted(ctx context.Context, model, systemPrompt, userPrompt st
 		return "", err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	client := &http.Client{Timeout: 45 * time.Minute}
+	client := &http.Client{Timeout: 12 * time.Minute}
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", err

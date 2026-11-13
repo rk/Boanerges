@@ -128,7 +128,7 @@ func (a *Agentic) AnalyzeSourceFormats(folder string) error {
 	if m.Kind != ProjectDictionary {
 		return fmt.Errorf("not a dictionary project")
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
 	defer cancel()
 	return ensureSourceGuides(ctx, folder, m.Model)
 }

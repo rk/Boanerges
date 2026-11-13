@@ -16,8 +16,9 @@ const (
 )
 
 type ProjectManifest struct {
-	Kind  ProjectKind `json:"kind"`
-	Model string      `json:"model"`
+	Kind         ProjectKind `json:"kind"`
+	Model        string      `json:"model"`
+	Translation  string      `json:"translation,omitempty"` // primary Bible translation, default asv
 }
 
 type RunStatus string

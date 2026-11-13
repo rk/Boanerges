@@ -136,10 +136,12 @@ func (r *runnerRegistry) loop(ctx context.Context, root, job, instruction, model
 		}
 	}()
 
-	env := &toolEnv{root: root, model: model, bible: r.bible, dict: r.dict, runner: r.get(root)}
+	env := &toolEnv{root: root, model: model, job: job, instruction: instruction, bible: r.bible, dict: r.dict, runner: r.get(root)}
+	if m, err := loadManifest(root); err == nil && strings.TrimSpace(m.Translation) != "" {
+		env.translation = m.Translation
+	}
 	h := env.runner
 
-	system := toolsPrompt
 	if job == "distill" {
 		if err := ensureSourceGuides(ctx, root, model); err != nil {
 			_ = appendStep(root, "system", "Format guides: "+err.Error())
@@ -147,12 +149,19 @@ func (r *runnerRegistry) loop(ctx context.Context, root, job, instruction, model
 			_ = appendStep(root, "system", "Format guides ready (see source-guides.json)")
 		}
 		_ = RunStateChanged.Broadcast(struct{}{})
-		system += distillToolRules
-		system += formatGuidesPromptBlock(root)
 	}
+	system := buildSystemPrompt(job, root)
 
-	const turnsPerBatch = 40
+	const turnsPerBatch = 24
+	const toolResultMax = 1_200
+	const instructionTail = 280
 	const maxBatches = 250
+
+	topicUpserts := 0
+	subagentRuns := 0
+	rejectedDoneStreak := 0
+	var lastRejectedSummary string
+	seedVerseRead := false
 
 batchLoop:
 	for batch := 0; batch < maxBatches; batch++ {
@@ -161,14 +170,21 @@ batchLoop:
 			userPrompt = buildJobPrompt(job, instruction, params)
 			if job == "distill" {
 				userPrompt += "\n" + distillToolRules
+			} else if isTopicalJob(job) {
+				userPrompt += "\n" + topicalToolRules
+				userPrompt += "\n" + seedReferenceHint(job, params)
 			}
-		} else {
+		} else if job == "distill" {
 			var err error
 			userPrompt, err = buildDistillContinuePrompt(root, instruction)
 			if err != nil {
 				r.fail(root, err.Error())
 				return
 			}
+		} else if isTopicalJob(job) {
+			userPrompt = buildTopicalContinuePrompt(root, job, instruction, params, topicUpserts, subagentRuns)
+		} else {
+			userPrompt = buildJobPrompt(job, instruction, params)
 		}
 
 		upserts := 0
@@ -202,7 +218,11 @@ batchLoop:
 						continue
 					}
 				}
-				userPrompt = "Reply must be ONE JSON object: {\"tool\":\"upsert_entry\",\"args\":{...}} — prose does not write files.\n" + userPrompt
+				if isTopicalJob(job) {
+					userPrompt = "Reply must be ONE JSON object with a topical tool, e.g. {\"tool\":\"read_reference\",\"args\":{\"bookId\":\"jhn\",\"chapter\":3,\"verse\":16}} or {\"tool\":\"search\",\"args\":{\"query\":\"faith\"}}.\n" + userPrompt
+				} else {
+					userPrompt = "Reply must be ONE JSON object: {\"tool\":\"upsert_entry\",\"args\":{...}} — prose does not write files.\n" + userPrompt
+				}
 				continue
 			}
 			if done {
@@ -222,12 +242,39 @@ batchLoop:
 						continue batchLoop
 					}
 				}
+				if isTopicalJob(job) {
+					if reason := rejectTopicalDone(job, turn+1, topicUpserts, subagentRuns, summary); reason != "" {
+						if summary == lastRejectedSummary {
+							rejectedDoneStreak++
+						} else {
+							rejectedDoneStreak = 1
+							lastRejectedSummary = summary
+						}
+						if rejectedDoneStreak >= 12 {
+							r.fail(root, "topical stuck: model repeats done without upsert_topic — pause and retry after restart, or use a stronger model")
+							return
+						}
+						_ = appendStep(root, "system", "Continuing: "+reason)
+						_ = appendRawRunLog(root, "system", "Rejected done: "+reason)
+						_ = RunStateChanged.Broadcast(struct{}{})
+						userPrompt = topicalForceNextPrompt(job, params, topicUpserts, subagentRuns, reason)
+						continue
+					}
+					rejectedDoneStreak = 0
+				}
 				_ = appendStep(root, "system", "Done: "+summary)
 				state, _ := loadRun(root)
 				state.Status = RunIdle
 				_ = saveRun(root, state)
 				_ = RunStateChanged.Broadcast(struct{}{})
 				return
+			}
+			if tool == "" && !done {
+				if note := progressNoteJSON(line); note != "" {
+					userPrompt = topicalProgressHint(job) + "\n"
+					_ = appendStep(root, "system", "Ignored done:false — "+truncate(note, 120))
+					continue
+				}
 			}
 			if tool == "" {
 				if job == "distill" {
@@ -240,7 +287,11 @@ batchLoop:
 						continue
 					}
 				}
-				userPrompt = "JSON must include \"tool\" or {\"done\":true,...}. To save entries use {\"tool\":\"upsert_entry\",\"args\":{...}}\n" + userPrompt
+				if isTopicalJob(job) {
+					userPrompt = "JSON must include \"tool\" or {\"done\":true,...}. Save with {\"tool\":\"upsert_topic\",\"args\":{...}}\n" + userPrompt
+				} else {
+					userPrompt = "JSON must include \"tool\" or {\"done\":true,...}. To save entries use {\"tool\":\"upsert_entry\",\"args\":{...}}\n" + userPrompt
+				}
 				continue
 			}
 			if job == "distill" && (tool == "read_source" || tool == "read_source_bridge") {
@@ -253,6 +304,9 @@ batchLoop:
 				}
 			}
 			_ = appendRawRunLog(root, "tool-call", fmt.Sprintf("tool=%s\nline=%s\nargs=%s", tool, line, string(args)))
+			if tool == "run_subagent" {
+				_ = appendRawRunLog(root, "system", "main: run_subagent blocks until subagent thread finishes (see [subagent:N] sections below)")
+			}
 			result, err := env.executeToolCall(ctx, tool, args, line)
 			if err != nil {
 				_ = appendRawRunLog(root, "tool-error", err.Error())
@@ -264,21 +318,42 @@ batchLoop:
 				upserts++
 				upsertsSinceChunk++
 			}
+			if tool == "upsert_topic" && strings.Contains(result, `"written"`) {
+				topicUpserts++
+			}
+			if tool == "run_subagent" {
+				subagentRuns++
+				topicUpserts += subagentTopicUpserts(result)
+			}
+			if tool == "read_reference" && isTopicalJob(job) {
+				seedVerseRead = true
+			}
 			if tool == "read_source" || tool == "read_source_bridge" {
 				chunkReads++
 				upsertsSinceChunk = 0
 			}
 			_ = appendStep(root, "tool", fmt.Sprintf("%s → %s", tool, truncate(result, 200)))
 			_ = RunStateChanged.Broadcast(struct{}{})
-			userPrompt = fmt.Sprintf("Tool %s returned:\n%s\nContinue the job.\nOriginal: %s", tool, truncate(result, 4000), instruction)
+			if isTopicalJob(job) && tool == "read_reference" && seedVerseRead && topicUpserts == 0 && subagentRuns == 0 {
+				userPrompt = topicalForceNextPrompt(job, params, topicUpserts, subagentRuns,
+					"Seed verse loaded. Do not read_reference again until after run_subagent.")
+			} else if isTopicalJob(job) {
+				userPrompt = fmt.Sprintf("Tool %s returned:\n%s\nNext: one tool JSON only. Job instruction: %s",
+					tool, truncate(result, toolResultMax), truncate(instruction, instructionTail))
+			} else {
+				userPrompt = fmt.Sprintf("Tool %s returned:\n%s\nContinue. Job instruction: %s",
+					tool, truncate(result, toolResultMax), truncate(instruction, instructionTail))
+			}
 		}
 
-		if job == "distill" {
-			state, _ := loadRun(root)
-			ensureDistillCheckpoint(&state)
-			state.Distill.Batch++
-			_ = saveRun(root, state)
-			_ = appendStep(root, "system", "Batch "+strconv.Itoa(state.Distill.Batch)+": hit turn limit, starting next batch")
+		if job == "distill" || isTopicalJob(job) {
+			if job == "distill" {
+				state, _ := loadRun(root)
+				ensureDistillCheckpoint(&state)
+				state.Distill.Batch++
+				_ = saveRun(root, state)
+			}
+			_ = appendStep(root, "system", "Batch "+strconv.Itoa(batch+1)+": hit turn limit, starting next batch")
 			_ = RunStateChanged.Broadcast(struct{}{})
 			continue batchLoop
 		}
@@ -337,6 +412,29 @@ func extractJSONLine(reply string) string {
 		}
 	}
 	return strings.TrimSpace(reply)
+}
+
+func topicalProgressHint(job string) string {
+	if isTopicalJob(job) {
+		return "Status noted. Next: ONE tool JSON. Example: {\"tool\":\"read_reference\",\"args\":{\"bookId\":\"jhn\",\"chapter\":3,\"verse\":16}}"
+	}
+	return "Status noted. Next: ONE tool JSON only. If reading: {\"tool\":\"read_source\",\"args\":{\"name\":\"<basename>\",\"offset\":0,\"limit\":8000}}"
+}
+
+func progressNoteJSON(line string) string {
+	line = strings.TrimSpace(line)
+	var probe struct {
+		Done    *bool  `json:"done"`
+		Summary string `json:"summary"`
+		Tool    string `json:"tool"`
+	}
+	if err := json.Unmarshal([]byte(line), &probe); err != nil {
+		return ""
+	}
+	if probe.Tool != "" || probe.Done == nil || *probe.Done {
+		return ""
+	}
+	return probe.Summary
 }
 
 func truncate(s string, n int) string {
